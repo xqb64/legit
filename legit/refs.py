@@ -46,6 +46,12 @@ class Refs:
             self.path: str = path
             self.refs: Refs = refs
 
+        def is_branch(self) -> bool:
+            return self.path.startswith("refs/heads/")
+
+        def is_remote(self) -> bool:
+            return self.path.startswith("refs/remotes/")
+
         def read_oid(self) -> Optional[str]:
             return self.refs.read_ref(self.path)
 
@@ -85,6 +91,15 @@ class Refs:
                 table[oid].append(ref)
 
         return table
+
+    def long_name(self, ref: str) -> str:
+        path = self.path_for_name(ref)
+        if path is not None:
+            return str(path.relative_to(self.path))
+        raise self.InvalidBranch(f"the requested upstream branch '{ref}' does not exist")
+
+    def list_remotes(self):
+        return self.list_refs(self.remotes_path)
 
     def list_all_refs(self):
         return [Refs.SymRef(self, Refs.HEAD)] + self.list_refs(self.refs_path)

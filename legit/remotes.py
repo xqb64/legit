@@ -13,8 +13,31 @@ class Remotes:
     class InvalidRemote(Exception):
         pass
 
+    class InvalidBranch(Exception):
+        pass
+
     def __init__(self, config: ConfigFile) -> None:
         self.config: ConfigFile = config
+
+    def set_upstream(self, branch: str, upstream: str) -> tuple[str, str]:
+        for name in self.list_remotes():
+            ref = self.get(name).set_upstream(branch, upstream)
+            if ref is not None:
+                return name, ref
+        raise self.InvalidBranch(f"Cannot setup tracking information; starting point '{upstream}' is not a branch")
+
+    def unset_upstream(self, branch: str) -> None:
+        self.config.open_for_update()
+        self.config.unset(["branch", branch, "remote"])
+        self.config.unset(["branch", branch, "merge"])
+        self.config.save()
+
+    def get_upstream(self, branch: str) -> str:
+        self.config.open()
+        name = self.config.get(["branch", branch, "remote"])
+        thing = self.get(name)
+        if thing is not None:
+            return thing.get_upstream(branch)
 
     def add(self, name, url, branches=[]) -> None:
         if not branches:
@@ -63,6 +86,18 @@ class Refspec:
         self.source: Path = source
         self.target: Path = target
         self.forced: bool = forced
+
+    @staticmethod
+    def invert(specs, ref) -> str:
+        specs = [Refspec.parse(spec) for spec in specs]
+
+        _map = {}
+
+        for spec in specs:
+            spec.source, spec.target = spec.target, spec.source
+            _map.update(spec.match_refs([ref]))
+
+        return _map.keys()[0]
 
     @staticmethod
     def parse(spec: str) -> "Refspec":
@@ -132,6 +167,24 @@ class Remote:
         self.name: str = name
 
         self.config.open()
+    
+    def set_upstream(self, branch: str, upstream: str) -> str:
+        ref_name = Refspec.invert(self.fetch_specs(), upstream)
+        if ref_name is None:
+            return None
+
+        self.config.open_for_update()
+        self.config.set(["branch", branch, "remote"], self.name)
+        self.config.set(["branch", branch, "merge"], ref_name)
+        self.config.save()
+
+        return ref_name
+
+    def get_upstream(self, branch: str) -> str | None:
+        merge = self.config.get(["branch", branch, "merge"])
+        targets = Refspec.expand(self.fetch_specs(), [merge])
+
+        return targets.keys()[0]
 
     @property
     def push_specs(self):

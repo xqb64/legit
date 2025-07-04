@@ -38,10 +38,13 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.exit(0 if not self.errors else 1)
 
     def configure(self) -> None:
+        current_branch = self.repo.refs.current_ref().short_name()
+        branch_remote = self.repo.config.get(["branch", current_branch, "remote"])
+
         try:
             name = self.args[0]
         except IndexError:
-            name = Remotes.DEFAULT_REMOTE
+            name = branch_remote or Remotes.DEFAULT_REMOTE
 
         remote = self.repo.remotes.get(name)
 

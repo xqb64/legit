@@ -30,6 +30,10 @@ class RevList:
 
         if options.get("all"):
             self.include_refs(self.repo.refs.list_all_refs())
+        if options.get("branches"):
+            self.include_refs(self.repo.refs.list_branches())
+        if options.get("remotes"):
+            self.include_refs(self.repo.refs.list_remotes())
 
         for rev in revs:
             self.handle_revision(rev)

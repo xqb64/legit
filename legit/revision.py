@@ -107,7 +107,12 @@ class Revision:
     PARENT_PATTERN = re.compile(r"^(.+)\^(\d*)$")
     ANCESTOR_PATTERN = re.compile(r"^(.+)~(\d+)$")
 
-    REF_ALIASES = {"@": "HEAD"}
+    UPSTREAM_PATTERN = re.compile(r"^(.*)@\{u(pstream)}?\}$", re.IGNORECASE)
+
+    REF_ALIASES = {
+        "@": "HEAD",
+        "": "HEAD",
+    }
 
     COMMIT = "commit"
 
@@ -142,6 +147,10 @@ class Revision:
             rev = Revision.parse(m.group(1))
             n = 1 if not m.group(2) else int(m.group(2))
             return cls.Parent(rev, n) if rev else None
+
+        elif m := cls.UPSTREAM_PATTERN.match(revision):
+            rev = Revision.parse(m.group(1))
+            return Upstream(rev) if rev else None
 
         elif m := cls.ANCESTOR_PATTERN.match(revision):
             base, num = m.group(1), int(m.group(2))
@@ -182,6 +191,11 @@ class Revision:
             msg = f"object {oid} is a {obj.type()}, not a {ty}"
             self.errors.append(HintedError(msg, []))
             return None
+
+    def upstream(self, branch: str) -> str:
+        if branch == "HEAD":
+            branch = self.repo.refs.current_ref().short_name()
+        return self.repo.remotes.get_upstream(branch)
 
     def read_ref(self, name: str) -> Optional[str]:
         oid = self.repo.refs.read_ref(name)
@@ -225,3 +239,15 @@ class Revision:
 
         # Push a HintedError onto the errors list
         self.errors.append(HintedError(message, hint))
+
+
+class Upstream:
+    def __init__(self, rev: str) -> None:
+        self.rev = rev
+    
+    @staticmethod
+    def resolve(context):
+        name = context.upstream(rev.name)
+        return context.read_ref(name)
+
+

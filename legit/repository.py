@@ -16,6 +16,7 @@ from legit.lockfile import Lockfile
 from legit.config_stack import ConfigStack
 from legit.config import ConfigFile
 from legit.remotes import Remotes
+from legit.common_ancestors import CommonAncestors
 
 
 UNSAFE_MESSAGE = "You seem to have moved HEAD. Not rewinding, check your HEAD!"
@@ -30,6 +31,9 @@ class Repository:
         self.workspace: Workspace = Workspace(git_path.parent)
         self.config: ConfigStack = ConfigStack(self.git_path)
         self.remotes: Remotes = Remotes(self.config.file("local"))
+    
+    def divergence(self, ref):
+        return Divergence(self, ref)
 
     def status(self, commit_oid: Optional[str] = None) -> Status:
         return Status(self, commit_oid)
@@ -226,3 +230,18 @@ class Sequencer:
         self.repo.hard_reset(head_oid)
         orig_head = self.repo.refs.update_head(head_oid)
         self.repo.refs.update_ref("ORIG_HEAD", orig_head)
+
+
+class Divergence:
+    def __init__(self, repo, ref) -> None:
+        self.upstream = repo.remotes.get_upstream(ref.short_name())
+        if self.upstream is None:
+            return
+
+        left = ref.read_oid()
+        right = repo.refs.read_ref(self.upstream)
+        common: CommonAncestors = CommonAncestors(repo.database, left, [right])
+
+        common.find()
+
+        self.ahead, self.behind = common.counts()

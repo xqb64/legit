@@ -18,6 +18,21 @@ class CommonAncestors:
             self.insert_by_date(self.queue, self.database.load(two))
             self.flags[two].add("parent2")
 
+    def counts(self):
+        ones, twos = 0, 0
+
+        for oid, flags in self.flags.items():
+            if len(flags) == 1:
+                continue
+            
+            if "parent1" in flags:
+                ones += 1
+
+            if "parent2" in flags:
+                twos += 1
+
+        return ones, twos
+
     def insert_by_date(self, structure, commit) -> None:
         index = next(
             (i for i, c in enumerate(structure) if c.date() < commit.date()),

@@ -16,6 +16,8 @@ class Log(PrintDiffMixin, Base):
         self.patch = False
         self.combined = False
 
+        self.rev_list_options = {"all": False, "branches": False, "remotes": False}
+
         self.define_print_diff_options()
 
         positional = []
@@ -23,41 +25,32 @@ class Log(PrintDiffMixin, Base):
             if arg.startswith("--decorate="):
                 _, when = arg.split("=", 1)
                 self.decorate = when or "short"
-                continue
             elif arg == "--no-decorate":
                 self.decorate = "no"
-                continue
-
-            if arg == "--abbrev-commit":
+            elif arg == "--abbrev-commit":
                 self.abbrev = True
-                continue
             elif arg == "--no-abbrev-commit":
                 self.abbrev = False
-                continue
-
-            if arg.startswith("--pretty=") or arg.startswith("--format="):
+            elif arg.startswith("--pretty=") or arg.startswith("--format="):
                 _, fmt = arg.split("=", 1)
                 self.format = fmt
-                continue
-
-            if arg == "--oneline":
+            elif arg == "--oneline":
                 self.abbrev = True
                 self.format = "oneline"
-                continue
-
-            if arg == "-p" or arg == "-u" or arg == "--patch":
+            elif arg == "-p" or arg == "-u" or arg == "--patch":
                 self.patch = True
-                continue
-
-            if any(x in self.args for x in ("-s", "--no-patch")):
+            elif arg in ("-s", "--no-patch"):
                 self.patch = False
-                continue
-
-            if arg == "--cc":
+            elif arg == "--cc":
                 self.combined = self.patch = True
-                continue
-
-            positional.append(arg)
+            elif arg == "--all":
+                self.rev_list_options["all"] = True
+            elif arg == "--branches":
+                self.rev_list_options["branches"] = True
+            elif arg == "--remotes":
+                self.rev_list_options["remotes"] = True
+            else:
+                positional.append(arg)
 
         self.args = positional
 
@@ -74,7 +67,7 @@ class Log(PrintDiffMixin, Base):
         self.reverse_refs = self.repo.refs.reverse_refs()
         self.current_ref = self.repo.refs.current_ref()
 
-        self.rev_list: RevList = RevList(self.repo, self.args)
+        self.rev_list: RevList = RevList(self.repo, self.args, self.rev_list_options)
 
         for commit in self.rev_list.each():
             self.show_commit(commit)
@@ -197,7 +190,12 @@ class Log(PrintDiffMixin, Base):
         return name
 
     def ref_color(self, ref):
-        return ["bold", "cyan"] if ref.is_head() else ["bold", "green"]
+        if ref.is_head():
+            return ["bold", "cyan"]
+        elif ref.is_branch():
+            return ["bold", "green"]
+        elif ref.is_remote():
+            return ["bold", "red"]
 
     def _blank_line(self) -> None:
         if self.format == "oneline":

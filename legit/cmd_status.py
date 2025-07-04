@@ -130,10 +130,38 @@ class StatusCmd(Base):
     def hint(self, msg: str) -> None:
         self.println(f"  ({msg})")
 
+    def print_upstream_status(self) -> None:
+        divergence = self.repo.divergence(self.repo.refs.current_ref())
+        if divergence is None:
+            return
+
+        base = self.repo.refs.short_name(divergence.upstream)
+        ahead = divergence.ahead
+        behind = divergence.behind
+
+        if ahead == 0 and behind == 0:
+            self.println(f"Your branch is up to date with '{base}'.")
+        elif behind == 0:
+            self.println(f"Your branch is ahead of '{base}' by {self.commits(ahead)}.")
+        elif ahead == 0:
+            self.println(f"Your branch is behind '{base}' by {self.commits(behind)}, and can be fast-forwarded.")
+        else:
+            self.println(f"Your branch and '{base}' have diverged,")
+            self.println(f"and have {ahead} and {behind} different commits each, respectively.")
+
+        self.println('')
+
+    def commits(self, n: int) -> str:
+        if n == 1:
+            return "commit"
+        else:
+            return f"{n} commits"
+
     def print_long_format(self) -> None:
         assert self.status_state is not None
 
         self.print_branch_status()
+        self.print_upstream_status()
         self.print_pending_commit_status()
 
         self.print_changes(

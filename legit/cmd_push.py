@@ -46,10 +46,15 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         self.exit(0 if not self.errors else 1)
 
     def configure(self) -> None:
+        current_branch = self.repo.refs.current_ref().short_name()
+        branch_remote = self.repo.config.get(["branch", current_branch, "remote"])
+        branch_merge = self.repo.config.get(["branch", current_branch, "merge"])
+
+
         try:
             name = self.args[0]
         except IndexError:
-            name = Remotes.DEFAULT_REMOTE
+            name = branch_remote or Remotes.DEFAULT_REMOTE
 
         remote = self.repo.remotes.get(name)
 
@@ -58,13 +63,14 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         self.receiver = (
             self.options.get("receiver") or remote.receiver or self.RECEIVE_PACK
         )
-        self.push_specs = (
-            self.args[1:]
-            if len(self.args) > 1
-            else remote.push_specs
-            if remote is not None
-            else None
-        )
+
+        if len(self.args) > 1:
+            self.push_specs = self.args[1:]
+        elif branch_merge:
+            spec = Refspec(current_branch, branch_merge, False)
+            self.push_specs = [str(spec)]
+        else:
+            self.push_specs = remote.push_specs if remote is not None else None
 
     def send_update_requests(self) -> None:
         self.updates = {}
