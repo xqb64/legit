@@ -11,7 +11,8 @@ from legit.blob import Blob
 from legit.tree_diff import TreeDiff
 from legit.pathfilter import PathFilter
 from legit.temp_file import TempFile
-
+from legit.db_loose import Loose, Raw
+from legit.db_backends import Backends
 
 
 TYPES: MutableMapping[str, Type[Blob | Commit | Tree]] = {
@@ -19,13 +20,6 @@ TYPES: MutableMapping[str, Type[Blob | Commit | Tree]] = {
     "commit": Commit,
     "tree": Tree,
 }
-
-
-class Raw:
-    def __init__(self, ty, size, data):
-        self.ty = ty
-        self.size = size
-        self.data = data
 
 
 class Database:
@@ -38,26 +32,27 @@ class Database:
     def __init__(self, path: Path) -> None:
         self.path: Path = path
         self.objects: MutableMapping[str, Blob | Commit | Tree] = {}
+        self.backend = Backends(self.path)
+    
+    def has(self, oid: str) -> bool:
+        return self.backend.has(oid)
 
     def load_info(self, oid: str) -> Raw:
-        ty, size, _ = self.read_object_header(oid, 128)
-        return Raw(ty, size, None)
+        return self.backend.load_info(oid)
+    
+    def load_raw(self, oid: str) -> Raw:
+        return self.backend.load_raw(oid)
+    
+    def prefix_match(self, name: str) -> list[str]:
+        return self.backend.prefix_match(name)
+
+    def write_object(self, oid: str, content: bytes) -> None:
+        return self.backend.write_object(oid, content)
 
     @property
     def pack_path(self):
         return self.path / "pack"
-
-    def has(self, oid: str) -> bool:
-        object_path = self.path / str(oid[:2]) / str(oid[2:])
-        return object_path.exists()
-
-    def load_raw(self, oid):
-        """
-        Load a raw Git object by its oid, returning a Raw(type, size, data) instance.
-        """
-        ty, size, rest = self.read_object_header(oid)
-        return Raw(ty, size, rest)
-    
+   
     def read_object_header(self, oid, read_bytes=None, *, chunk_size: int = 8192):
         """
         Read the Git object header for *oid* using a streaming inflater.
@@ -133,8 +128,8 @@ class Database:
         """
         Read and parse a Git object by oid, returning the parsed object with its oid set.
         """
-        type_, _, rest = self.read_object_header(oid)
-        obj = TYPES[type_].parse(rest)
+        raw = self.load_raw(oid)
+        obj = TYPES[raw.ty].parse(raw.rest)
         obj.oid = oid
         return obj
 
@@ -206,31 +201,6 @@ class Database:
     def hash_content(self, content: bytes) -> str:
         return hashlib.sha1(content).hexdigest()
  
-    def write_object(self, oid: str, content: bytes) -> None:
-        object_path = self.path / str(oid[:2]) / str(oid[2:])
-        if object_path.exists():
-            return
-        
-        file = TempFile(object_path.parent, "tmp_obj")
-        file.write(zlib.compress(content, zlib.Z_BEST_SPEED))
-        file.move(object_path.name)
-
-    def prefix_match(self, name: str) -> list[str]:
-        object_path = self.path / str(name[:2]) / str(name[2:])
-        dirname = object_path.parent
-
-        oids = []
-        
-        try:
-            files = dirname.iterdir()
-        except FileNotFoundError:
-            return []
-
-        for filename in files:
-            oids.append(f"{dirname.name}{filename.name}")
-
-        return [oid for oid in oids if oid.startswith(name)]
-
     def short_oid(self, oid: str) -> str:
         return oid[:7]
 

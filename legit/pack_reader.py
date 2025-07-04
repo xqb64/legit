@@ -2,8 +2,9 @@ import io
 import zlib
 import struct
 
-from legit.pack import InvalidPack, HEADER_SIZE, HEADER_FORMAT, SIGNATURE, VERSION, TYPE_CODES, COMMIT, BLOB, TREE, Record, RefDelta
+from legit.pack import REF_DELTA, InvalidPack, HEADER_SIZE, HEADER_FORMAT, SIGNATURE, VERSION, TYPE_CODES, COMMIT, BLOB, TREE, Record, RefDelta
 from legit.numbers import VarIntLE
+from legit.pack_expander import Expander
 
 
 TYPE_CODES_REVERSED = {
@@ -27,6 +28,18 @@ class Reader:
 
         if version != VERSION:
             raise InvalidPack(f"unsupported pack version: {version}")
+
+    def load_info(self):
+        ty, size = self.read_record_header()
+
+        if ty in [COMMIT, BLOB, TREE]:
+            return Record(TYPE_CODES_REVERSED[ty], size)
+
+        if ty == REF_DELTA:
+            delta = self.read_ref_delta()
+            size = Expander(delta.delta_data).target_size
+
+            return RefDelta(delta.base_oid, size)
 
     def read_record(self) -> 'Record | None':
         ty, _ = self.read_record_header()
