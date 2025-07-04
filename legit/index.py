@@ -465,7 +465,9 @@ class Checksum:
         return data
 
     def verify_checksum(self) -> None:
-        data = self.file.read(Checksum.CHECKSUM_SIZE)
-
-        if data != self.digest.digest():
+        remaining = self.file.read()
+        data = remaining[:-self.CHECKSUM_SIZE]
+        stored_checksum = remaining[-self.CHECKSUM_SIZE:]
+        self.digest.update(data)
+        if stored_checksum != self.digest.digest():
             raise Exception("Checksum does not match data stored on disk.")
