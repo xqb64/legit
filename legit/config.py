@@ -187,7 +187,7 @@ class ConfigFile:
         return sections
 
     def section_exists(self, key: Sequence[str]) -> bool:
-        return Section.normalize(key) in self.lines
+        return Section.normalize([k for k in key if k]) in self.lines
 
     def line_count(self) -> int:
         return sum(len(ls) for ls in self.lines.values())

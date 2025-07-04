@@ -16,9 +16,6 @@ WORKSPACE_CHANGED = "local modifications"
 class Rm(Base):
     def run(self) -> None:
         self.define_options()
-
-        self.repo = Repository(self.dir / ".git")
-
         self.repo.index.load_for_update()
 
         self.head_oid = self.repo.refs.read_head()

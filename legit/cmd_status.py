@@ -71,7 +71,6 @@ class StatusCmd(Base):
         stderr: TextIO,
     ) -> None:
         super().__init__(_dir, env, args, stdin, stdout, stderr)
-        self.repo = Repository(self.dir / ".git")
         self.status_state: Status | None = None
 
     def run(self) -> None:
@@ -126,13 +125,21 @@ class StatusCmd(Base):
         self.hint(f"use 'legit {op} --abort' to cancel the {op} operation")
 
         self.println("")
+    
+    def print_branch_status(self) -> None:
+        current = self.repo.refs.current_ref()
+
+        if current.is_head():
+            self.println(self.fmt("red", "Not currently on any branch"))
+        else:
+            self.println(f"On branch '{current.short_name()}'")
 
     def hint(self, msg: str) -> None:
         self.println(f"  ({msg})")
 
     def print_upstream_status(self) -> None:
         divergence = self.repo.divergence(self.repo.refs.current_ref())
-        if divergence is None:
+        if divergence is None or divergence.upstream is None:
             return
 
         base = self.repo.refs.short_name(divergence.upstream)
