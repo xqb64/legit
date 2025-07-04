@@ -58,7 +58,7 @@ class Index:
     
     def oid_position(self, oid):
         prefix = int(oid[:2], 16)
-        packed = struct.pack(">20s", bytes(oid))
+        packed = struct.pack(">20s", bytes(oid, 'ascii'))
 
         low = 0 if prefix == 0 else self.fanout[prefix - 1]
         high = self.fanout[prefix] - 1
