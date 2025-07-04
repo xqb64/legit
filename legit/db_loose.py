@@ -24,8 +24,8 @@ class Loose:
         """
         Load a raw Git object by its oid, returning a Raw(type, size, data) instance.
         """
-        ty, size, rest = self.read_object_header(oid)
-        return Raw(ty, size, rest)
+        ty, size, (data, pos) = self.read_object_header(oid)
+        return Raw(ty, size, data[pos:])
     
     def prefix_match(self, name: str) -> list[str]:
         object_path = self.path / str(name[:2]) / str(name[2:])
