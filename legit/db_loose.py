@@ -53,4 +53,24 @@ class Loose:
         file.write(zlib.compress(content, zlib.Z_BEST_SPEED))
         file.move(object_path.name)
 
-
+    def read_object_header(self, oid, read_bytes=None):
+        path = self.path / str(oid[:2]) / str(oid[2:])
+        
+        with open(path, 'rb') as f:
+            if read_bytes is not None:
+                file_data = f.read(read_bytes)
+            else:
+                file_data = f.read()
+        
+        decompressor = zlib.decompressobj()
+        data = decompressor.decompress(file_data)
+        
+        space_pos = data.find(b' ')
+        null_pos = data.find(b'\0', space_pos)
+        
+        type_ = data[:space_pos].decode('ascii')
+        size = int(data[space_pos + 1:null_pos].decode('ascii'))
+        
+        scanner_pos = null_pos + 1
+        
+        return type_, size, (data, scanner_pos)
