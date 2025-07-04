@@ -1,5 +1,6 @@
 import struct
 
+IDX_MAX_OFFSET = 0x80000000 
 
 class Index:
     HEADER_SIZE = 8
@@ -57,7 +58,7 @@ class Index:
     
     def oid_position(self, oid):
         prefix = int(oid[:2], 16)
-        packed = struct.pack(">20s", oid)
+        packed = struct.pack(">20s", bytes(oid))
 
         low = 0 if prefix == 0 else self.fanout[prefix - 1]
         high = self.fanout[prefix] - 1
