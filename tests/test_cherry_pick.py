@@ -94,7 +94,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "topic~3")
             assert_status(cmd, 0)
 
-            revs = list(RevList(repo, ["@~3.."]).each())
+            revs = [commit for (commit, path) in list(RevList(repo, ["@~3.."]).each())]
             
             assert [c.message.strip() for c in revs] == ["five", "four", "three"]
             
@@ -133,7 +133,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "--continue")
             assert_status(cmd, 0)
 
-            commits = list(RevList(repo, ["@~3.."]).each())
+            commits = [commit for (commit, path) in list(RevList(repo, ["@~3.."]).each())]
 
             assert [commits[1].oid] == commits[0].parents
             assert [c.message.strip() for c in commits] == ["eight", "four", "three"]
@@ -148,7 +148,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("commit")
             assert_status(cmd, 0)
             
-            commits = list(RevList(repo, ["@~3.."]).each())
+            commits = [commit for (commit, path) in list(RevList(repo, ["@~3.."]).each())]
 
             assert [commits[1].oid] == commits[0].parents
             assert [c.message.strip() for c in commits] == ["eight", "four", "three"]
@@ -157,7 +157,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "topic~3", "topic^", "topic")
             assert_status(cmd, 0)
 
-            revs = list(RevList(repo, ["@~4.."]).each())
+            revs = [commit for (commit, path) in list(RevList(repo, ["@~4.."]).each())]
 
             assert [c.message.strip() for c in revs] == ["eight", "seven", "five", "four"]
             
@@ -215,7 +215,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "--continue")
             assert_status(cmd, 0)
             
-            revs = list(RevList(repo, ["@~5.."]).each())
+            revs = [commit for (commit, path) in list(RevList(repo, ["@~5.."]).each())]
 
             assert [c.message.strip() for c in revs] == ["eight", "seven", "six", "five", "four"]
             
@@ -232,7 +232,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "--continue")
             assert_status(cmd, 0)
             
-            revs = list(RevList(repo, ["@~5.."]).each())
+            revs = [commit for (commit, path) in list(RevList(repo, ["@~5.."]).each())]
 
             assert [c.message.strip() for c in revs] == ["eight", "seven", "six", "five", "four"]
             
@@ -366,7 +366,7 @@ class TestCherryPick:
             cmd, _, _, _ = legit_cmd("cherry-pick", "--continue")
             assert_status(cmd, 0)
 
-            revs = list(RevList(repo, ["@~3.."]).each())
+            revs = [commit for (commit, path) in list(RevList(repo, ["@~3.."]).each())]
             
             assert [c.message.strip() for c in revs] == ["merge side^", "merge side", "four"]
             assert_index(repo, ("f.txt", 0), ("j.txt", 0))

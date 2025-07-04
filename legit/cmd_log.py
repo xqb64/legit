@@ -69,7 +69,7 @@ class Log(PrintDiffMixin, Base):
 
         self.rev_list: RevList = RevList(self.repo, self.args, self.rev_list_options)
 
-        for commit in self.rev_list.each():
+        for commit, _path in self.rev_list.each():
             self.show_commit(commit)
 
         self.exit(0)
@@ -123,7 +123,7 @@ class Log(PrintDiffMixin, Base):
     def from_diff_item(self, path, item) -> Target:
         if item is not None:
             blob = self.repo.database.load(item.oid)
-            return Target(path, item.oid, oct(item.mode)[2:], blob.data)
+            return Target(path, item.oid, oct(item.mode)[2:], blob.data.decode('utf-8'))
         else:
             return Target(path, "0" * 40, None, "")
 

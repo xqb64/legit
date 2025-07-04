@@ -193,7 +193,7 @@ class Sequencer:
         if self.todo_file is None:
             return
 
-        for action, commit in self.commands:
+        for action, (commit, path) in self.commands:
             short = self.repo.database.short_oid(commit.oid)
             self.todo_file.write(
                 f"{action} {short} {commit.title_line()}\n".encode("utf-8")
@@ -210,7 +210,7 @@ class Sequencer:
             action, oid, _rest = re.compile(r"^(\S+) (\S+) (.*)$").match(line).groups()
             oids = self.repo.database.prefix_match(oid)
             commit = self.repo.database.load(oids[0])
-            self.commands.append((action, commit))
+            self.commands.append((action, (commit, None)))
 
     def quit(self) -> None:
         import shutil

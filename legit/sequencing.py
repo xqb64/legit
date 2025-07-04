@@ -51,7 +51,6 @@ class SequencingMixin:
         self.args = positional
 
     def run(self) -> None:
-        self.repo: Repository = Repository(self.dir / ".git")
         self.sequencer: Sequencer = Sequencer(self.repo)
 
         self.define_options()
@@ -141,7 +140,7 @@ class SequencingMixin:
             cmd = self.sequencer.next_command()
             if cmd is None:
                 break
-            action, commit = cmd
+            action, (commit, path) = cmd
             if action == "revert":
                 self.revert(commit)
             elif action == "pick":

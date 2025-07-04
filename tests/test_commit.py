@@ -91,7 +91,7 @@ class TestReusingMessages:
         legit_cmd("commit", "-C", "@")
 
         revs = RevList(repo, ["HEAD"])
-        messages = [c.message.strip() for c in revs.each()]
+        messages = [c.message.strip() for (c, path) in list(revs.each())]
         assert messages == ["first", "first"]
 
 class TestAmendingCommits:
@@ -105,7 +105,7 @@ class TestAmendingCommits:
     def test_replaces_last_commit_message(self, repo, stub_editor, legit_cmd):
         legit_cmd("commit", "--amend")
         revs = RevList(repo, ["HEAD"])
-        messages = [c.message.strip() for c in revs.each()]
+        messages = [c.message.strip() for (c, path) in list(revs.each())]
         assert messages == ["third [amended]", "second", "first"]
 
     def test_replaces_last_commit_tree(self, write_file, legit_cmd, load_commit, repo):

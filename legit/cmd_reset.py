@@ -10,8 +10,6 @@ class Reset(Base):
     def run(self) -> None:
         self.define_options()
 
-        self.repo: Repository = Repository(self.dir / ".git")
-
         self.select_commit_oid()
 
         self.repo.index.load_for_update()

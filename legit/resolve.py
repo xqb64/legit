@@ -155,13 +155,13 @@ class Resolve:
 
         oids = [base_oid, left_oid, right_oid]
         blobs = [
-            self.repo.database.load(oid).data if oid is not None else "" for oid in oids
+            self.repo.database.load(oid).data.decode('utf-8') if oid is not None else "" for oid in oids
         ]
         merge = Diff3.merge(*blobs)
 
         data = merge.to_string(self.inputs.left_name, self.inputs.right_name)
 
-        blob = Blob(data)
+        blob = Blob(data.encode('utf-8'))
         self.repo.database.store(blob)
 
         return [merge.is_clean(), blob.oid]
@@ -173,9 +173,9 @@ class Resolve:
         return "".join(
             [
                 f"<<<<<<< {self.inputs.left_name}\n",
-                left_blob.data,
+                left_blob.data.decode('utf-8'),
                 "=======\n",
-                right_blob.data,
+                right_blob.data.decode('utf-8'),
                 f">>>>>>> {self.inputs.right_name}\n",
             ]
         )

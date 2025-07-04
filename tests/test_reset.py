@@ -9,7 +9,7 @@ def _snapshot_workspace(repo_path: Path) -> dict[str, str]:
     for path in repo_path.rglob("*"):
         if ".git" in path.parts or not path.is_file():
             continue
-        result[str(path.relative_to(repo_path))] = path.read_text()
+        result[str(path.relative_to(repo_path))] = path.read_bytes().decode('utf-8')
     return result
 
 
@@ -31,7 +31,7 @@ class TestResetNoHead:
         files = {}
         repo.index.load()
         for entry in repo.index.entries.values():
-            files[str(entry.path)] = repo.database.load(entry.oid).data
+            files[str(entry.path)] = repo.database.load(entry.oid).data.decode('utf-8')
         assert files == expected
 
     def assert_unchanged_workspace(self, repo_path):
@@ -89,7 +89,7 @@ class TestResetWithHead:
         files = {}
         repo.index.load()
         for entry in repo.index.entries.values():
-            files[str(entry.path)] = repo.database.load(entry.oid).data
+            files[str(entry.path)] = repo.database.load(entry.oid).data.decode('utf-8')
         assert files == expected
 
     def assert_unchanged_workspace(self, repo_path):

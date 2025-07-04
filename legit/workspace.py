@@ -32,14 +32,14 @@ class Workspace:
         self.path: Path = path
 
     def write_file(
-        self, path: Path, data: str, mode: Optional[int] = None, mkdir: bool = False
+        self, path: Path, data: bytes, mode: Optional[int] = None, mkdir: bool = False
     ) -> None:
         full_path: Path = self.path / path
         if mkdir:
             full_path.parent.mkdir(exist_ok=True, parents=True)
 
         flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-        with os.fdopen(os.open(full_path, flags), "w") as f:
+        with os.fdopen(os.open(full_path, flags), "wb") as f:
             f.write(data)
 
         if mode:
@@ -100,7 +100,7 @@ class Workspace:
             else:
                 data = migration.blob_data(entry.oid)
                 with os.fdopen(os.open(path, flags, 0o644), "wb+") as f:
-                    f.write(data.encode("utf-8"))
+                    f.write(data)
                 path.chmod(entry.mode)
 
     def remove_directory(self, dirname: Path) -> None:

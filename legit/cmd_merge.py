@@ -27,7 +27,6 @@ class Merge(WriteCommitMixin, Base):
     def run(self) -> None:
         self.define_write_commit_options()
 
-        self.repo = Repository(self.dir / ".git")
         self.pending_commit: PendingCommit = self.repo.pending_commit()
 
         self.mode = "run"

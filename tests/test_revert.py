@@ -37,7 +37,7 @@ def get_rev_list_messages(repo, *rev_specs):
     Gets a list of commit messages for a given revision range using RevList,
     emulating the behavior of the helper in the Ruby tests.
     """
-    revs = list(RevList(repo, list(rev_specs)).each())
+    revs = [r for r, _ in list(RevList(repo, list(rev_specs)).each())]
     return [c.title_line().strip() for c in revs]
 
 def _snapshot_workspace(repo_path: Path) -> dict[str, str]:
