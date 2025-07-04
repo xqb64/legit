@@ -25,6 +25,7 @@ class Workspace:
         "env",
         ".pytest_cache",
         ".mypy_cache",
+        ".ruff_cache",
     ]
 
     def __init__(self, path: Path) -> None:
@@ -152,7 +153,7 @@ class Workspace:
 
     def read_file(self, path: Path) -> str:
         try:
-            with open(self.path / path) as f:
+            with open(self.path / path, 'rb') as f:
                 return f.read()
         except PermissionError:
             raise Workspace.NoPermission(f'open("{path.name}"): Permission denied')

@@ -144,12 +144,16 @@ class StatusCmd(Base):
         elif behind == 0:
             self.println(f"Your branch is ahead of '{base}' by {self.commits(ahead)}.")
         elif ahead == 0:
-            self.println(f"Your branch is behind '{base}' by {self.commits(behind)}, and can be fast-forwarded.")
+            self.println(
+                f"Your branch is behind '{base}' by {self.commits(behind)}, and can be fast-forwarded."
+            )
         else:
             self.println(f"Your branch and '{base}' have diverged,")
-            self.println(f"and have {ahead} and {behind} different commits each, respectively.")
+            self.println(
+                f"and have {ahead} and {behind} different commits each, respectively."
+            )
 
-        self.println('')
+        self.println("")
 
     def commits(self, n: int) -> str:
         if n == 1:

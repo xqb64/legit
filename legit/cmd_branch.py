@@ -21,7 +21,7 @@ class Branch(FastForwardMixin, Base):
             "force": False,
             "all": False,
             "remotes": False,
-            "upstream": '',
+            "upstream": "",
             "track": False,
         }
         args_iter = iter(self.args)
@@ -63,7 +63,7 @@ class Branch(FastForwardMixin, Base):
             self.create_branch()
 
         self.exit(0)
-        
+
     def set_upstream(self, branch_name: str, upstream: str) -> None:
         try:
             upstream = self.repo.refs.long_name(upstream)
@@ -71,7 +71,9 @@ class Branch(FastForwardMixin, Base):
 
             base = self.repo.refs.short_name(ref)
 
-            self.println(f"Branch '{branch_name}' set up to track remote branch '{base}' from '{remote}'.")
+            self.println(
+                f"Branch '{branch_name}' set up to track remote branch '{base}' from '{remote}'."
+            )
         except Refs.InvalidBranch as e:
             self.stderr.write(f"error: {e}\n")
             self.exit(1)
@@ -89,7 +91,6 @@ class Branch(FastForwardMixin, Base):
             self.repo.remotes.unset_upstream(branch_name)
         else:
             self.set_upstream(branch_name, self.options["upstream"])
-
 
     def list_branches(self) -> None:
         current = self.repo.refs.current_ref()
@@ -142,7 +143,9 @@ class Branch(FastForwardMixin, Base):
         info = []
 
         if self.options["verbose"] > 1:
-            info.append(self.fmt("blue", self.repo.refs.short_name(divergence.upstream)))
+            info.append(
+                self.fmt("blue", self.repo.refs.short_name(divergence.upstream))
+            )
 
         if ahead > 0:
             info.append(f"ahead {ahead}")
@@ -152,9 +155,8 @@ class Branch(FastForwardMixin, Base):
 
         if not info:
             return ""
-        
-        return " [{', '.join(info)}]"
 
+        return " [{', '.join(info)}]"
 
     def create_branch(self) -> None:
         try:
@@ -206,7 +208,11 @@ class Branch(FastForwardMixin, Base):
 
     def check_merge_status(self, branch_name: str) -> None:
         upstream = self.repo.remotes.get_upstream(branch_name)
-        head_oid = self.repo.refs.read_ref(upstream) if upstream is not None else self.repo.refs.read_head()
+        head_oid = (
+            self.repo.refs.read_ref(upstream)
+            if upstream is not None
+            else self.repo.refs.read_head()
+        )
         branch_oid = self.repo.refs.read_ref(branch_name)
 
         if self.fast_forward_error(branch_oid, head_oid):

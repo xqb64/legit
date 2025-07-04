@@ -24,7 +24,7 @@ class CommonAncestors:
         for oid, flags in self.flags.items():
             if len(flags) == 1:
                 continue
-            
+
             if "parent1" in flags:
                 ones += 1
 

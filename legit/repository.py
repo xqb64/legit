@@ -31,7 +31,7 @@ class Repository:
         self.workspace: Workspace = Workspace(git_path.parent)
         self.config: ConfigStack = ConfigStack(self.git_path)
         self.remotes: Remotes = Remotes(self.config.file("local"))
-    
+
     def divergence(self, ref):
         return Divergence(self, ref)
 

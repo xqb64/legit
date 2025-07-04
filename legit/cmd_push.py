@@ -50,7 +50,6 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         branch_remote = self.repo.config.get(["branch", current_branch, "remote"])
         branch_merge = self.repo.config.get(["branch", current_branch, "merge"])
 
-
         try:
             name = self.args[0]
         except IndexError:

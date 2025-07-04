@@ -244,10 +244,8 @@ class Revision:
 class Upstream:
     def __init__(self, rev: str) -> None:
         self.rev = rev
-    
+
     @staticmethod
     def resolve(context):
         name = context.upstream(rev.name)
         return context.read_ref(name)
-
-

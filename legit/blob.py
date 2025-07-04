@@ -1,11 +1,11 @@
 class Blob:
-    def __init__(self, data: str) -> None:
-        self.data: str = data
+    def __init__(self, data: bytes) -> None:
+        self.data: bytes = data
         self._oid: str | None = None
 
     @classmethod
     def parse(cls, data: bytes) -> "Blob":
-        return cls(data.decode("utf-8"))
+        return cls(data)
 
     @property
     def oid(self) -> str:
@@ -17,10 +17,10 @@ class Blob:
         self._oid = value
 
     def __str__(self) -> str:
-        return self.data
+        return self.data.decode('utf-8')
 
     def to_bytes(self) -> bytes:
-        return self.data.encode("utf-8")
+        return self.data
 
     def type(self) -> str:
         return "blob"

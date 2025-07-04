@@ -24,7 +24,9 @@ class Remotes:
             ref = self.get(name).set_upstream(branch, upstream)
             if ref is not None:
                 return name, ref
-        raise self.InvalidBranch(f"Cannot setup tracking information; starting point '{upstream}' is not a branch")
+        raise self.InvalidBranch(
+            f"Cannot setup tracking information; starting point '{upstream}' is not a branch"
+        )
 
     def unset_upstream(self, branch: str) -> None:
         self.config.open_for_update()
@@ -167,7 +169,7 @@ class Remote:
         self.name: str = name
 
         self.config.open()
-    
+
     def set_upstream(self, branch: str, upstream: str) -> str:
         ref_name = Refspec.invert(self.fetch_specs(), upstream)
         if ref_name is None:

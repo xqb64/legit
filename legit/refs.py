@@ -96,7 +96,9 @@ class Refs:
         path = self.path_for_name(ref)
         if path is not None:
             return str(path.relative_to(self.path))
-        raise self.InvalidBranch(f"the requested upstream branch '{ref}' does not exist")
+        raise self.InvalidBranch(
+            f"the requested upstream branch '{ref}' does not exist"
+        )
 
     def list_remotes(self):
         return self.list_refs(self.remotes_path)
