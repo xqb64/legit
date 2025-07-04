@@ -47,4 +47,3 @@ class Entry:
         if self.delta:
             return binascii.unhexlify(self.delta.base.oid)
         return b""
-

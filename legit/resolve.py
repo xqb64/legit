@@ -30,7 +30,6 @@ class Resolve:
             blob = self.repo.database.load(item.oid)
             self.repo.workspace.write_file(path, blob.data)
 
-
     def add_conflicts_to_index(self) -> None:
         for path, items in self.conflicts.items():
             self.repo.index.add_conflict_set(path, items)
@@ -48,35 +47,36 @@ class Resolve:
             if new_item is not None:
                 self.file_dir_conflict(path, self.left_diff, self.inputs.left_name)
             self.same_path_conflict(path, old_item, new_item)
-    
+
         for path, (old_item, new_item) in self.left_diff.items():
             if new_item is not None:
                 self.file_dir_conflict(path, self.right_diff, self.inputs.right_name)
-
 
     def file_dir_conflict(self, path, diff, name: str) -> None:
         for parent in path.parents:
             old_item, new_item = diff.get(parent, (None, None))
             if not new_item:
                 continue
-    
+
             if name == self.inputs.left_name:
                 self.conflicts[parent] = [old_item, new_item, None]
             elif name == self.inputs.right_name:
                 self.conflicts[parent] = [old_item, None, new_item]
-            
+
             if parent in self.clean_diff:
                 del self.clean_diff[parent]
-    
+
             rename = f"{parent}~{name}"
             self.untracked[rename] = new_item
 
             if diff.get(path) is None:
                 self.log(f"Adding {path}")
-            
+
             self.log_conflict(parent, rename)
 
-    def same_path_conflict(self, path: Path, base: DatabaseEntry, right: DatabaseEntry) -> None:
+    def same_path_conflict(
+        self, path: Path, base: DatabaseEntry, right: DatabaseEntry
+    ) -> None:
         if path in self.conflicts:
             return
 
@@ -106,7 +106,7 @@ class Resolve:
         self.clean_diff[path] = [left, DatabaseEntry(oid, mode)]
         if oid_ok and mode_ok:
             return
-        
+
         self.conflicts[path] = [base, left, right]
         self.log_conflict(path)
 
@@ -128,17 +128,21 @@ class Resolve:
         deleted, modified = self.log_branch_names(path)
         rename = f" at {rename}" if rename is not None else ""
 
-        self.log(f"CONFLICT (modify/delete): {path} " +
-                 f"deleted in {deleted} and modified in {modified}. " +
-                 f"Version {modified} of {path} left in tree{rename}.")
+        self.log(
+            f"CONFLICT (modify/delete): {path} "
+            + f"deleted in {deleted} and modified in {modified}. "
+            + f"Version {modified} of {path} left in tree{rename}."
+        )
 
     def log_file_directory_conflict(self, path: Path, rename: str | None) -> None:
         ty = "file/directory" if self.conflicts[path][1] else "directory/file"
         branch, _ = self.log_branch_names(path)
 
-        self.log(f"CONFLICT ({ty}): There is a directory " +
-                 f"with name {path} in {branch}. " +
-                 f"Adding {path} as {rename}")
+        self.log(
+            f"CONFLICT ({ty}): There is a directory "
+            + f"with name {path} in {branch}. "
+            + f"Adding {path} as {rename}"
+        )
 
     def log_branch_names(self, path: Path) -> tuple[str, str]:
         a, b = self.inputs.left_name, self.inputs.right_name
@@ -151,8 +155,7 @@ class Resolve:
 
         oids = [base_oid, left_oid, right_oid]
         blobs = [
-            self.repo.database.load(oid).data if oid is not None else ""
-            for oid in oids
+            self.repo.database.load(oid).data if oid is not None else "" for oid in oids
         ]
         merge = Diff3.merge(*blobs)
 
@@ -167,13 +170,15 @@ class Resolve:
         left_blob = self.repo.database.load(left_oid)
         right_blob = self.repo.database.load(right_oid)
 
-        return ''.join([
-            f"<<<<<<< {self.inputs.left_name}\n",
-            left_blob.data,
-            "=======\n",
-            right_blob.data,
-            f">>>>>>> {self.inputs.right_name}\n",
-        ])
+        return "".join(
+            [
+                f"<<<<<<< {self.inputs.left_name}\n",
+                left_blob.data,
+                "=======\n",
+                right_blob.data,
+                f">>>>>>> {self.inputs.right_name}\n",
+            ]
+        )
 
     def merge_modes(self, base_mode, left_mode, right_mode):
         result = self.merge3(base_mode, left_mode, right_mode)
@@ -184,7 +189,7 @@ class Resolve:
     def merge3(self, base, left, right):
         if left is None:
             return [False, right]
-        
+
         if right is None:
             return [False, left]
 

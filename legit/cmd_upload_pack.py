@@ -3,6 +3,7 @@ from legit.cmd_base import Base
 from legit.remote_agent import RemoteAgentMixin
 from legit.send_objects import SendObjectsMixin
 
+
 class UploadPack(RemoteAgentMixin, SendObjectsMixin, Base):
     def run(self) -> None:
         self.accept_client("upload-pack")
@@ -37,6 +38,3 @@ class UploadPack(RemoteAgentMixin, SendObjectsMixin, Base):
     def send_objects(self):
         revs = list(self.wanted) + [f"^{oid}" for oid in self.remote_has]
         self.send_packet_objects(revs)
-
-
-    

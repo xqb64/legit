@@ -6,10 +6,13 @@ from typing import BinaryIO
 class Lockfile:
     class MissingParent(Exception):
         pass
+
     class NoPermission(Exception):
         pass
+
     class StaleLock(Exception):
         pass
+
     class LockDenied(Exception):
         pass
 
@@ -35,7 +38,9 @@ class Lockfile:
                 self.lock = os.fdopen(os.open(self.lock_path, flags, mode), "wb+")
                 return True
             except FileExistsError:
-                raise Lockfile.LockDenied(f"Unable to create '{self.lock_path}': File exists.")
+                raise Lockfile.LockDenied(
+                    f"Unable to create '{self.lock_path}': File exists."
+                )
             except PermissionError:
                 raise Lockfile.NoPermission
             except FileNotFoundError:
@@ -44,7 +49,9 @@ class Lockfile:
                     self.lock = os.fdopen(os.open(self.lock_path, flags, mode), "wb+")
                     return True
                 except FileExistsError:
-                    raise Lockfile.LockDenied(f"Unable to create '{self.lock_path}': File exists.")
+                    raise Lockfile.LockDenied(
+                        f"Unable to create '{self.lock_path}': File exists."
+                    )
         return False
 
     def write(self, data: bytes) -> None:
@@ -66,5 +73,3 @@ class Lockfile:
     def raise_on_stale_lock(self) -> None:
         if self.lock is None:
             raise Lockfile.StaleLock
-
-

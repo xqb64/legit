@@ -5,7 +5,8 @@ from typing import Any, Optional, Callable
 from legit.lockfile import Lockfile
 from collections import defaultdict
 
-INVALID_NAME = re.compile(r'''
+INVALID_NAME = re.compile(
+    r"""
       ^\.
     | /\.
     | \.\.
@@ -13,12 +14,15 @@ INVALID_NAME = re.compile(r'''
     | \.lock$
     | @\{
     | [\x00-\x20*:?\[\\\^~\x7f]
-''', re.VERBOSE)
+""",
+    re.VERBOSE,
+)
 
 
 class Refs:
     class LockDenied(Exception):
         pass
+
     class InvalidBranch(Exception):
         pass
 
@@ -38,7 +42,7 @@ class Refs:
             return hash(self.oid)
 
     class SymRef:
-        def __init__(self, refs: 'Refs', path: str) -> None:
+        def __init__(self, refs: "Refs", path: str) -> None:
             self.path: str = path
             self.refs: Refs = refs
 
@@ -50,7 +54,7 @@ class Refs:
 
         def short_name(self) -> str:
             return self.refs.short_name(self.path)
-    
+
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, Refs.SymRef):
                 return NotImplemented
@@ -61,7 +65,7 @@ class Refs:
 
     HEAD = "HEAD"
     SYMREF = re.compile(r"^ref: (.+)$")
-    
+
     REFS_DIR = Path("refs")
     HEADS_DIR = REFS_DIR / "heads"
     REMOTES_DIR = REFS_DIR / "remotes"
@@ -72,8 +76,8 @@ class Refs:
         self.heads_path: Path = self.path / self.HEADS_DIR
         self.remotes_path: Path = self.path / self.REMOTES_DIR
 
-    def reverse_refs(self) -> dict[str, list['Refs.Ref | Refs.SymRef']]:
-        table: dict[str, list['Refs.Ref | Refs.SymRef']] = defaultdict(list)
+    def reverse_refs(self) -> dict[str, list["Refs.Ref | Refs.SymRef"]]:
+        table: dict[str, list["Refs.Ref | Refs.SymRef"]] = defaultdict(list)
 
         for ref in self.list_all_refs():
             oid = ref.read_oid()
@@ -87,23 +91,23 @@ class Refs:
 
     def short_name(self, path: str) -> str:
         full_path = self.path / path
-        
+
         prefix = None
-        
+
         for base_dir in [self.remotes_path, self.heads_path, self.path]:
             if full_path.is_relative_to(base_dir):
                 prefix = base_dir
                 break
-        
+
         if prefix is None:
             raise ValueError("Path is not within any known prefix directory.")
 
         return str(full_path.relative_to(prefix))
 
-    def list_branches(self) -> list['Refs.SymRef']:
+    def list_branches(self) -> list["Refs.SymRef"]:
         return self.list_refs(self.heads_path)
 
-    def list_refs(self, dirname: Path) -> list['Refs.SymRef']:
+    def list_refs(self, dirname: Path) -> list["Refs.SymRef"]:
         try:
             entries = list(dirname.iterdir())
         except FileNotFoundError:
@@ -118,7 +122,7 @@ class Refs:
                 refs.append(Refs.SymRef(self, str(rel_path)))
         return refs
 
-    def current_ref(self, source: str = "HEAD") -> 'Refs.SymRef':
+    def current_ref(self, source: str = "HEAD") -> "Refs.SymRef":
         ref = self.read_oid_or_symref(self.path / source)
 
         if isinstance(ref, Refs.SymRef):
@@ -136,7 +140,7 @@ class Refs:
         else:
             self._update_ref_file(head, oid)
 
-    def read_oid_or_symref(self, path: Path) -> Optional['Refs.Ref | Refs.SymRef']:
+    def read_oid_or_symref(self, path: Path) -> Optional["Refs.Ref | Refs.SymRef"]:
         try:
             data = path.read_text().strip()
         except FileNotFoundError:
@@ -180,23 +184,24 @@ class Refs:
 
     def write_lockfile(self, lockfile: Lockfile, oid: Optional[str]) -> None:
         assert oid is not None
-        lockfile.write(oid.encode('utf-8') + b'\n')
+        lockfile.write(oid.encode("utf-8") + b"\n")
         lockfile.commit()
 
     def create_branch(self, branch_name: str, start_oid: str) -> str:
         if INVALID_NAME.search(branch_name):
             raise Refs.InvalidBranch(f"'{branch_name}' is not a valid branch name.")
-        
+
         path = self.heads_path / branch_name
         if path.is_file():
             raise Refs.InvalidBranch(f"A branch named '{branch_name}' already exists.")
-    
+
         return self._update_ref_file(path, start_oid)
 
     class StaleValue(Exception):
         """Raised when the ref has changed since last read."""
+
         pass
-   
+
     def compare_and_swap(
         self,
         name: str,
@@ -212,7 +217,6 @@ class Refs:
 
         # yield to the “block” just like Ruby’s update_ref_file(path, new_oid) { … }
         self._update_ref_file(path, new_oid, guard)
-
 
     def _update_ref_file(
         self,
@@ -302,4 +306,3 @@ class Refs:
         while p != self.heads_path and p.exists() and not any(p.iterdir()):
             p.rmdir()
             p = p.parent
-

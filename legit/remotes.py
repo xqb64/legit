@@ -24,9 +24,9 @@ class Remotes:
         if self.config.get(["remote", name, "url"]):
             self.config.save()
             raise Remotes.InvalidRemote(f"remote {name} already exists.")
-        
+
         self.config.set(["remote", name, "url"], url)
-        
+
         for branch in branches:
             source = Refs.HEADS_DIR / branch
             target = Refs.REMOTES_DIR / name / branch
@@ -44,12 +44,12 @@ class Remotes:
                 raise Remotes.InvalidRemote(f"No such remote: {name}")
         finally:
             self.config.save()
-    
+
     def list_remotes(self):
         self.config.open()
         return self.config.subsections("remote")
 
-    def get(self, name: str) -> 'Remote':
+    def get(self, name: str) -> "Remote":
         self.config.open()
         if not self.config.section_exists(["remote", name]):
             return None
@@ -65,7 +65,7 @@ class Refspec:
         self.forced: bool = forced
 
     @staticmethod
-    def parse(spec: str) -> 'Refspec':
+    def parse(spec: str) -> "Refspec":
         m = Refspec.REFSPEC_FORMAT.match(spec)
         source = Refspec.canonical(m.group(2))
         target = Refspec.canonical(m.group(4)) or source
@@ -78,7 +78,7 @@ class Refspec:
 
         if not Revision.valid_ref(name):
             return Path(name)
-        
+
         first = Path(name).parts[0]
         dirs = [Refs.REFS_DIR, Refs.HEADS_DIR, Refs.REMOTES_DIR]
 
@@ -116,7 +116,7 @@ class Refspec:
                 dst = str(self.target).replace("*", wildcard_value, 1)
             else:
                 dst = str(self.target)
-            
+
             mappings[dst] = (ref, self.forced)
 
         return mappings
@@ -124,6 +124,7 @@ class Refspec:
     def __str__(self) -> str:
         spec = "+" if self.forced else ""
         return spec + ":".join(map(str, [self.source, self.target]))
+
 
 class Remote:
     def __init__(self, config: ConfigFile, name: str) -> None:
@@ -147,7 +148,7 @@ class Remote:
     @property
     def push_url(self):
         return self.config.get(["remote", self.name, "pushurl"]) or self.fetch_url
-    
+
     @property
     def fetch_specs(self):
         return self.config.get_all(["remote", self.name, "fetch"])

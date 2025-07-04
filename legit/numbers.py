@@ -2,7 +2,7 @@ class VarIntLE:
     @staticmethod
     def write(value: int, shift) -> bytes:
         parts = []
-        mask = 2 ** shift - 1
+        mask = 2**shift - 1
 
         while value > mask:
             parts.append(0x80 | (value & mask))
@@ -17,10 +17,10 @@ class VarIntLE:
     def read(stream, shift) -> tuple[int, int]:
         first = stream.readbyte()
 
-        value = first & (2 ** shift - 1)
+        value = first & (2**shift - 1)
         shift = 4
         byte = first
-        
+
         while byte >= 0x80:
             byte = stream.readbyte()
             value |= (byte & 0x7F) << shift
@@ -35,7 +35,7 @@ class PackedInt56LE:
         parts = [0]
 
         for i in range(7):
-            byte = (value >> (8 * i)) & 0xff
+            byte = (value >> (8 * i)) & 0xFF
             if byte == 0:
                 continue
 

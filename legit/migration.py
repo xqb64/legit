@@ -45,7 +45,7 @@ class Migration:
         tree_diff: dict[Path, list[DatabaseEntry]],
     ) -> None:
         self.repo: "Repository" = repo
-        self.tree_diff: dict[Path, list[DatabaseEntry]] = tree_diff 
+        self.tree_diff: dict[Path, list[DatabaseEntry]] = tree_diff
 
         self.changes: Dict[str, List[Tuple[Path, Optional[DatabaseEntry]]]] = {
             k: [] for k in ("create", "update", "delete")
@@ -92,17 +92,22 @@ class Migration:
             dirs.append(parent)
         return dirs
 
-    def record_change(self, path: Path, old_item: Optional[DatabaseEntry], new_item: Optional[DatabaseEntry]) -> None:
+    def record_change(
+        self,
+        path: Path,
+        old_item: Optional[DatabaseEntry],
+        new_item: Optional[DatabaseEntry],
+    ) -> None:
         """Populate *changes*, *mkdirs*, and *rmdirs* like the Ruby method."""
         dir_chain = self._ancestor_dirs(path.parent)
-    
+
         if old_item is None:
             self.mkdirs.update(dir_chain)
             action = "create"
         elif new_item is None:
             self.rmdirs.update(dir_chain)
             action = "delete"
-        else:                                     
+        else:
             self.mkdirs.update(dir_chain)
             action = "update"
 
@@ -115,7 +120,7 @@ class Migration:
         new_item: Optional[DatabaseEntry],
     ) -> None:
         entry: Optional[Entry] = self.repo.index.entry_for_path(path)
-        
+
         if self.index_differs_from_trees(entry, old_item, new_item):
             self.conflicts["stale_file"].add(str(path))
             return
@@ -130,9 +135,7 @@ class Migration:
         if stat is None:
             parent = self.untracked_parent(path)
             if parent:
-                self.conflicts[conflict_type].add(
-                    str(path if entry else parent)
-                )
+                self.conflicts[conflict_type].add(str(path if entry else parent))
         elif self._is_file(stat):
             changed = self.inspector.compare_index_to_workspace(entry, stat)
             if changed:
@@ -175,9 +178,8 @@ class Migration:
         The index conflicts when it differs from *both* the current tree
         and the target tree.
         """
-        return (
-            bool(self.inspector.compare_tree_to_index(old_item, entry))
-            and bool(self.inspector.compare_tree_to_index(new_item, entry))
+        return bool(self.inspector.compare_tree_to_index(old_item, entry)) and bool(
+            self.inspector.compare_tree_to_index(new_item, entry)
         )
 
     def untracked_parent(self, path: Path) -> Path | None:
@@ -226,4 +228,3 @@ class Migration:
                 assert entry is not None
                 assert stat is not None
                 self.repo.index.add(path, entry.oid, stat)
-

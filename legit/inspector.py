@@ -20,7 +20,9 @@ class Inspector:
     def __init__(self, repo: Repository) -> None:
         self.repo: Repository = repo
 
-    def compare_index_to_workspace(self, entry: Optional[Entry], stat: os.stat_result | None) -> Optional[str]:
+    def compare_index_to_workspace(
+        self, entry: Optional[Entry], stat: os.stat_result | None
+    ) -> Optional[str]:
         if entry is None:
             return "untracked"
 
@@ -42,7 +44,9 @@ class Inspector:
 
         return None
 
-    def compare_tree_to_index(self, item: Optional[DatabaseEntry], entry: Optional[Entry]) -> Optional[str]:
+    def compare_tree_to_index(
+        self, item: Optional[DatabaseEntry], entry: Optional[Entry]
+    ) -> Optional[str]:
         if item is None and entry is None:
             return None
 
@@ -63,10 +67,10 @@ class Inspector:
 
         if self._is_file(stat):
             return not self.repo.index.is_tracked_file(path)
-        
+
         if not self._is_dir(stat):
             return False
-        
+
         items = self.repo.workspace.list_dir(str(path))
         files = [(k, v) for k, v in items.items() if self._is_file(v)]
         dirs = [(k, v) for k, v in items.items() if self._is_dir(v)]
@@ -77,7 +81,7 @@ class Inspector:
                     return True
 
         return False
- 
+
     def _is_file(self, stat_result: os.stat_result) -> bool:
         return stat.S_ISREG(stat_result.st_mode)
 

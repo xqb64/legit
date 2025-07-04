@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
- 
+
 from legit.db_loose import Loose
 from legit.db_packed import Packed
 
@@ -10,7 +10,7 @@ class Backends:
         self.path = path
         self.loose = Loose(path)
         self.stores = [self.loose] + self.packed()
-    
+
     def write_object(self, *args, **kwargs):
         return self.loose.write_object(*args, **kwargs)
 
@@ -19,9 +19,9 @@ class Backends:
         return self.path / "pack"
 
     def packed(self):
-        try:           
+        try:
             pack_dir = Path(self.pack_path)
-            packs = [f for f in pack_dir.iterdir() if f.suffix == '.pack']
+            packs = [f for f in pack_dir.iterdir() if f.suffix == ".pack"]
             packs.sort(key=lambda path: os.path.getmtime(path), reverse=True)
             return [Packed(path) for path in packs]
         except FileNotFoundError:
@@ -36,7 +36,7 @@ class Backends:
             if info:
                 return info
         return None
-    
+
     def load_raw(self, oid):
         for store in self.stores:
             raw = store.load_raw(oid)

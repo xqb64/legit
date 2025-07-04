@@ -1,12 +1,14 @@
 from collections import defaultdict
 from pathlib import Path
 
+
 class Trie:
     """
     A trie node that tracks whether the path represented
     by the sequence of keys is "matched" and has children nodes.
     """
-    __slots__ = ('matched', 'children')
+
+    __slots__ = ("matched", "children")
 
     def __init__(self, matched: bool = False, children=None):
         self.matched = matched
@@ -45,7 +47,8 @@ class PathFilter:
     Filters filesystem-like entries based on a set of allowed
     paths, represented by a Trie.
     """
-    __slots__ = ('_routes', 'path')
+
+    __slots__ = ("_routes", "path")
 
     def __init__(self, routes: Trie = None, path: Path = None):
         # Default to a fully-matched root if no routes provided
@@ -74,6 +77,7 @@ class PathFilter:
         or fetch the child node. Returns a new PathFilter with
         updated routes and path context.
         """
-        next_routes = self._routes if self._routes.matched else self._routes.children[name]
+        next_routes = (
+            self._routes if self._routes.matched else self._routes.children[name]
+        )
         return PathFilter(next_routes, self.path / name)
-

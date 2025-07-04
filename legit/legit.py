@@ -16,6 +16,3 @@ cmd: Base = Command.execute(
 )
 
 sys.exit(cmd.status)
-
-
-

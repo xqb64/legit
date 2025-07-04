@@ -34,10 +34,10 @@ class Repository:
     def status(self, commit_oid: Optional[str] = None) -> Status:
         return Status(self, commit_oid)
 
-    def migration(self, tree_diff: dict[Path, list[DatabaseEntry]]) -> 'Migration':
+    def migration(self, tree_diff: dict[Path, list[DatabaseEntry]]) -> "Migration":
         return Migration(self, tree_diff)
 
-    def pending_commit(self) -> 'PendingCommit':
+    def pending_commit(self) -> "PendingCommit":
         return PendingCommit(self.git_path)
 
     def hard_reset(self, oid: str) -> None:
@@ -70,10 +70,11 @@ class HardReset:
         stat = self.repo.workspace.stat_file(path)
         self.repo.index.add(path, entry.oid, stat)
 
+
 class PendingCommit:
     class Error(Exception):
         pass
-    
+
     HEAD_FILES = {
         "merge": "MERGE_HEAD",
         "cherry_pick": "CHERRY_PICK_HEAD",
@@ -83,22 +84,26 @@ class PendingCommit:
     def __init__(self, path: Path) -> None:
         self.path = path
         self.message_path = path / "MERGE_MSG"
-    
+
     def merge_oid(self, ty: str = "merge"):
         head_path = self.path / PendingCommit.HEAD_FILES[ty]
         try:
             return head_path.read_text().strip()
         except FileNotFoundError:
             name = head_path.name
-            raise PendingCommit.Error(f"There is no merge in progress ({name} missing).")
+            raise PendingCommit.Error(
+                f"There is no merge in progress ({name} missing)."
+            )
 
     @property
     def merge_message(self):
         return self.message_path.read_text()
-    
+
     def start(self, oid: str, ty: str = "merge") -> None:
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-        with os.fdopen(os.open(self.path / PendingCommit.HEAD_FILES[ty], flags, 0o644), "w") as f:
+        with os.fdopen(
+            os.open(self.path / PendingCommit.HEAD_FILES[ty], flags, 0o644), "w"
+        ) as f:
             f.write(oid)
 
     def clear(self, ty: str = "merge") -> None:
@@ -154,7 +159,7 @@ class Sequencer:
     def write_file(self, path: Path, data: str) -> None:
         lockfile = Lockfile(path)
         lockfile.hold_for_update()
-        lockfile.write(data.encode('utf-8') + b'\n')
+        lockfile.write(data.encode("utf-8") + b"\n")
         lockfile.commit()
 
     def pick(self, commit: Commit) -> None:
@@ -172,7 +177,7 @@ class Sequencer:
     def drop_command(self) -> None:
         self.commands.pop(0)
         self.write_file(self.abort_path, self.repo.refs.read_head())
-    
+
     def open_todo_file(self) -> None:
         if not self.path.is_dir():
             return
@@ -186,15 +191,17 @@ class Sequencer:
 
         for action, commit in self.commands:
             short = self.repo.database.short_oid(commit.oid)
-            self.todo_file.write(f"{action} {short} {commit.title_line()}\n".encode('utf-8'))
-        
+            self.todo_file.write(
+                f"{action} {short} {commit.title_line()}\n".encode("utf-8")
+            )
+
         self.todo_file.commit()
 
     def load(self) -> None:
         self.open_todo_file()
         if not self.todo_path.exists():
             return
-    
+
         for line in self.todo_path.read_text().splitlines():
             action, oid, _rest = re.compile(r"^(\S+) (\S+) (.*)$").match(line).groups()
             oids = self.repo.database.prefix_match(oid)
@@ -203,6 +210,7 @@ class Sequencer:
 
     def quit(self) -> None:
         import shutil
+
         shutil.rmtree(self.path)
 
     def abort(self) -> None:
@@ -214,8 +222,7 @@ class Sequencer:
 
         if actual != expected:
             raise ValueError(UNSAFE_MESSAGE)
-        
+
         self.repo.hard_reset(head_oid)
         orig_head = self.repo.refs.update_head(head_oid)
         self.repo.refs.update_ref("ORIG_HEAD", orig_head)
-

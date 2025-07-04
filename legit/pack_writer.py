@@ -24,7 +24,7 @@ class Writer:
         self.write_header()
         self.write_entries()
         self.output.write(self.digest.digest())
-    
+
     def compress_objects(self):
         compressor = Compressor(self.database, self.progress)
         for entry in self.pack_list:
@@ -42,7 +42,7 @@ class Writer:
             self.progress.start("Counting objects")
         for obj, path in rev_list.each():
             self.add_to_pack_list(obj, path)
-            
+
             if self.progress is not None:
                 self.progress.tick()
         if self.progress is not None:
@@ -74,7 +74,7 @@ class Writer:
         if self.progress is not None:
             self.progress.stop()
 
-    def write_entry(self, entry: 'Writer.Entry'):
+    def write_entry(self, entry: "Writer.Entry"):
         if entry.delta:
             self.write_entry(entry.delta.base)
 
@@ -87,7 +87,7 @@ class Writer:
 
         header = VarIntLE.write(entry.packed_size, 4)
         header_list = list(header)
-        header_list[0] |= (entry.packed_type << 4)
+        header_list[0] |= entry.packed_type << 4
         self.write(bytes(header_list))
         self.write(entry.delta_prefix)
         compressed = zlib.compress(obj.data, self.compression)

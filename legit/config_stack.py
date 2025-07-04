@@ -10,7 +10,7 @@ SYSTEM_CONFIG = Path("/etc/gitconfig")
 class ConfigStack:
     def __init__(self, git_path: Path) -> None:
         self.configs = {
-            "local":  ConfigFile(git_path / "config"),
+            "local": ConfigFile(git_path / "config"),
             "global": ConfigFile(GLOBAL_CONFIG),
             "system": ConfigFile(SYSTEM_CONFIG),
         }
@@ -35,4 +35,3 @@ class ConfigStack:
             cfg.open()
             values.extend(cfg.get_all(key))
         return values
-

@@ -19,7 +19,7 @@ COMMIT_NOTES = textwrap.dedent(
 class Revert(SequencingMixin, WriteCommitMixin, Base):
     def merge_type(self) -> str:
         return "revert"
-    
+
     def store_commit_sequence(self) -> None:
         commits = RevList(self.repo, self.args, {"walk": False})
         for commit in commits.each():
@@ -37,7 +37,9 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
         author = self.current_author()
         message = self.edit_revert_message(message)
 
-        picked = Commit([inputs.left_oid], self.write_tree().oid, author, author, message)
+        picked = Commit(
+            [inputs.left_oid], self.write_tree().oid, author, author, message
+        )
 
         self.finish_commit(picked)
 
@@ -50,13 +52,11 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
         right_name = f"parent of {short}... {commit.title_line().strip()}"
         right_oid = self.select_parent(commit)
 
-        return CherryPickInput(left_name, right_name, 
-                               left_oid, right_oid,
-                               [commit.oid])
+        return CherryPickInput(left_name, right_name, left_oid, right_oid, [commit.oid])
 
     def revert_commit_message(self, commit: Commit) -> str:
         return textwrap.dedent(
-                f"""\
+            f"""\
             Revert "{commit.title_line().strip()}"
 
             This reverts commit {commit.oid}.
@@ -70,5 +70,3 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
             editor.note(COMMIT_NOTES)
 
         return Editor.edit(self.commit_message_path(), block=_setup)
-
-

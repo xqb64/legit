@@ -13,6 +13,7 @@ class Clean:
     def to_string(self, *args):
         return "".join(self.lines)
 
+
 @dataclass
 class Conflict:
     o_lines: List[str]
@@ -25,7 +26,9 @@ class Conflict:
             text.append(f" {name}")
         text.append("\n")
 
-    def to_string(self, a_name: Optional[str] = None, b_name: Optional[str] = None) -> str:
+    def to_string(
+        self, a_name: Optional[str] = None, b_name: Optional[str] = None
+    ) -> str:
         text = []
         self._separator(text, "<", a_name)
         text.extend(self.a_lines)
@@ -34,6 +37,7 @@ class Conflict:
         self._separator(text, ">", b_name)
         return "".join(text)
 
+
 @dataclass
 class Result:
     chunks: List[Union[Clean, Conflict]]
@@ -41,7 +45,9 @@ class Result:
     def is_clean(self) -> bool:
         return not any(isinstance(chunk, Conflict) for chunk in self.chunks)
 
-    def to_string(self, a_name: Optional[str] = None, b_name: Optional[str] = None) -> str:
+    def to_string(
+        self, a_name: Optional[str] = None, b_name: Optional[str] = None
+    ) -> str:
         return "".join(chunk.to_string(a_name, b_name) for chunk in self.chunks)
 
 
@@ -58,7 +64,9 @@ class Diff3:
         self.match_b = {}
 
     @staticmethod
-    def merge(o: Union[str, List[str]], a: Union[str, List[str]], b: Union[str, List[str]]) -> Result:
+    def merge(
+        o: Union[str, List[str]], a: Union[str, List[str]], b: Union[str, List[str]]
+    ) -> Result:
         o_lines = o.splitlines(True) if isinstance(o, str) else o
         a_lines = a.splitlines(True) if isinstance(a, str) else a
         b_lines = b.splitlines(True) if isinstance(b, str) else b
@@ -80,7 +88,7 @@ class Diff3:
     def _match_set(self, file_lines: List[str]) -> dict:
         matches = {}
         for edit in diff(self.o, file_lines):
-            if edit.ty == 'eql':
+            if edit.ty == "eql":
                 matches[edit.a_line.number] = edit.b_line.number
         return matches
 
@@ -104,16 +112,20 @@ class Diff3:
 
     def _find_next_mismatch(self) -> Optional[int]:
         i = 1
-        while self._in_bounds(i) and \
-              self._is_match(self.match_a, self.line_a, i) and \
-              self._is_match(self.match_b, self.line_b, i):
+        while (
+            self._in_bounds(i)
+            and self._is_match(self.match_a, self.line_a, i)
+            and self._is_match(self.match_b, self.line_b, i)
+        ):
             i += 1
         return i if self._in_bounds(i) else None
 
     def _in_bounds(self, i: int) -> bool:
-        return self.line_o + i <= len(self.o) or \
-               self.line_a + i <= len(self.a) or \
-               self.line_b + i <= len(self.b)
+        return (
+            self.line_o + i <= len(self.o)
+            or self.line_a + i <= len(self.a)
+            or self.line_b + i <= len(self.b)
+        )
 
     def _is_match(self, matches: dict, offset: int, i: int) -> bool:
         return matches.get(self.line_o + i) == offset + i
@@ -128,15 +140,13 @@ class Diff3:
         self._write_chunk(
             self.o[self.line_o : o - 1],
             self.a[self.line_a : a - 1],
-            self.b[self.line_b : b - 1]
+            self.b[self.line_b : b - 1],
         )
         self.line_o, self.line_a, self.line_b = o - 1, a - 1, b - 1
 
     def _emit_final_chunk(self):
         self._write_chunk(
-            self.o[self.line_o:],
-            self.a[self.line_a:],
-            self.b[self.line_b:]
+            self.o[self.line_o :], self.a[self.line_a :], self.b[self.line_b :]
         )
 
     def _write_chunk(self, o_lines: List[str], a_lines: List[str], b_lines: List[str]):

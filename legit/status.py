@@ -41,13 +41,12 @@ class Status:
         self.check_index_entries()
         self.collect_deleted_head_files()
 
-
     def collect_deleted_head_files(self) -> None:
         for path in self.head_tree.keys():
             if not self.repo.index.is_tracked_file(path):
                 self.record_change(path, self.index_changes, "deleted")
 
-    def read_tree(self, tree_oid: str, pathname: str ='') -> None:
+    def read_tree(self, tree_oid: str, pathname: str = "") -> None:
         tree = self.repo.database.load(tree_oid)
         assert isinstance(tree, Tree)
 
@@ -90,12 +89,14 @@ class Status:
 
         if status is not None:
             self.record_change(entry.path, self.index_changes, status)
-            
-    def record_change(self, path: Path, structure: MutableMapping[str, str], ty: str) -> None:
+
+    def record_change(
+        self, path: Path, structure: MutableMapping[str, str], ty: str
+    ) -> None:
         self.changed.add(str(path))
         structure[str(path)] = ty
 
-    def scan_workspace(self, prefix: str = '') -> None:
+    def scan_workspace(self, prefix: str = "") -> None:
         for path, stat in self.repo.workspace.list_dir(prefix).items():
             if self.repo.index.is_tracked(path):
                 if self.inspector._is_dir(stat):
@@ -121,10 +122,10 @@ class Status:
         if not entry.stat_match(stat):
             self.record_change(entry.path, self.workspace_changes, "modified")
             return
-        
+
         if entry.times_match(stat):
             return
-        
+
         data = self.repo.workspace.read_file(entry.path)
         blob = Blob(data)
         oid = self.repo.database.hash_object(blob)
@@ -133,5 +134,3 @@ class Status:
             self.repo.index.update_entry_stat(entry, stat)
         else:
             self.record_change(entry.path, self.workspace_changes, "modified")
-
-

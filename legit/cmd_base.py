@@ -65,8 +65,8 @@ class Base:
             self.run()
             self.status = 0
         except ExitSignal as e:
-            self.status = e.status 
-        
+            self.status = e.status
+
         if getattr(self, "pager", None) is not None:
             self.stdout.close()
             assert self.pager is not None
@@ -87,15 +87,15 @@ class Base:
 
     def println(self, string: str) -> None:
         try:
-            self.stdout.write(string + '\n')
+            self.stdout.write(string + "\n")
             self.stdout.flush()
         except BrokenPipeError:
             self.exit(0)
 
+
 class ExitSignal(Exception):
     """Internal exception to short-circuit out of `run()` with a status."""
+
     def __init__(self, status: int = 0) -> None:
         super().__init__(f"Exit with status {status}")
         self.status: int | None = status
-
-

@@ -12,6 +12,7 @@ class Window:
         A container for an Entry and its decompressed data.
         In Python, we can use a simple class or a dataclass.
         """
+
         def __init__(self, entry: Any, data: bytes):
             self.entry = entry
             self.data = data
@@ -47,7 +48,7 @@ class Window:
         self._objects: List[Optional[Window.Unpacked]] = [None] * size
         self._offset: int = 0
 
-    def add(self, entry: Any, data: bytes) -> 'Window.Unpacked':
+    def add(self, entry: Any, data: bytes) -> "Window.Unpacked":
         """
         Adds a new object to the window, replacing the oldest if full.
 

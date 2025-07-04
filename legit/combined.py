@@ -2,13 +2,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional, Generator, Iterable
 
-from legit.myers import Edit, Line 
+from legit.myers import Edit, Line
 
 SYMBOLS = {
     "del": "-",
     "ins": "+",
     "eql": " ",
 }
+
 
 class Combined:
     """
@@ -19,6 +20,7 @@ class Combined:
     @dataclass
     class Row:
         """Represents a single row in a combined diff."""
+
         edits: List[Optional[Edit]]
 
         @property
@@ -40,19 +42,23 @@ class Combined:
 
         def __str__(self) -> str:
             """Returns the string representation of the row (e.g., '- text')."""
-            symbols = "".join([
-                SYMBOLS.get(edit.ty if edit is not None else None, " ")
-                for edit in self.edits
-            ])
-            
-            del_edit = next((edit for edit in self.edits if edit and edit.ty == "del"), None)
+            symbols = "".join(
+                [
+                    SYMBOLS.get(edit.ty if edit is not None else None, " ")
+                    for edit in self.edits
+                ]
+            )
+
+            del_edit = next(
+                (edit for edit in self.edits if edit and edit.ty == "del"), None
+            )
 
             if del_edit is not None:
                 line = del_edit.a_line
             else:
                 line = self.edits[0].b_line
 
-            return ''.join(symbols) + line.text
+            return "".join(symbols) + line.text
 
     def __init__(self, diffs: List[List[Edit]]):
         self._diffs = diffs
@@ -85,12 +91,14 @@ class Combined:
         """Zips the current offsets with their respective diffs."""
         return zip(self._offsets, self._diffs)
 
-    def _consume_deletions(self, diff: List[Edit], i: int) -> Generator[Combined.Row, None, None]:
+    def _consume_deletions(
+        self, diff: List[Edit], i: int
+    ) -> Generator[Combined.Row, None, None]:
         """
         Yields rows for any consecutive deletions starting at the current
         offset for a given diff.
         """
-        while self._offsets[i] < len(diff) and diff[self._offsets[i]].ty == 'del':
+        while self._offsets[i] < len(diff) and diff[self._offsets[i]].ty == "del":
             edits: List[Optional[Edit]] = [None] * len(self._diffs)
             edits[i] = diff[self._offsets[i]]
             self._offsets[i] += 1

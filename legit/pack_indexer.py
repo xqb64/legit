@@ -43,7 +43,7 @@ class Indexer:
 
         for n in range(self.reader.count):
             self.index_object()
-            
+
             if self.progress is not None:
                 self.progress.tick(self.stream.offset)
 
@@ -86,7 +86,7 @@ class Indexer:
         for oid, (offset, _) in self.index.items():
             record = self.read_record_at(offset)
             self.resolve_delta_base(record, oid)
-        
+
         if self.progress is not None:
             self.progress.stop()
 
@@ -127,7 +127,7 @@ class Indexer:
 
         for oid in self.object_ids:
             counts[int(oid[:2], 16)] += 1
-        
+
         for count in counts:
             total += count
             self.index_file.write(struct.pack(">I", total))
@@ -162,6 +162,7 @@ class Indexer:
         filename = f"pack-{pack_digest.hexdigest()}.idx"
         self.index_file.move(filename)
 
+
 class PackFile:
     def __init__(self, pack_dir, name):
         self.file = TempFile(pack_dir, name)
@@ -174,5 +175,3 @@ class PackFile:
     def move(self, name):
         self.file.write(self.digest.digest())
         self.file.move(name)
-
-

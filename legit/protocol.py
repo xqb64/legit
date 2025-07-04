@@ -20,8 +20,8 @@ class Remotes:
                 return self.output.write(b"0000")
 
             line = self.append_caps(line)
-            
-            size = len(line.encode('utf-8')) + 5
+
+            size = len(line.encode("utf-8")) + 5
             header = f"{size:04x}"
 
             self.output.write(header.encode())
@@ -35,11 +35,11 @@ class Remotes:
             head_bytes = self.input.read(4)
 
             try:
-                head_str = head_bytes.decode('ascii')
+                head_str = head_bytes.decode("ascii")
             except UnicodeDecodeError:
                 return None if not head_bytes else head_bytes
 
-            if not re.match(r'^[0-9a-f]{4}$', head_str, re.IGNORECASE):
+            if not re.match(r"^[0-9a-f]{4}$", head_str, re.IGNORECASE):
                 return head_bytes
 
             size = int(head_str, 16)
@@ -50,7 +50,7 @@ class Remotes:
             if body.endswith(b"\n"):
                 body = body[:-1]
 
-            body_str = body.decode('utf-8', errors='replace')
+            body_str = body.decode("utf-8", errors="replace")
 
             return self.detect_caps(body_str)
 
@@ -81,7 +81,7 @@ class Remotes:
         def detect_caps(self, line):
             if self.caps_remote is not None:
                 return line
-            
+
             if self.command == "upload-pack":
                 sep = " "
                 parts_count = 3
@@ -98,4 +98,3 @@ class Remotes:
 
             self.caps_remote = caps.split() if caps else []
             return sep.join(main_parts)
-

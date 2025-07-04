@@ -6,13 +6,15 @@ from typing import Dict, List, Optional, Tuple, Sequence, Any, Callable, Union
 from legit.lockfile import Lockfile
 
 
-SECTION_LINE  = re.compile(r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I)
-VARIABLE_LINE = re.compile(r'^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*(?:$|#|;)', re.I | re.M)
-BLANK_LINE    = re.compile(r'^\s*(?:$|#|;)')
-INTEGER       = re.compile(r'^-?[1-9][0-9]*$')
+SECTION_LINE = re.compile(r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I)
+VARIABLE_LINE = re.compile(
+    r"^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*(?:$|#|;)", re.I | re.M
+)
+BLANK_LINE = re.compile(r"^\s*(?:$|#|;)")
+INTEGER = re.compile(r"^-?[1-9][0-9]*$")
 
-VALID_SECTION  = re.compile(r'^[a-z0-9-]+$', re.I)
-VALID_VARIABLE = re.compile(r'^[a-z][a-z0-9-]*$', re.I)
+VALID_SECTION = re.compile(r"^[a-z0-9-]+$", re.I)
+VALID_VARIABLE = re.compile(r"^[a-z][a-z0-9-]*$", re.I)
 
 
 class Conflict(Exception):
@@ -26,6 +28,7 @@ class ParseError(Exception):
 @dataclass
 class Section:
     """Represents the *logical* section, not a line in the file."""
+
     name: List[str]
 
     @staticmethod
@@ -39,13 +42,14 @@ class Section:
     @property
     def heading_line(self) -> str:
         line = f"[{self.name[0]}"
-    
+
         if len(self.name) > 1:
-            line += f' "{'.'.join(self.name[1:])}"'
+            line += f' "{".".join(self.name[1:])}"'
 
         line += "]\n"
 
         return line
+
 
 @dataclass
 class Variable:
@@ -77,13 +81,10 @@ class ConfigFile:
         self.path = Path(path)
         self.lockfile = Lockfile(self.path)
         self.lines: dict[tuple[str, str], List[Line]] = defaultdict(list)
-    
+
     @staticmethod
     def valid_key(key):
-       return (
-            bool(VALID_SECTION.match(key[0])) and
-            bool(VALID_VARIABLE.match(key[1]))
-        )
+        return bool(VALID_SECTION.match(key[0])) and bool(VALID_VARIABLE.match(key[1]))
 
     def open(self) -> None:
         if not self.lines:
@@ -96,7 +97,7 @@ class ConfigFile:
     def save(self) -> None:
         for section, lines in self.lines.items():
             for line in lines:
-                self.lockfile.write(line.text.encode('utf-8'))
+                self.lockfile.write(line.text.encode("utf-8"))
         self.lockfile.commit()
 
     def get(self, key: Sequence[str]) -> Any:
@@ -119,7 +120,7 @@ class ConfigFile:
     def set(self, key: Sequence[str], value: Any) -> None:
         key, var = self.split_key(key)
         section, lines = self.find_lines(key, var)
-            
+
         if len(lines) == 0:
             self.add_variable(section, key, var, value)
         elif len(lines) == 1:
@@ -146,8 +147,9 @@ class ConfigFile:
         the default behaviour raises Conflict when more than one value
         exists—exactly what the Ruby block did.
         """
-        if predicate is None:                              # default check
-            def predicate(lines: List["Line"]) -> None:    # noqa: F821
+        if predicate is None:  # default check
+
+            def predicate(lines: List["Line"]) -> None:  # noqa: F821
                 if len(lines) > 1:
                     raise Conflict(f"{key} has multiple values")
 
@@ -164,7 +166,7 @@ class ConfigFile:
         if section is None:
             return
 
-        if callback is not None: 
+        if callback is not None:
             callback(lines)
 
         self.remove_all(section, lines)
@@ -199,32 +201,30 @@ class ConfigFile:
         var = key.pop()
         return (key, var)
 
-    def find_lines(self,
-                    key: Sequence[str],
-                    var: str) -> Tuple[Optional[Section], List[Line]]:
+    def find_lines(
+        self, key: Sequence[str], var: str
+    ) -> Tuple[Optional[Section], List[Line]]:
         name = Section.normalize(key)
         if name not in self.lines:
             return (None, list())
 
-        lines   = self.lines[name]
+        lines = self.lines[name]
         section = lines[0].section
-        normal  = Variable.normalize(var)
-        lines   = [ln for ln in lines if ln.normal_variable == normal]
+        normal = Variable.normalize(var)
+        lines = [ln for ln in lines if ln.normal_variable == normal]
         return (section, lines)
 
     def add_section(self, key: Sequence[str]) -> Section:
         section = Section(key)
-        header  = Line(section.heading_line, section)
+        header = Line(section.heading_line, section)
         self.lines_for(section).append(header)
         return section
 
-    def add_variable(self,
-                      section: Optional[Section],
-                      key: Sequence[str],
-                      var: str,
-                      value: Any) -> None:
+    def add_variable(
+        self, section: Optional[Section], key: Sequence[str], var: str, value: Any
+    ) -> None:
         section = section or self.add_section(key)
-        text    = Variable.serialize(var, value)
+        text = Variable.serialize(var, value)
         variable = Variable(var, value)
         self.lines_for(section).append(Line(text, section, variable))
 
@@ -267,17 +267,15 @@ class ConfigFile:
                 return buffer
 
     def parse_line(self, section: Section, line: str) -> Line:
-        if (m := SECTION_LINE.match(line)):
+        if m := SECTION_LINE.match(line):
             section = Section([m.group(1)] + ([m.group(3)] if m.group(3) else []))
             return Line(line, section)
-        if (m := VARIABLE_LINE.match(line)):
+        if m := VARIABLE_LINE.match(line):
             variable = Variable(m.group(1), self.parse_value(m.group(2)))
             return Line(line, section, variable)
         if BLANK_LINE.match(line):
             return Line(line, section)
-        raise ParseError(
-            f"bad config line {self.line_count() + 1} in file {self.path}"
-        )
+        raise ParseError(f"bad config line {self.line_count() + 1} in file {self.path}")
 
     @staticmethod
     def parse_value(value: str) -> Any:
@@ -289,4 +287,3 @@ class ConfigFile:
         if INTEGER.match(value):
             return int(value)
         return value.replace("\\\n", "")
-

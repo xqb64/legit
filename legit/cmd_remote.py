@@ -6,7 +6,7 @@ class Remote(Base):
     def define_options(self) -> None:
         self.options = {"verbose": False, "tracked": []}
         positional_args = []
-        
+
         args_iter = iter(self.args)
         for arg in args_iter:
             if arg in ("-v", "--verbose"):
@@ -18,7 +18,7 @@ class Remote(Base):
                     pass
             else:
                 positional_args.append(arg)
-                
+
         self.args = positional_args
 
     def run(self) -> None:
@@ -51,7 +51,6 @@ class Remote(Base):
         except Remotes.InvalidRemote as e:
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
-    
 
     def list_remotes(self) -> None:
         for name in self.repo.remotes.list_remotes():
@@ -67,4 +66,3 @@ class Remote(Base):
 
         self.println(f"{name}\t{remote.fetch_url} (fetch)")
         self.println(f"{name}\t{remote.push_url} (push)")
-

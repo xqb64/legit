@@ -8,7 +8,7 @@ class FastForwardMixin:
 
         if not self.repo.database.has(old_oid):
             return "fetch first"
-        
+
         if not self.is_fast_forward(old_oid, new_oid):
             return "non-fast-forward"
 
@@ -16,4 +16,3 @@ class FastForwardMixin:
         common = CommonAncestors(self.repo.database, old_oid, [new_oid])
         common.find()
         return common.is_marked(old_oid, "parent2")
-

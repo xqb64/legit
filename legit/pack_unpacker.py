@@ -17,7 +17,7 @@ class Unpacker:
             self.process_record()
             if self.progress is not None:
                 self.progress.tick(self.stream.offset)
-        
+
         if self.progress is not None:
             self.progress.stop()
 
@@ -28,7 +28,7 @@ class Unpacker:
             record, _ = self.reader.read_record()
             record = self.resolve(record)
             self.database.store(record)
-    
+
     def resolve(self, record):
         if isinstance(record, Record):
             return record

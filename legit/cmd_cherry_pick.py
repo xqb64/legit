@@ -19,7 +19,7 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
         commits = RevList(self.repo, list(reversed(self.args)), {"walk": False})
         for commit in reversed(list(commits.each())):
             self.sequencer.pick(commit)
-   
+
     def pick(self, commit: Commit):
         inputs = self.pick_merge_inputs(commit)
 
@@ -28,7 +28,13 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
         if self.repo.index.is_conflict():
             self.fail_on_conflict(inputs, commit.message)
 
-        picked = Commit([inputs.left_oid], self.write_tree().oid, commit.author, self.current_author(), commit.message)
+        picked = Commit(
+            [inputs.left_oid],
+            self.write_tree().oid,
+            commit.author,
+            self.current_author(),
+            commit.message,
+        )
 
         self.finish_commit(picked)
 
@@ -43,5 +49,3 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
         right_oid = commit.oid
 
         return CherryPickInput(left_name, right_name, left_oid, right_oid, [parent])
-
-

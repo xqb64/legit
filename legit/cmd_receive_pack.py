@@ -53,7 +53,7 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
     def update_ref(self, ref, old, new):
         if self.unpack_error:
             return self.report_status(f"ng {ref} unpacker error")
-            
+
         self.validate_update(ref, old, new)
 
         try:
@@ -70,15 +70,17 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         if self.repo.config.get(["receive", "denyNonFastForwards"]):
             if self.fast_forward_error(old, new):
                 raise Exception("non-fast-forward")
-    
-        if not self.repo.config.get(["core", "bare"]) or self.repo.refs.current_ref().path != ref:
+
+        if (
+            not self.repo.config.get(["core", "bare"])
+            or self.repo.refs.current_ref().path != ref
+        ):
             return
 
         if not self.repo.config.get(["receive", "denyCurrentBranch"]):
             if new:
                 raise Exception("branch is currently checked out")
-        
+
         if not self.repo.config.get(["receive", "denyDeleteCurrent"]):
             if not new:
                 raise Exception("deletion of the current branch prohibited")
-        

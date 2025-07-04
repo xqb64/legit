@@ -5,7 +5,6 @@ UNITS = ["B", "KiB", "MiB", "GiB"]
 SCALE = 1024.0
 
 
-
 class Progress:
     def __init__(self, output):
         self.output = output
@@ -74,7 +73,8 @@ class Progress:
 
     def format_bytes(self):
         import math
+
         power = math.floor(math.log(self.bytes, SCALE))
-        scaled = self.bytes / (SCALE ** power)
+        scaled = self.bytes / (SCALE**power)
 
         return "%.2f %s" % (scaled, UNITS[power])

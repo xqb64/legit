@@ -12,7 +12,9 @@ class Branch(Base):
         self.force = any(opt in self.args for opt in ("-f", "-D"))
 
         # Remove option flags from positional args
-        filtered = [a for a in self.args if a not in ("-v", "--verbose", "-d", "-f", "-D")]
+        filtered = [
+            a for a in self.args if a not in ("-v", "--verbose", "-d", "-f", "-D")
+        ]
         self.args = filtered
 
         # Dispatch
@@ -44,11 +46,11 @@ class Branch(Base):
 
     def extended_branch_info(self, ref, max_width) -> str:
         if not self.verbose:
-            return ''
+            return ""
 
         commit = self.repo.database.load(ref.read_oid())
         short = self.repo.database.short_oid(commit.oid)
-        space = ' ' * (max_width - len(ref.short_name()))
+        space = " " * (max_width - len(ref.short_name()))
         return f"{space} {short} {commit.title_line()}"
 
     def create_branch(self) -> None:
@@ -96,5 +98,3 @@ class Branch(Base):
         except Refs.InvalidBranch as e:
             self.stderr.write(f"error: {e}\n")
             self.exit(1)
-
-

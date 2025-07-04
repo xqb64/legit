@@ -39,12 +39,13 @@ CHERRY_PICK_NOTES = textwrap.dedent(
     """
 )
 
+
 class WriteCommitMixin:
     def current_author(self) -> Author:
         config_name = self.repo.config.get(["user", "name"])
         config_email = self.repo.config.get(["user", "email"])
 
-        name  = self.env.get("GIT_AUTHOR_NAME", config_name)
+        name = self.env.get("GIT_AUTHOR_NAME", config_name)
         email = self.env.get("GIT_AUTHOR_EMAIL", config_email)
 
         return Author(name, email, datetime.now().astimezone())
@@ -62,28 +63,28 @@ class WriteCommitMixin:
         self.message = None
         self.file = None
         self.edit = False
-    
+
         args_iter = iter(self.args)
         for arg in args_iter:
-            if arg in ('-e', '--edit'):
+            if arg in ("-e", "--edit"):
                 self.edit = True
-            elif arg == '--no-edit':
+            elif arg == "--no-edit":
                 self.edit = False
-    
-            elif arg.startswith('--message='):
-                self.message = arg.split('=', 1)[1]
-            elif arg == '-m':
+
+            elif arg.startswith("--message="):
+                self.message = arg.split("=", 1)[1]
+            elif arg == "-m":
                 try:
                     self.message = next(args_iter)
-                    if self.edit == 'auto':
+                    if self.edit == "auto":
                         self.edit = False
                 except StopIteration:
                     pass
-    
-            elif arg.startswith('--file='):
-                file_path = arg.split('=', 1)[1]
+
+            elif arg.startswith("--file="):
+                file_path = arg.split("=", 1)[1]
                 self.file = self.expanded_path(file_path)
-            elif arg == '-F':
+            elif arg == "-F":
                 try:
                     file_path = next(args_iter)
                     self.file = self.expanded_path(file_path)
@@ -103,10 +104,12 @@ class WriteCommitMixin:
 
     def write_commit(self, parents, message):
         tree = self.write_tree()
-        
+
         author = self.current_author()
-        
-        commit = CommitObject([p for p in parents if p], tree.oid, author, author, message)
+
+        commit = CommitObject(
+            [p for p in parents if p], tree.oid, author, author, message
+        )
         self.repo.database.store(commit)
         self.repo.refs.update_head(commit.oid)
 
@@ -143,7 +146,13 @@ class WriteCommitMixin:
         pick_oid = self.repo.pending_commit().merge_oid("cherry_pick")
         commit = self.repo.database.load(pick_oid)
 
-        picked = CommitObject(parents, self.write_tree().oid, commit.author, self.current_author(), message)
+        picked = CommitObject(
+            parents,
+            self.write_tree().oid,
+            commit.author,
+            self.current_author(),
+            message,
+        )
 
         self.repo.database.store(picked)
         self.repo.refs.update_head(picked.oid)
@@ -164,11 +173,10 @@ class WriteCommitMixin:
             return
 
         message = "Committing is not possible because you have unmerged files"
-        self.stderr.write(f"error: {message}." + '\n')
+        self.stderr.write(f"error: {message}." + "\n")
         self.stderr.write(CONFLICT_MESSAGE)
 
         self.exit(128)
-
 
     def compose_merge_message(self, notes: Optional[str] = None) -> Optional[str]:
         def editor_setup(editor: Editor):
@@ -177,10 +185,8 @@ class WriteCommitMixin:
                 editor.note(notes)
             editor.println("")
             editor.note(COMMIT_NOTES)
-    
+
             if not self.edit:
                 editor.close()
-    
+
         return Editor.edit(self.commit_message_path(), block=editor_setup)
-
-

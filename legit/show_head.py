@@ -9,7 +9,8 @@ repo = Repository(Path.cwd() / ".git")
 head_oid = repo.refs.read_head()
 commit = repo.database.load(head_oid)
 
-def show_tree(repo: Repository, oid: str, prefix: str ='') -> None:
+
+def show_tree(repo: Repository, oid: str, prefix: str = "") -> None:
     tree: Blob | Commit | Tree = repo.database.load(oid)
 
     assert isinstance(tree, Tree)

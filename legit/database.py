@@ -33,16 +33,16 @@ class Database:
         self.path: Path = path
         self.objects: MutableMapping[str, Blob | Commit | Tree] = {}
         self.backend = Backends(self.path)
-    
+
     def has(self, oid: str) -> bool:
         return self.backend.has(oid)
 
     def load_info(self, oid: str) -> Raw:
         return self.backend.load_info(oid)
-    
+
     def load_raw(self, oid: str) -> Raw:
         return self.backend.load_raw(oid)
-    
+
     def prefix_match(self, name: str) -> list[str]:
         return self.backend.prefix_match(name)
 
@@ -52,7 +52,7 @@ class Database:
     @property
     def pack_path(self):
         return self.path / "pack"
-   
+
     def read_object(self, oid):
         """
         Read and parse a Git object by oid, returning the parsed object with its oid set.
@@ -64,8 +64,10 @@ class Database:
 
     def tree_entry(self, oid: str) -> DatabaseEntry:
         return DatabaseEntry(oid, 0o40000)
-    
-    def tree_diff(self, a: str, b: str, pathfilter=PathFilter()) -> dict[Path, list[Optional[DatabaseEntry]]]:
+
+    def tree_diff(
+        self, a: str, b: str, pathfilter=PathFilter()
+    ) -> dict[Path, list[Optional[DatabaseEntry]]]:
         diff = TreeDiff(self)
         diff.compare_oids(a, b, pathfilter)
         return diff.changes
@@ -108,14 +110,14 @@ class Database:
         if not entry.is_tree():
             thing[prefix] = entry
             return entry
-        
+
         for name, item in self.load(entry.oid).entries.items():
             self.build_list(thing, item, prefix / name)
-    
+
     def store(self, obj: Blob | Commit | Tree) -> None:
         content = self.serialize_object(obj)
         obj.oid = self.hash_content(content)
-        
+
         self.write_object(obj.oid, content)
 
     def hash_object(self, obj: Blob | Commit | Tree) -> str:
@@ -123,19 +125,17 @@ class Database:
 
     def serialize_object(self, obj: Blob | Commit | Tree) -> bytes:
         string = obj.to_bytes()
-        header = f"{obj.type()} {len(string)}".encode('utf-8') + b"\x00"
+        header = f"{obj.type()} {len(string)}".encode("utf-8") + b"\x00"
 
         return header + string
 
     def hash_content(self, content: bytes) -> str:
         return hashlib.sha1(content).hexdigest()
- 
+
     def short_oid(self, oid: str) -> str:
         return oid[:7]
 
     def generate_temp_name(self) -> str:
-        return f"tmp_obj_" + ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-            
-        
-
-
+        return f"tmp_obj_" + "".join(
+            random.choices(string.ascii_letters + string.digits, k=6)
+        )

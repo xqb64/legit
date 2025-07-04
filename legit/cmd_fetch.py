@@ -18,7 +18,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
             if arg in ("--force", "-f"):
                 self.options["force"] = True
             elif arg.startswith("--upload-pack="):
-                self.options["uploader"] = arg.split('=', 1)[1]
+                self.options["uploader"] = arg.split("=", 1)[1]
             else:
                 positional.append(arg)
         self.args = positional
@@ -34,7 +34,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.send_have_list()
         self.recv_objects()
         self.update_remote_refs()
-            
+
         self.exit(0 if not self.errors else 1)
 
     def configure(self) -> None:
@@ -50,8 +50,18 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         else:
             self.fetch_url = self.args[0]
 
-        self.uploader = self.options["uploader"] or (remote.uploader if remote is not None else None) or Fetch.UPLOAD_PACK
-        self.fetch_specs = self.args[1:] if len(self.args) > 1 else remote.fetch_specs if remote is not None else None
+        self.uploader = (
+            self.options["uploader"]
+            or (remote.uploader if remote is not None else None)
+            or Fetch.UPLOAD_PACK
+        )
+        self.fetch_specs = (
+            self.args[1:]
+            if len(self.args) > 1
+            else remote.fetch_specs
+            if remote is not None
+            else None
+        )
 
     def send_want_list(self):
         self.targets = Refspec.expand(self.fetch_specs, self.remote_refs.keys())
@@ -76,7 +86,6 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
 
         if not wanted:
             self.exit(0)
-
 
     def send_have_list(self):
         options = {"all": True, "missing": True}
@@ -107,7 +116,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         new_oid = self.remote_refs[source]
         ref_names = (source, target)
         ff_error = self.fast_forward_error(old_oid, new_oid)
-        
+
         # FIXME
         error = None
 
@@ -117,6 +126,3 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
             error = self.errors[target] = ff_error
 
         self.report_ref_update(ref_names, error, old_oid, new_oid, ff_error is None)
-
-
-

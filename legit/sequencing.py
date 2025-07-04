@@ -17,18 +17,18 @@ CONFLICT_NOTES = textwrap.dedent(
 class SequencingMixin:
     def define_options(self) -> None:
         self.define_write_commit_options()
-        
+
         self.mode = "run"
         self.mainline = None
-    
+
         positional = []
 
         args_iter = iter(self.args)
         for arg in args_iter:
-            if arg.startswith('--mainline='):
-                self.mainline = int(arg.split('=', 1)[1])
+            if arg.startswith("--mainline="):
+                self.mainline = int(arg.split("=", 1)[1])
                 continue
-            elif arg == '-m':
+            elif arg == "-m":
                 try:
                     self.mainline = int(next(args_iter))
                 except StopIteration:
@@ -44,17 +44,16 @@ class SequencingMixin:
             elif arg == "--quit":
                 self.mode = "quit"
                 continue
-            
+
             else:
                 positional.append(arg)
 
         self.args = positional
-        
 
     def run(self) -> None:
         self.repo: Repository = Repository(self.dir / ".git")
         self.sequencer: Sequencer = Sequencer(self.repo)
-        
+
         self.define_options()
 
         if self.mode == "continue":
@@ -75,13 +74,17 @@ class SequencingMixin:
             if mainline:
                 return commit.parents[mainline - 1]
 
-            self.stderr.write(f"error: commit {commit.oid} is a merge but no -m option was given\n")
+            self.stderr.write(
+                f"error: commit {commit.oid} is a merge but no -m option was given\n"
+            )
             self.exit(1)
         else:
             if not mainline:
                 return commit.parent
 
-            self.stderr.write(f"error: mainline was specified but commit {commit.oid} is not a merge\n")
+            self.stderr.write(
+                f"error: mainline was specified but commit {commit.oid} is not a merge\n"
+            )
             self.exit(1)
 
     def resolve_merge(self, inputs) -> None:
@@ -93,6 +96,7 @@ class SequencingMixin:
         self.sequencer.dump()
 
         self.repo.pending_commit().start(inputs.right_oid, self.merge_type())
+
         def editor_setup(editor: Editor):
             editor.println(message)
             editor.println("")
@@ -100,13 +104,13 @@ class SequencingMixin:
             for name in self.repo.index.conflict_paths():
                 editor.note(f"\t{name}")
             editor.close()
-        
+
         Editor.edit(self.repo.pending_commit().message_path, block=editor_setup)
-        
+
         self.stderr.write(f"error: could not apply {inputs.right_name}\n")
         for line in CONFLICT_NOTES.splitlines():
             self.stderr.write(f"hint: {line}\n")
-        
+
         self.println(f"exiting with 1111111111111")
         self.exit(1)
 
@@ -118,7 +122,7 @@ class SequencingMixin:
     def handle_continue(self) -> None:
         try:
             self.repo.index.load()
-            
+
             match self.repo.pending_commit().merge_type():
                 case c if c == "cherry_pick":
                     self.write_cherry_pick_commit()
@@ -134,7 +138,6 @@ class SequencingMixin:
 
     def resume_sequencer(self) -> None:
         while True:
-            
             cmd = self.sequencer.next_command()
             if cmd is None:
                 break

@@ -10,14 +10,13 @@ def git_sort_key(item):
     return name
 
 
-
 class DatabaseEntry:
     TREE_MODE = 0o40000
 
     def __init__(self, oid: str, mode: int) -> None:
         self.oid: str = oid
         self.mode: int = mode
-    
+
     def is_tree(self) -> bool:
         return self.mode == DatabaseEntry.TREE_MODE
 
@@ -25,16 +24,20 @@ class DatabaseEntry:
         if not isinstance(other, DatabaseEntry):
             return NotImplemented
         return (
-            self.oid  == other.oid  and
-            self.mode == other.mode and
-            self.is_tree() == other.is_tree()
+            self.oid == other.oid
+            and self.mode == other.mode
+            and self.is_tree() == other.is_tree()
         )
+
+
 class Tree:
-    def __init__(self, entries: MutableMapping[str, 'DatabaseEntry | Entry | Tree'] | None = None) -> None:
+    def __init__(
+        self, entries: MutableMapping[str, "DatabaseEntry | Entry | Tree"] | None = None
+    ) -> None:
         self.entries: MutableMapping[str, DatabaseEntry | Entry | Tree] = (
-            entries if entries is not None else {} 
+            entries if entries is not None else {}
         )
-        self.oid: str = ''
+        self.oid: str = ""
 
     @classmethod
     def parse(cls, payload: bytes) -> "Tree":
@@ -59,7 +62,7 @@ class Tree:
             name = payload[idx:nul].decode("utf-8", errors="replace")
             idx = nul + 1
 
-            # 20-byte object id 
+            # 20-byte object id
             oid_bytes = payload[idx : idx + 20]
             oid = oid_bytes.hex()
             idx += 20
@@ -67,9 +70,9 @@ class Tree:
             entries[name] = DatabaseEntry(oid=oid, mode=mode)
 
         return cls(entries)
-    
+
     @classmethod
-    def from_entries(cls, entries: dict[Path, Entry]) -> 'Tree':
+    def from_entries(cls, entries: dict[Path, Entry]) -> "Tree":
         entries = dict(sorted(entries.items(), key=lambda x: x[1].path))
 
         root = Tree()
@@ -78,7 +81,7 @@ class Tree:
             root.add_entry(entry.parent_directories(), entry)
 
         return root
-    
+
     def add_entry(self, parents: list[Path], entry: Entry) -> None:
         if not parents:
             self.entries[entry.basename()] = entry
@@ -95,7 +98,7 @@ class Tree:
         parts = []
         for name, entry in sorted(self.entries.items(), key=git_sort_key):
             if isinstance(entry, Tree):
-                mode_str = '40000'
+                mode_str = "40000"
                 assert entry.oid is not None
                 oid = entry.oid
             else:
@@ -109,10 +112,8 @@ class Tree:
             parts.append(header + sha)
         return b"".join(parts)
 
-    def traverse(self, code: Callable[['Tree'], None]) -> None:
+    def traverse(self, code: Callable[["Tree"], None]) -> None:
         for name, entry in self.entries.items():
             if isinstance(entry, Tree):
                 entry.traverse(code)
         code(self)
-
-

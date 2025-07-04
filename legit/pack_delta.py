@@ -2,6 +2,7 @@ import struct
 from legit.numbers import PackedInt56LE, VarIntLE
 from legit.pack_xdelta import XDelta
 
+
 class Delta:
     """
     Represents the difference between two objects (a "delta").
@@ -10,15 +11,16 @@ class Delta:
 
     class Copy:
         """Represents a 'copy' instruction in a delta."""
+
         def __init__(self, offset: int, size: int):
             self.offset = offset
             self.size = size
 
         @classmethod
-        def parse(cls, stream, byte: int) -> 'Delta.Copy':
+        def parse(cls, stream, byte: int) -> "Delta.Copy":
             """Parses a copy instruction from a byte stream."""
             value = PackedInt56LE.read(stream, byte)
-            offset = value & 0xffffffff
+            offset = value & 0xFFFFFFFF
             size = value >> 32
             return cls(offset, size)
 
@@ -36,11 +38,12 @@ class Delta:
 
     class Insert:
         """Represents an 'insert' instruction in a delta."""
+
         def __init__(self, data: bytes):
             self.data = data
 
         @classmethod
-        def parse(cls, stream, byte: int) -> 'Delta.Insert':
+        def parse(cls, stream, byte: int) -> "Delta.Insert":
             """Parses an insert instruction from a byte stream."""
             # The 'byte' indicates the length of the data to read
             return cls(stream.read(byte))
@@ -63,13 +66,10 @@ class Delta:
             source: The base object (Unpacked).
             target: The target object to be expressed as a delta (Unpacked).
         """
-        self.base = source.entry if hasattr(source, 'entry') else source
-        
+        self.base = source.entry if hasattr(source, "entry") else source
+
         # The delta data starts with the varint-encoded sizes of the source and target
-        data_parts = [
-            self._sizeof(source),
-            self._sizeof(target)
-        ]
+        data_parts = [self._sizeof(source), self._sizeof(target)]
 
         # Lazily create and cache the delta index on the source object
         if source.delta_index is None:
@@ -77,11 +77,11 @@ class Delta:
 
         # Use the index to find differences and generate delta operations
         delta_ops = source.delta_index.compress(target.data)
-        
+
         # Convert each operation (Copy/Insert) to its byte representation
         for op in delta_ops:
             data_parts.append(op.to_bytes())
-            
+
         self.data = b"".join(data_parts)
 
     @property
@@ -93,4 +93,3 @@ class Delta:
         """(Private) Encodes an object's size as a VarIntLE byte string."""
         byte_array = VarIntLE.write(entry.size, 7)
         return bytes(byte_array)
-

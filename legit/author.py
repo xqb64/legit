@@ -10,14 +10,14 @@ class Author:
         self.time = time
 
     @classmethod
-    def parse(cls, string: str) -> Optional['Author']:
+    def parse(cls, string: str) -> Optional["Author"]:
         """
         Parse strings like:
           "Alice <alice@example.com> 1622505600 +0200"
         into an Author(name, email, datetime).
         Returns None on bad format.
         """
-        parts = re.split(r'<|>', string)
+        parts = re.split(r"<|>", string)
         if len(parts) != 3:
             return None
 
@@ -27,7 +27,7 @@ class Author:
             epoch_str, offset_str = rest.split()
             epoch = int(epoch_str)
             # offset_str is like "+HHMM" or "-HHMM"
-            sign = 1 if offset_str[0] == '+' else -1
+            sign = 1 if offset_str[0] == "+" else -1
             hours = int(offset_str[1:3])
             minutes = int(offset_str[3:5])
             tz = timezone(sign * timedelta(hours=hours, minutes=minutes))
@@ -47,4 +47,3 @@ class Author:
         epoch = int(self.time.timestamp())
         offset = self.time.strftime("%z")
         return f"{self.name} <{self.email}> {epoch} {offset}"
-

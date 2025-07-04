@@ -1,6 +1,7 @@
 import struct
 
-IDX_MAX_OFFSET = 0x80000000 
+IDX_MAX_OFFSET = 0x80000000
+
 
 class Index:
     HEADER_SIZE = 8
@@ -51,14 +52,14 @@ class Index:
                 offset += size * count
 
         return offset + pos * self.SIZES[layer]
-    
+
     def read_int32(self, layer, pos):
         self.input.seek(self.offset_for(layer, pos))
         return struct.unpack(">I", self.input.read(4))[0]
-    
+
     def oid_position(self, oid):
         prefix = int(oid[:2], 16)
-        packed = struct.pack(">20s", bytes(oid, 'ascii'))
+        packed = struct.pack(">20s", bytes(oid, "ascii"))
 
         low = 0 if prefix == 0 else self.fanout[prefix - 1]
         high = self.fanout[prefix] - 1

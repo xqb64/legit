@@ -6,6 +6,7 @@ from legit.myers import Edit, Line
 
 HUNK_CONTEXT = 3
 
+
 @dataclass
 class Hunk:
     a_starts: List[int]
@@ -18,7 +19,7 @@ class Hunk:
         offset = 0
 
         while True:
-            while offset < len(edits) and edits[offset].ty == 'eql':
+            while offset < len(edits) and edits[offset].ty == "eql":
                 offset += 1
 
             if offset >= len(edits):
@@ -26,14 +27,16 @@ class Hunk:
 
             offset -= HUNK_CONTEXT + 1
 
-            a_starts = [] if offset < 0 else [line.number for line in edits[offset].a_lines]
+            a_starts = (
+                [] if offset < 0 else [line.number for line in edits[offset].a_lines]
+            )
             b_start = None if offset < 0 else edits[offset].b_line.number
 
             hunk = Hunk(a_starts=a_starts, b_start=b_start, edits=[])
             hunks.append(hunk)
 
             offset = Hunk._build(hunks[-1], edits, offset)
-    
+
     @staticmethod
     def _build(hunk: Hunk, edits: List[Edit], offset: int) -> int:
         counter = -1
@@ -41,11 +44,11 @@ class Hunk:
         while counter != 0:
             if offset >= 0 and counter > 0:
                 hunk.edits.append(edits[offset])
-            
+
             offset += 1
             if offset >= len(edits):
                 break
-           
+
             try:
                 spam = edits[offset + HUNK_CONTEXT]
             except IndexError:
@@ -73,12 +76,14 @@ class Hunk:
 
         b_lines = [e.b_line for e in self.edits]
         offsets.append(self._format("+", b_lines, self.b_start))
-        
+
         sep = "@" * len(offsets)
 
         return " ".join([sep, *offsets, sep])
 
-    def _format(self, sign: str, lines: List[Optional[Line]], start: Optional[int]) -> str:
+    def _format(
+        self, sign: str, lines: List[Optional[Line]], start: Optional[int]
+    ) -> str:
         lines = [ln for ln in lines if ln is not None]
 
         start_val = lines[0].number if lines else start
@@ -87,4 +92,3 @@ class Hunk:
             start_val = 0
 
         return f"{sign}{start_val},{len(lines)}"
-

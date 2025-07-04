@@ -46,7 +46,9 @@ class Reset(Base):
             self.mode = "mixed"
         elif "--hard" in self.args:
             self.mode = "hard"
-        self.args = [arg for arg in self.args if arg not in {"--soft", "--mixed", "--hard"}]
+        self.args = [
+            arg for arg in self.args if arg not in {"--soft", "--mixed", "--hard"}
+        ]
 
     def select_commit_oid(self) -> None:
         revision = self.args[0] if self.args else "HEAD"
@@ -59,11 +61,9 @@ class Reset(Base):
 
     def reset_path(self, path: Optional[Path]) -> None:
         listing = self.repo.database.load_tree_list(self.commit_oid, path)
-    
+
         if path is not None:
             self.repo.index.remove(path)
 
         for item_path, entry in listing.items():
             self.repo.index.add_from_db(item_path, entry)
-
-

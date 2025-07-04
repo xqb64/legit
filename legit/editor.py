@@ -4,11 +4,13 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Callable
 
+
 class Editor:
     """
     Manages editing content in a user-specified command-line editor.
     (Docstrings from previous example omitted for brevity)
     """
+
     DEFAULT_EDITOR = "vi"
 
     def __init__(self, path: os.PathLike, command: Optional[str] = None):
@@ -32,8 +34,13 @@ class Editor:
         self._edit_file()
 
     @classmethod
-    def edit(cls, path: os.PathLike, command: Optional[str] = None, *,
-             block: Callable[['Editor'], None]) -> Optional[str]:
+    def edit(
+        cls,
+        path: os.PathLike,
+        command: Optional[str] = None,
+        *,
+        block: Callable[["Editor"], None],
+    ) -> Optional[str]:
         """
         Class method that mimics the original Ruby 'edit' block pattern.
 
@@ -102,10 +109,7 @@ class Editor:
             self.cleaned_content = None
 
     def _remove_notes(self, text: str) -> Optional[str]:
-        lines = [
-            line for line in text.splitlines() if not line.strip().startswith("#")
-        ]
+        lines = [line for line in text.splitlines() if not line.strip().startswith("#")]
         if not any(line.strip() for line in lines):
             return None
         return "\n".join(lines).strip() + "\n"
-

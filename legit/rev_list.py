@@ -27,18 +27,18 @@ class RevList:
         self.missing = options.get("missing", False)
         self.pending = []
         self.paths = {}
-    
+
         if options.get("all"):
             self.include_refs(self.repo.refs.list_all_refs())
-    
+
         for rev in revs:
             self.handle_revision(rev)
-    
+
         if not self.queue:
             self.handle_revision("HEAD")
 
         self.filter = PathFilter.build(self.prune)
-    
+
     def include_refs(self, refs) -> None:
         oids = [ref.read_oid() for ref in refs]
         for oid in oids:
@@ -56,7 +56,7 @@ class RevList:
     def load_commit(self, oid: Optional[str]) -> Optional[Commit]:
         if oid is None:
             return None
-    
+
         if oid not in self.commits:
             self.commits[oid] = self.repo.database.load(oid)
         return self.commits[oid]
@@ -87,7 +87,7 @@ class RevList:
         if not rev:
             rev = "HEAD"
 
-        try:    
+        try:
             oid = Revision(self.repo, rev).resolve(Revision.COMMIT)
             commit = self.load_commit(oid)
             self.enqueue_commit(commit)
@@ -104,7 +104,7 @@ class RevList:
         queue: list[str] = list(commit.parents)
 
         while queue:
-            oid = queue.pop(0) 
+            oid = queue.pop(0)
 
             if not self.mark(oid, "uninteresting"):
                 continue
@@ -119,8 +119,7 @@ class RevList:
 
         if self.walk:
             index = next(
-                (i for i, c in enumerate(self.queue) if c.date() < commit.date()),
-                None
+                (i for i, c in enumerate(self.queue) if c.date() < commit.date()), None
             )
 
             pos = index if index is not None else len(self.queue)
@@ -137,7 +136,7 @@ class RevList:
 
         for commit in self.traverse_commits():
             yield commit, None
-        
+
         for obj in self.traverse_pending():
             yield obj, self.paths.get(obj.oid)
 
@@ -171,8 +170,10 @@ class RevList:
 
     def mark_tree_uninteresting(self, tree_oid):
         entry = self.repo.database.tree_entry(tree_oid)
+
         def _mark(o):
             self.mark(o.oid, "uninteresting")
+
         self.traverse_tree(entry, _mark)
 
     def traverse_pending(self) -> Generator:
@@ -190,15 +191,15 @@ class RevList:
         Helper generator that yields a tree entry and its children,
         skipping entries marked uninteresting or already seen.
         """
-        if self.is_marked(entry.oid, 'uninteresting'):
+        if self.is_marked(entry.oid, "uninteresting"):
             return
-        if not self.mark(entry.oid, 'seen'):
+        if not self.mark(entry.oid, "seen"):
             return
         yield entry
         if entry.is_tree():
             tree = self.repo.database.load(entry.oid)
             for name, item in tree.entries.items():
-                yield from self._traverse_objects(item) 
+                yield from self._traverse_objects(item)
 
     def limit_list(self):
         while self.still_interesting():
@@ -207,7 +208,7 @@ class RevList:
 
             if not self.is_marked(commit.oid, "uninteresting"):
                 self.output.append(commit)
-        
+
         self.queue = self.output
 
     def still_interesting(self) -> bool:
@@ -217,7 +218,7 @@ class RevList:
 
         # The last output vs the first queued
         oldest_out = self.output[-1] if self.output else None
-        newest_in  = self.queue[0]
+        newest_in = self.queue[0]
 
         # If the most‐recently‐output commit is older (or equal) than
         # the next one coming in, we’re still in order => still interesting.
@@ -226,7 +227,7 @@ class RevList:
 
         # Otherwise, if there’s any commit in the queue that isn’t marked
         # uninteresting, we’re still interested.
-        if any(not self.is_marked(c.oid, 'uninteresting') for c in self.queue):
+        if any(not self.is_marked(c.oid, "uninteresting") for c in self.queue):
             return True
 
         # Otherwise, nothing left that’s interesting
@@ -241,14 +242,13 @@ class RevList:
             commit = self.queue.pop(0)
             if not self.limited:
                 self.add_parents(commit)
-            if self.is_marked(commit.oid, 'uninteresting'):
+            if self.is_marked(commit.oid, "uninteresting"):
                 continue
-            if self.is_marked(commit.oid, 'treesame'):
+            if self.is_marked(commit.oid, "treesame"):
                 continue
             self.pending.append(self.repo.database.tree_entry(commit.tree))
             yield commit
 
-           
     def add_parents(self, commit):
         if not (self.walk and self.mark(commit.oid, "added")):
             return
@@ -266,7 +266,7 @@ class RevList:
     def simplify_commit(self, commit):
         if not self.prune:
             return commit.parents
-        
+
         parents = commit.parents
         parents = [None] if not parents else parents
 
@@ -277,4 +277,3 @@ class RevList:
             return [oid] if oid else []
 
         return commit.parents
-

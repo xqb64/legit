@@ -13,15 +13,26 @@ if TYPE_CHECKING:
 class Workspace:
     class MissingFile(Exception):
         pass
+
     class NoPermission(Exception):
         pass
 
-    IGNORE: list[str] = [".", "..", ".git", "__pycache__", "env", ".pytest_cache", ".mypy_cache"]
+    IGNORE: list[str] = [
+        ".",
+        "..",
+        ".git",
+        "__pycache__",
+        "env",
+        ".pytest_cache",
+        ".mypy_cache",
+    ]
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path
-    
-    def write_file(self, path: Path, data: str, mode: Optional[int] = None, mkdir: bool = False) -> None:
+
+    def write_file(
+        self, path: Path, data: str, mode: Optional[int] = None, mkdir: bool = False
+    ) -> None:
         full_path: Path = self.path / path
         if mkdir:
             full_path.parent.mkdir(exist_ok=True, parents=True)
@@ -33,7 +44,7 @@ class Workspace:
         if mode:
             full_path.chmod(mode)
 
-    def apply_migration(self, migration: 'Migration') -> None:
+    def apply_migration(self, migration: "Migration") -> None:
         self.apply_change_list(migration, "delete")
 
         for d in sorted(migration.rmdirs, key=lambda p: p.parts, reverse=True):
@@ -44,7 +55,7 @@ class Workspace:
 
         self.apply_change_list(migration, "update")
         self.apply_change_list(migration, "create")
-   
+
     def remove(self, path: str):
         try:
             self._rm_rf(self.path / path)
@@ -54,15 +65,15 @@ class Workspace:
             pass
 
     def _rm_rf(self, path: Path) -> None:
-       try:
-           if path.is_dir():
-               shutil.rmtree(path)
-           else:
-               path.unlink()
-       except (FileNotFoundError, NotADirectoryError):
-           pass
+        try:
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+        except (FileNotFoundError, NotADirectoryError):
+            pass
 
-    def apply_change_list(self, migration: 'Migration', action: str) -> None:
+    def apply_change_list(self, migration: "Migration", action: str) -> None:
         for filename, entry in migration.changes[action]:
             path = self.path / filename
 
@@ -70,13 +81,13 @@ class Workspace:
 
             if action == "delete":
                 continue
-            
+
             p = path.parent
 
             while p != self.path and p.exists() and p.is_file():
                 p.unlink()
                 p = p.parent
-            
+
             path.parent.mkdir(parents=True, exist_ok=True)
 
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
@@ -88,9 +99,8 @@ class Workspace:
             else:
                 data = migration.blob_data(entry.oid)
                 with os.fdopen(os.open(path, flags, 0o644), "wb+") as f:
-                    f.write(data.encode('utf-8'))
+                    f.write(data.encode("utf-8"))
                 path.chmod(entry.mode)
-
 
     def remove_directory(self, dirname: Path) -> None:
         try:
@@ -120,13 +130,15 @@ class Workspace:
         elif path.exists():
             yield path.relative_to(self.path)
         else:
-            raise Workspace.MissingFile(f"pathspec \"{path.relative_to(self.path)}\" did not match any files")
+            raise Workspace.MissingFile(
+                f'pathspec "{path.relative_to(self.path)}" did not match any files'
+            )
 
     def list_dir(self, dirname: str) -> MutableMapping[Path, os.stat_result]:
         stats = {}
 
         path = self.path / dirname
-        
+
         entries = []
         for f in path.iterdir():
             if f.name not in Workspace.IGNORE:
@@ -143,7 +155,7 @@ class Workspace:
             with open(self.path / path) as f:
                 return f.read()
         except PermissionError:
-            raise Workspace.NoPermission(f"open(\"{path.name}\"): Permission denied")
+            raise Workspace.NoPermission(f'open("{path.name}"): Permission denied')
 
     def stat_file(self, path: Path) -> Optional[os.stat_result]:
         try:
@@ -151,5 +163,4 @@ class Workspace:
         except FileNotFoundError:
             return None
         except PermissionError:
-            raise Workspace.NoPermission(f"stat(\"{path.name}\"): Permission denied")
-
+            raise Workspace.NoPermission(f'stat("{path.name}"): Permission denied')

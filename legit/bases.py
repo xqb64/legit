@@ -12,7 +12,7 @@ class Bases:
             return self.commits
 
         self.redundant = set()
-        
+
         for commit in self.commits:
             self.filter_commit(commit)
 
@@ -21,21 +21,18 @@ class Bases:
     def filter_commit(self, commit: str) -> None:
         if commit in self.redundant:
             return
-    
+
         others = [
-            oid for oid in self.commits
-            if oid != commit and oid not in self.redundant
+            oid for oid in self.commits if oid != commit and oid not in self.redundant
         ]
-    
+
         common = CommonAncestors(self.database, commit, others)
-    
+
         common.find()
-    
+
         if common.is_marked(commit, "parent2"):
             self.redundant.add(commit)
-    
+
         others[:] = [oid for oid in others if common.is_marked(oid, "parent1")]
-    
+
         self.redundant.update(others)
-
-

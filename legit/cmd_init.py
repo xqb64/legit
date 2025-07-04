@@ -25,10 +25,9 @@ class Init(Base):
             root_path = Path(self.args[0]).absolute().resolve()
         else:
             root_path = Path(self.dir).absolute().resolve()
-        
 
         git_path: Path = root_path / ".git"
-        
+
         config = ConfigFile(git_path / "config")
         config.open_for_update()
         config.set(["core", "bare"], False)
@@ -40,7 +39,7 @@ class Init(Base):
             except PermissionError as e:
                 self.stderr.write(f"fatal: {e.strerror}")
                 self.exit(1)
-    
+
         refs = Refs(git_path)
         path = f"refs/heads/{DEFAULT_BRANCH}"
         refs.update_head(f"ref: {path}")

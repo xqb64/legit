@@ -28,7 +28,7 @@ from legit.cmd_push import Push
 class Command:
     class Unknown(Exception):
         pass
-    
+
     COMMANDS: dict[str, Type[Base]] = {
         "init": Init,
         "add": Add,
@@ -60,13 +60,12 @@ class Command:
     ) -> Base:
         name = argv[1]
         args = argv[2:]
-        
+
         if name not in Command.COMMANDS:
             raise Command.Unknown(f"{name} is not a legit command")
-        
+
         cmd_class = Command.COMMANDS[name]
         cmd: Base = cmd_class(_dir, env, args, stdin, stdout, stderr)
         cmd.execute()
 
         return cmd
-

@@ -9,7 +9,7 @@ DIFF_FORMATS: dict[str, str] = {
     "meta": "bold",
     "frag": "cyan",
     "old": "red",
-    "new": "green"
+    "new": "green",
 }
 
 
@@ -30,12 +30,12 @@ class PrintDiffMixin:
     def diff_fmt(self, name, text):
         key = ["color", "diff", name]
         style_str = self.repo.config.get(key)
-        
+
         if style_str:
             style = style_str.split()
         else:
             style = DIFF_FORMATS.get(name)
-        
+
         return self.fmt(style, text)
 
     def define_print_diff_options(self) -> None:
@@ -46,25 +46,24 @@ class PrintDiffMixin:
 
     def print_combined_diff(self, a_versions, b_version):
         self._header(f"diff --cc {b_version.path}")
-    
+
         a_oids = [self._short(a.oid) for a in a_versions]
         oid_range = f"index {','.join(a_oids)}..{self._short(b_version.oid)}"
         self._header(oid_range)
-    
+
         if not all(a.mode == b_version.mode for a in a_versions):
             a_modes = ",".join(str(a.mode) for a in a_versions)
             self._header(f"mode {a_modes}..{b_version.mode}")
-    
+
         self._header(f"--- a/{b_version.diff_path()}")
         self._header(f"+++ b/{b_version.diff_path()}")
-    
+
         a_data = [a.data for a in a_versions]
         b_data = b_version.data
         hunks = combined_hunks(a_data, b_data)
-    
+
         for hunk in hunks:
             self.print_diff_hunk(hunk)
-
 
     def print_diff(self, a: Target, b: Target) -> None:
         if a.oid == b.oid and a.mode == b.mode:
@@ -72,7 +71,7 @@ class PrintDiffMixin:
 
         a.path = Path("a") / a.path
         b.path = Path("b") / b.path
-        
+
         self._header(f"diff --git {a.path} {b.path}")
         self.print_diff_mode(a, b)
         self.print_diff_content(a, b)
@@ -92,12 +91,12 @@ class PrintDiffMixin:
 
         oid_range = f"index {self._short(a.oid)}..{self._short(b.oid)}"
         if a.mode == b.mode:
-            oid_range += f" {a.mode}" 
+            oid_range += f" {a.mode}"
 
         self._header(oid_range)
         self._header(f"--- {a.diff_path()}")
         self._header(f"+++ {b.diff_path()}")
-    
+
         hunks = diff_hunks(a.data, b.data)
         for hunk in hunks:
             self.print_diff_hunk(hunk)
@@ -123,7 +122,3 @@ class PrintDiffMixin:
 
     def _header(self, string: str) -> None:
         self.println(self.diff_fmt("meta", string))
-
-
-
-

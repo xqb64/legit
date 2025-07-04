@@ -36,12 +36,12 @@ class Merge(WriteCommitMixin, Base):
             self.mode = "continue"
         elif "--abort" in self.args:
             self.mode = "abort"
-         
+
         if self.mode == "continue":
             self.handle_continue()
         elif self.mode == "abort":
             self.handle_abort()
- 
+
         if self.pending_commit.is_in_progress():
             self.handle_in_progress_merge()
 
@@ -53,12 +53,12 @@ class Merge(WriteCommitMixin, Base):
 
         if self.inputs.are_fast_forward():
             self.handle_fast_forward()
-        
+
         self.pending_commit.start(self.inputs.right_oid)
-       
+
         self.resolve_merge()
         self.commit_merge()
-        
+
         self.exit(0)
 
     def compose_message(self) -> Optional[str]:
@@ -66,12 +66,11 @@ class Merge(WriteCommitMixin, Base):
             editor.println(self.read_message() or self.default_commit_message())
             editor.println("")
             editor.note(COMMIT_NOTES)
-    
+
             if not self.edit:
                 editor.close()
-    
-        return Editor.edit(self.pending_commit.message_path, block=editor_setup)
 
+        return Editor.edit(self.pending_commit.message_path, block=editor_setup)
 
     def handle_abort(self) -> None:
         try:
@@ -79,7 +78,7 @@ class Merge(WriteCommitMixin, Base):
         except PendingCommit.Error as e:
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
-        
+
         self.repo.index.load_for_update()
         self.repo.hard_reset(self.repo.refs.read_head())
         self.repo.index.write_updates()
@@ -102,7 +101,7 @@ class Merge(WriteCommitMixin, Base):
 
     def resolve_merge(self) -> None:
         self.repo.index.load_for_update()
-        
+
         merge = Resolve(self.repo, self.inputs)
         merge.on_progress(lambda info: self.println(info))
         merge.execute()
@@ -119,15 +118,17 @@ class Merge(WriteCommitMixin, Base):
             for name in self.repo.index.conflict_paths():
                 editor.note(f"\t{name}")
             editor.close()
-        
+
         Editor.edit(self.pending_commit.message_path, block=editor_setup)
-        
-        self.println(f"Automatic merge failed; fix conflicts and then commit the result.")
+
+        self.println(
+            f"Automatic merge failed; fix conflicts and then commit the result."
+        )
         self.exit(1)
 
     def default_commit_message(self) -> str:
         return f"Merge commit '{self.inputs.right_name}"
-       
+
     def commit_merge(self) -> None:
         parents = [self.inputs.left_oid, self.inputs.right_oid]
         message = self.compose_message()
@@ -147,7 +148,9 @@ class Merge(WriteCommitMixin, Base):
 
         self.repo.index.load_for_update()
 
-        tree_diff = self.repo.database.tree_diff(self.inputs.left_oid, self.inputs.right_oid)
+        tree_diff = self.repo.database.tree_diff(
+            self.inputs.left_oid, self.inputs.right_oid
+        )
         self.repo.migration(tree_diff).apply_changes()
 
         self.repo.index.write_updates()

@@ -7,6 +7,7 @@ class Compressor:
     """
     Finds and creates delta objects to reduce packfile size.
     """
+
     # Constants
     OBJECT_SIZE_MIN = 50
     OBJECT_SIZE_MAX = 0x20000000
@@ -34,7 +35,11 @@ class Compressor:
             max_size = target.size / 2 - 20
             ref_depth = 1
 
-        return max_size * (Compressor.MAX_DEPTH - source.depth) / (Compressor.MAX_DEPTH + 1 - ref_depth)
+        return (
+            max_size
+            * (Compressor.MAX_DEPTH - source.depth)
+            / (Compressor.MAX_DEPTH + 1 - ref_depth)
+        )
 
     def add(self, entry: Any) -> None:
         """

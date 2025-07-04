@@ -36,7 +36,7 @@ class Rm(Base):
             self.repo.index.release_lock()
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
-        
+
         try:
             for path in self.args:
                 self.plan_removal(path)
@@ -55,14 +55,13 @@ class Rm(Base):
         self.exit(0)
 
     def define_options(self) -> None:
-       self.cached = "--cached" in self.args
-       self.force = "-f" in self.args or "--force" in self.args
-       self.recursive = "-r" in self.args
-   
-       self.args = [
-           arg for arg in self.args
-           if arg not in ("--cached", "-f", "--force", "-r")
-       ]
+        self.cached = "--cached" in self.args
+        self.force = "-f" in self.args or "--force" in self.args
+        self.recursive = "-r" in self.args
+
+        self.args = [
+            arg for arg in self.args if arg not in ("--cached", "-f", "--force", "-r")
+        ]
 
     def expand_path(self, path):
         if self.repo.index.is_tracked_directory(path):
@@ -75,7 +74,6 @@ class Rm(Base):
             return [path]
 
         raise ValueError(f"pathspec '{path}' did not match any files")
-
 
     def remove_file(self, path: str) -> None:
         self.repo.index.remove(Path(path))
@@ -96,7 +94,9 @@ class Rm(Base):
 
         staged_change = self.inspector.compare_tree_to_index(item, entry)
         if stat_result is not None:
-            unstaged_change = self.inspector.compare_index_to_workspace(entry, stat_result) 
+            unstaged_change = self.inspector.compare_index_to_workspace(
+                entry, stat_result
+            )
         else:
             unstaged_change = None
 
@@ -131,4 +131,3 @@ class Rm(Base):
 
         for path in paths:
             self.stderr.write(f"    {path}\n")
-

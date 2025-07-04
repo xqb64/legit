@@ -3,15 +3,17 @@ from typing import List, Dict, Generator
 
 
 SYMBOLS: dict[str, str] = {
-    'eql': ' ',
-    'ins': '+',
-    'del': '-',
+    "eql": " ",
+    "ins": "+",
+    "del": "-",
 }
+
 
 @dataclass
 class Line:
     number: int
     text: str
+
 
 @dataclass
 class Edit:
@@ -28,6 +30,7 @@ class Edit:
     def a_lines(self):
         return [self.a_line]
 
+
 class Myers:
     """Myers O((N + M) D) diff algorithm for two sequences."""
 
@@ -43,13 +46,13 @@ class Myers:
         edits: list[Edit] = []
 
         for prev_x, prev_y, x, y in self._backtrack():
-            if x == prev_x: # insertion
+            if x == prev_x:  # insertion
                 b_line = self.b[prev_y]
                 edits.append(Edit("ins", None, b_line))
-            elif y == prev_y: # deletion
+            elif y == prev_y:  # deletion
                 a_line = self.a[prev_x]
                 edits.append(Edit("del", a_line, None))
-            else: # equality (diagonal move)
+            else:  # equality (diagonal move)
                 a_line = self.a[prev_x]
                 b_line = self.b[prev_y]
                 edits.append(Edit("eql", a_line, b_line))
@@ -65,7 +68,7 @@ class Myers:
         trace = self._shortest_edit()
         x, y = len(self.a), len(self.b)
 
-        for d in range(len(trace) - 1, -1, -1):              # reverse order
+        for d in range(len(trace) - 1, -1, -1):  # reverse order
             v = trace[d]
             k = x - y
 
@@ -98,7 +101,7 @@ class Myers:
         """
         n, m = len(self.a), len(self.b)
         max_d = n + m
-        v: dict[int, int] = {1: 0}          # diagonal -> furthest x
+        v: dict[int, int] = {1: 0}  # diagonal -> furthest x
         trace: list[dict[int, int]] = []
 
         for d in range(max_d + 1):
@@ -107,9 +110,9 @@ class Myers:
             for k in range(-d, d + 1, 2):
                 # Decide whether the next step is down or right.
                 if k == -d or (k != d and v.get(k - 1, 0) < v.get(k + 1, 0)):
-                    x = v.get(k + 1, 0)            # down (insertion)
+                    x = v.get(k + 1, 0)  # down (insertion)
                 else:
-                    x = v.get(k - 1, 0) + 1        # right (deletion)
+                    x = v.get(k - 1, 0) + 1  # right (deletion)
 
                 y = x - k
 
@@ -121,7 +124,6 @@ class Myers:
                 v[k] = x  # record furthest x for this diagonal
 
                 if x >= n and y >= m:
-                    return trace    # full path found
+                    return trace  # full path found
 
         return trace  # fall-back (shouldn't happen)
-

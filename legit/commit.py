@@ -11,7 +11,7 @@ class Commit:
         tree: str,
         author: Author,
         committer: Author,
-        message: str
+        message: str,
     ) -> None:
         self.parents: list[Optional[str]] = parents
         self.tree: str = tree
@@ -22,20 +22,20 @@ class Commit:
 
     def is_merge(self) -> bool:
         return len(self.parents) > 1
-    
+
     @property
     def parent(self):
         try:
             return self.parents[0]
         except IndexError:
             return None
-    
+
     @parent.setter
     def parent(self, value):
         if not self.parents:
             self.parents.append(value)
         else:
-            self.parents[0] = value   
+            self.parents[0] = value
 
     @classmethod
     def parse(cls, data: bytes) -> "Commit":
@@ -64,7 +64,7 @@ class Commit:
             key, value = line.split(" ", 1)
             headers[key].append(value)
 
-        message = text[pos:] 
+        message = text[pos:]
 
         tree_values = headers.get("tree")
         if not tree_values:
@@ -89,7 +89,7 @@ class Commit:
     @oid.setter
     def oid(self, value: str) -> None:
         self._oid = value
-    
+
     def title_line(self) -> str:
         return self.message.splitlines()[0]
 
@@ -105,15 +105,15 @@ class Commit:
         ]
 
         for parent in self.parents:
-            lines += [
-                f"parent {parent}"
+            lines += [f"parent {parent}"]
+
+        lines.extend(
+            [
+                f"author {self.author}",
+                f"committer {self.committer}",
+                "",
+                self.message,
             ]
+        )
 
-        lines.extend([
-            f"author {self.author}",
-            f"committer {self.committer}",
-            "",
-            self.message,
-        ])
-
-        return b'\n'.join(line.encode('utf-8') for line in lines)
+        return b"\n".join(line.encode("utf-8") for line in lines)

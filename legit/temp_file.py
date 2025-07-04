@@ -12,7 +12,7 @@ class TempFile:
         self.file = None
 
     def generate_temp_name(self, prefix: str) -> str:
-        return prefix + ''.join(random.choices(self.TEMP_CHARS, k=6))
+        return prefix + "".join(random.choices(self.TEMP_CHARS, k=6))
 
     def write(self, data) -> None:
         if self.file is None:

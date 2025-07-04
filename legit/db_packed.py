@@ -55,4 +55,3 @@ class Packed:
         elif isinstance(record, RefDelta):
             base = self.load_info(record.base_oid)
             return Raw(base.ty, record.delta_data, None)
-

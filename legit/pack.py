@@ -1,5 +1,5 @@
-MAX_COPY_SIZE = 0xffffff
-MAX_INSERT_SIZE = 0x7f
+MAX_COPY_SIZE = 0xFFFFFF
+MAX_INSERT_SIZE = 0x7F
 
 HEADER_SIZE = 12
 HEADER_FORMAT = ">4sII"
@@ -14,12 +14,14 @@ REF_DELTA = 7
 
 TYPE_CODES = {
     "commit": COMMIT,
-    "tree":   TREE,
-    "blob":   BLOB,
+    "tree": TREE,
+    "blob": BLOB,
 }
+
 
 class InvalidPack(Exception):
     pass
+
 
 class Record:
     def __init__(self, ty, data):
@@ -28,7 +30,7 @@ class Record:
         self.oid = None
 
     def __str__(self):
-        return self.data.decode('utf-8', errors='replace')
+        return self.data.decode("utf-8", errors="replace")
 
     def to_bytes(self):
         return self.data

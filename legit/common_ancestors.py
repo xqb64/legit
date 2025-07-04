@@ -8,7 +8,7 @@ class CommonAncestors:
         self.database: Database = database
         self.flags = defaultdict(set)
         self.queue = []
-        
+
         self.results = []
 
         self.insert_by_date(self.queue, self.database.load(one))
@@ -48,9 +48,9 @@ class CommonAncestors:
         flags = self.flags[commit.oid]
 
         if flags == set(["parent1", "parent2"]):
-            flags.add("result") 
+            flags.add("result")
 
-            self.insert_by_date(self.results, commit) 
+            self.insert_by_date(self.results, commit)
             self.add_parents(commit, flags | {"stale"})
         else:
             self.add_parents(commit, flags)
@@ -59,10 +59,8 @@ class CommonAncestors:
         for parent_oid in commit.parents:
             if self.flags[parent_oid].issuperset(flags):
                 continue
-    
+
             self.flags[parent_oid].update(flags)
-    
+
             parent_commit = self.database.load(parent_oid)
             self.insert_by_date(self.queue, parent_commit)
-
-

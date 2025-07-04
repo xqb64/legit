@@ -28,11 +28,11 @@ class Checkout(Base):
 
         self.current_ref: Refs.SymRef = self.repo.refs.current_ref()
         self.current_oid: Optional[str] = self.current_ref.read_oid()
-        
+
         revision: Revision = Revision(self.repo, self.target)
-    
+
         self.target_oid: str | None = None
-        
+
         try:
             self.target_oid = revision.resolve(Revision.COMMIT)
         except Revision.InvalidObject as e:
@@ -41,8 +41,10 @@ class Checkout(Base):
         self.repo.index.load_for_update()
 
         tree_diff = self.repo.database.tree_diff(self.current_oid, self.target_oid)
-        migration = self.repo.migration(cast(dict[Path, list[DatabaseEntry]], tree_diff))
-        
+        migration = self.repo.migration(
+            cast(dict[Path, list[DatabaseEntry]], tree_diff)
+        )
+
         try:
             migration.apply_changes()
         except Migration.Conflict:
@@ -56,24 +58,26 @@ class Checkout(Base):
         self.print_previous_head()
         self.print_detachment_notice()
         self.print_new_head()
-        
+
         self.exit(0)
 
     def handle_migration_conflict(self, migration: Migration) -> None:
         self.repo.index.release_lock()
 
         for msg in migration.errors:
-            self.stderr.write(f"error: {msg}" + '\n')
+            self.stderr.write(f"error: {msg}" + "\n")
         self.stderr.write("Aborting\n")
 
         self.exit(1)
 
-    def handle_invalid_object(self, revision: Revision, e: Revision.InvalidObject) -> None:
+    def handle_invalid_object(
+        self, revision: Revision, e: Revision.InvalidObject
+    ) -> None:
         for err in revision.errors:
-            self.stderr.write(f"error: {err}" + '\n')
+            self.stderr.write(f"error: {err}" + "\n")
             for line in err.hint:
-                self.stderr.write(f"hint: {line}" + '\n')
-        self.stderr.write(f"error: {e}" + '\n')
+                self.stderr.write(f"hint: {line}" + "\n")
+        self.stderr.write(f"error: {e}" + "\n")
         self.exit(1)
 
     def print_previous_head(self) -> None:
@@ -95,9 +99,9 @@ class Checkout(Base):
             return
 
         self.stderr.write(f"Note: checking out '{self.target}'.\n")
-        self.stderr.write('\n')
+        self.stderr.write("\n")
         self.stderr.write(DETACHED_HEAD_MESSAGE)
-        self.stderr.write('\n')
+        self.stderr.write("\n")
 
     def print_new_head(self) -> None:
         if self.new_ref.is_head():

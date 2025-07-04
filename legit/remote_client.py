@@ -16,7 +16,7 @@ class RemoteClientMixin:
                 continue
 
             oid, ref = m.groups()
-            
+
             if oid != RemoteClientMixin.ZERO_OID:
                 self.remote_refs[ref] = oid.lower()
 
@@ -29,7 +29,7 @@ class RemoteClientMixin:
             stderr=self.stderr,
         )
 
-        input_stream  = proc.stdout
+        input_stream = proc.stdout
         output_stream = proc.stdin
 
         self.conn = Remotes.Protocol(name, input_stream, output_stream, capabilities)
@@ -37,23 +37,25 @@ class RemoteClientMixin:
     def build_agent_command(self, program, url):
         import shlex
         from urllib.parse import urlparse
-        
+
         uri = urlparse(url)
-        argv = shlex.split(program) + [uri.path.lstrip('/')]
+        argv = shlex.split(program) + [uri.path.lstrip("/")]
         if uri.scheme == "file":
             return argv
         elif uri.scheme == "ssh":
             return self.ssh_command(uri, argv)
-    
+
     def ssh_command(self, uri, argv):
         ssh = ["ssh", uri.hostname]
         if uri.username:
             ssh += ["-l", uri.username]
         if uri.port:
             ssh += ["-p", str(uri.port)]
-        return ssh + argv 
+        return ssh + argv
 
-    def report_ref_update(self, ref_names, error, old_oid=None, new_oid=None, is_ff=False):
+    def report_ref_update(
+        self, ref_names, error, old_oid=None, new_oid=None, is_ff=False
+    ):
         if error:
             return self.show_ref_update("!", "[rejected]", ref_names, error)
 
@@ -85,4 +87,4 @@ class RemoteClientMixin:
         if reason:
             message += f" ({reason})"
 
-        self.stderr.write(message + '\n')
+        self.stderr.write(message + "\n")

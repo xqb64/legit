@@ -4,9 +4,10 @@ import subprocess
 import sys
 from typing import MutableMapping, TextIO
 
+
 class Pager:
     PAGER_CMD = "less"
-    PAGER_ENV = { "LESS": "FRX", "LV": "-c" }
+    PAGER_ENV = {"LESS": "FRX", "LV": "-c"}
 
     def __init__(
         self,
@@ -26,7 +27,7 @@ class Pager:
 
         reader_fd, writer_fd = os.pipe()
 
-        self.input: TextIO = os.fdopen(writer_fd, 'w')
+        self.input: TextIO = os.fdopen(writer_fd, "w")
 
         self._proc: subprocess.Popen[bytes] | None = subprocess.Popen(
             args,
@@ -44,5 +45,3 @@ class Pager:
         if self._proc:
             self._proc.wait()
             self._proc = None
-
-

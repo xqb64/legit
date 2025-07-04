@@ -4,7 +4,7 @@ from legit.pack import InvalidPack
 
 
 class Stream:
-    def __init__(self, f, buffer=b''):
+    def __init__(self, f, buffer=b""):
         self.input = f
         self.digest = hashlib.sha1()
         self.offset = 0
@@ -41,14 +41,14 @@ class Stream:
     def readbyte(self) -> int:
         """
         Reads a single byte and returns it as an integer.
-        
+
         Raises:
             EOFError: If the end of the stream is reached unexpectedly.
         """
         b = self.read(1)
         if not b:
             raise EOFError("Unexpected EOF when reading a byte")
-        return b[0]    
+        return b[0]
 
     def seek(self, amount: int):
         """
@@ -68,7 +68,7 @@ class Stream:
 
         # Prepend it to the main buffer to be read first next time.
         self.buffer = data_to_unread + self.buffer
-        self.offset += amount # Adjust offset backwards.
+        self.offset += amount  # Adjust offset backwards.
 
     def read_buffered(self, size: int, block: bool = True) -> bytes:
         """
@@ -79,7 +79,7 @@ class Stream:
 
         # 1. Consume internal buffer.
         from_buf = self.buffer[:size]
-        del self.buffer[:len(from_buf)]
+        del self.buffer[: len(from_buf)]
 
         needed = size - len(from_buf)
         if needed <= 0:
@@ -88,9 +88,9 @@ class Stream:
         try:
             from_io = self.input.read(needed)
         except (EOFError, BlockingIOError):
-            from_io = b''
+            from_io = b""
 
-        return bytes(from_buf) + (from_io or b'')
+        return bytes(from_buf) + (from_io or b"")
 
     def update_state(self, data: bytes):
         """
@@ -104,6 +104,3 @@ class Stream:
         else:
             # Otherwise, update the main SHA-1 digest.
             self.digest.update(data)
-
-
-

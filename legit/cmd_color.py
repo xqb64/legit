@@ -16,9 +16,10 @@ SGR_CODES: dict[str, int] = {
     "white": 37,
 }
 
+
 class Color:
     @staticmethod
-    def format(style, text: str) -> str: 
+    def format(style, text: str) -> str:
         if isinstance(style, str):
             names = [style]
         else:
@@ -33,9 +34,8 @@ class Color:
         for i, code in enumerate(codes):
             if 30 <= code <= 37:
                 if color_is_set:
-                    codes[i] += 10 
+                    codes[i] += 10
                 color_is_set = True
 
         code_str = ";".join(str(c) for c in codes)
         return f"\x1b[{code_str}m{text}\x1b[0m"
-

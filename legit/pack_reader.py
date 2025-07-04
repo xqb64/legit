@@ -2,16 +2,25 @@ import io
 import zlib
 import struct
 
-from legit.pack import REF_DELTA, InvalidPack, HEADER_SIZE, HEADER_FORMAT, SIGNATURE, VERSION, TYPE_CODES, COMMIT, BLOB, TREE, Record, RefDelta
+from legit.pack import (
+    REF_DELTA,
+    InvalidPack,
+    HEADER_SIZE,
+    HEADER_FORMAT,
+    SIGNATURE,
+    VERSION,
+    TYPE_CODES,
+    COMMIT,
+    BLOB,
+    TREE,
+    Record,
+    RefDelta,
+)
 from legit.numbers import VarIntLE
 from legit.pack_expander import Expander
 
 
-TYPE_CODES_REVERSED = {
-    COMMIT: "commit",
-    BLOB: "blob",
-    TREE: "tree"
-}
+TYPE_CODES_REVERSED = {COMMIT: "commit", BLOB: "blob", TREE: "tree"}
 
 
 class Reader:
@@ -41,7 +50,7 @@ class Reader:
 
             return RefDelta(delta.base_oid, size)
 
-    def read_record(self) -> 'Record | None':
+    def read_record(self) -> "Record | None":
         ty, _ = self.read_record_header()
 
         if ty in [COMMIT, BLOB, TREE]:
@@ -56,10 +65,10 @@ class Reader:
             byte = self.input.readbyte()
             while byte & 0x80:
                 byte = self.input.readbyte()
-            
+
             # Skip the zlib-compressed delta data
-            self.read_zlib_stream() 
-            
+            self.read_zlib_stream()
+
             # Return None to indicate the object was skipped
             return None
 
@@ -70,7 +79,7 @@ class Reader:
         base_oid = self.input.read(20).hex()
         delta_data = self.read_zlib_stream()
         return RefDelta(base_oid, delta_dat)
-    
+
     def read_record_header(self):
         byte, size = VarIntLE.read(self.input, 4)
         ty = (byte >> 4) & 0x7
@@ -83,8 +92,10 @@ class Reader:
         while not decompressor.eof:
             chunk = self.input.read_nonblock(256)
             if not chunk and not decompressor.eof:
-                raise InvalidPack("Input stream ended unexpectedly during zlib decompression")
-            
+                raise InvalidPack(
+                    "Input stream ended unexpectedly during zlib decompression"
+                )
+
             try:
                 output.extend(decompressor.decompress(chunk))
             except zlib.error as e:
@@ -98,5 +109,3 @@ class Reader:
             self.input.seek(-len(decompressor.unused_data))
 
         return bytes(output)
-
-

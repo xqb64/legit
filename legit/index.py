@@ -9,6 +9,7 @@ from typing import BinaryIO
 
 from typing import BinaryIO, Protocol, runtime_checkable
 
+
 @runtime_checkable
 class Hash(Protocol):
     def update(self, data: bytes) -> None: ...
@@ -18,6 +19,7 @@ class Hash(Protocol):
 def _u32(x: int) -> int:
     """Return the lower 32 bits of x (Git index uses uint32)."""
     return x & 0xFFFFFFFF
+
 
 class Index:
     HEADER_SIZE: int = 12
@@ -63,16 +65,16 @@ class Index:
             if not item:
                 continue
 
-            entry = Entry.create_from_db(path, item, idx+1)
+            entry = Entry.create_from_db(path, item, idx + 1)
             self.store_entry(entry)
-        
+
         self.changed = True
-    
-    def update_entry_stat(self, entry: 'Entry', stat: os.stat_result) -> None:
+
+    def update_entry_stat(self, entry: "Entry", stat: os.stat_result) -> None:
         entry.update_stat(stat)
         self.changed = True
 
-    def entry_for_path(self, path: Path, stage: int = 0) ->' Entry | None':
+    def entry_for_path(self, path: Path, stage: int = 0) -> " Entry | None":
         return self.entries.get((path, stage))
 
     def is_tracked_file(self, path: Path) -> bool:
@@ -96,13 +98,13 @@ class Index:
         self.discard_conflicts(entry)
         self.store_entry(entry)
         self.changed = True
-    
+
     def remove(self, path: Path) -> None:
         self.remove_entry(path)
         self.remove_children(path)
         self.changed = True
 
-    def discard_conflicts(self, entry: 'Entry') -> None:
+    def discard_conflicts(self, entry: "Entry") -> None:
         for dirname in entry.parent_directories():
             self.remove_entry(dirname)
         self.remove_children(entry.path)
@@ -143,7 +145,9 @@ class Index:
         assert self.lockfile.lock is not None
         writer: Checksum = Checksum(self.lockfile.lock)
 
-        header: bytes = struct.pack(Index.HEADER_FORMAT, Index.SIGNATURE, Index.VERSION, len(self.entries))
+        header: bytes = struct.pack(
+            Index.HEADER_FORMAT, Index.SIGNATURE, Index.VERSION, len(self.entries)
+        )
         writer.write(header)
 
         for _, v in sorted(self.entries.items()):
@@ -153,7 +157,6 @@ class Index:
         self.lockfile.commit()
 
         self.changed = False
-
 
     def load_for_update(self) -> None:
         self.lockfile.hold_for_update()
@@ -171,7 +174,7 @@ class Index:
             reader.verify_checksum()
 
             file.close()
-    
+
     def clear(self) -> None:
         self._clear()
         self.changed = True
@@ -183,11 +186,11 @@ class Index:
 
     def open_index_file(self) -> BinaryIO | None:
         try:
-            return open(self.path, 'rb')
+            return open(self.path, "rb")
         except FileNotFoundError:
             return None
 
-    def read_header(self, reader: 'Checksum') -> int:
+    def read_header(self, reader: "Checksum") -> int:
         data = reader.read(Index.HEADER_SIZE)
 
         signature: bytes
@@ -204,16 +207,16 @@ class Index:
 
         return count
 
-    def read_entries(self, reader: 'Checksum', count: int) -> None:
+    def read_entries(self, reader: "Checksum", count: int) -> None:
         for _ in range(count):
             entry = reader.read(Index.ENTRY_MIN_SIZE)
 
-            while entry[-1:] != b'\x00':  # Ensure slicing result is bytes
+            while entry[-1:] != b"\x00":  # Ensure slicing result is bytes
                 entry += reader.read(Index.ENTRY_BLOCK)
 
             self.store_entry(Entry.parse(entry))
 
-    def store_entry(self, entry: 'Entry') -> None:
+    def store_entry(self, entry: "Entry") -> None:
         self.entries[entry.key()] = entry
         for dirname in entry.parent_directories():
             self.parents[dirname].add(entry.path)
@@ -231,14 +234,15 @@ class Index:
         self.lockfile.write(self.digest.digest())
         self.lockfile.commit()
 
+
 class Entry:
     REGULAR_MODE: int = 0o100644
     EXECUTABLE_MODE: int = 0o100755
-    MAX_PATH_SIZE: int = 0xfff
+    MAX_PATH_SIZE: int = 0xFFF
     ENTRY_BLOCK: int = 8
     HEADER_FORMAT: str = "!10I20sH"
     HEADER_SIZE: int = struct.calcsize(HEADER_FORMAT)
- 
+
     def __init__(
         self,
         ctime: float,
@@ -270,11 +274,11 @@ class Entry:
         self.path = path
 
     @classmethod
-    def create_from_db(cls, path: Path, item, n: int) -> 'Entry':
+    def create_from_db(cls, path: Path, item, n: int) -> "Entry":
         p = str(path)
         flags = (n << 12) | min(len(p), Entry.MAX_PATH_SIZE)
         return cls(0, 0, 0, 0, 0, 0, item.mode, 0, 0, 0, item.oid, flags, path)
-            
+
     @property
     def stage(self) -> int:
         return (self.flags >> 12) & 0x3
@@ -298,13 +302,17 @@ class Entry:
         return Entry.REGULAR_MODE if not is_executable else Entry.EXECUTABLE_MODE
 
     def stat_match(self, stat_result: os.stat_result) -> bool:
-        return self._mode == Entry.mode_for_stat(stat_result) and (self.size == 0 or self.size == stat_result.st_size)
-    
+        return self._mode == Entry.mode_for_stat(stat_result) and (
+            self.size == 0 or self.size == stat_result.st_size
+        )
+
     def times_match(self, stat_result: os.stat_result) -> bool:
-        return self.ctime == int(stat_result.st_ctime) and \
-               self.ctime_nsec == stat_result.st_ctime_ns and \
-               self.mtime == int(stat_result.st_mtime) and \
-               self.mtime_nsec == stat_result.st_mtime_ns
+        return (
+            self.ctime == int(stat_result.st_ctime)
+            and self.ctime_nsec == stat_result.st_ctime_ns
+            and self.mtime == int(stat_result.st_mtime)
+            and self.mtime_nsec == stat_result.st_mtime_ns
+        )
 
     def mode(self) -> int:
         return self._mode
@@ -315,10 +323,10 @@ class Entry:
 
     def parent_directories(self) -> list[Path]:
         parts = Path(self.path).parts
-        return [Path(*parts[:i+1]) for i in range(len(parts)-1)]
-    
+        return [Path(*parts[: i + 1]) for i in range(len(parts) - 1)]
+
     @classmethod
-    def parse(cls, data: bytes) -> 'Entry':
+    def parse(cls, data: bytes) -> "Entry":
         """
         Parses a byte string to create an Entry instance.
         This is the inverse of the to_bytes method.
@@ -326,62 +334,87 @@ class Entry:
         import binascii
 
         # Unpack the fixed-size part of the data
-        header_data = data[:cls.HEADER_SIZE]
+        header_data = data[: cls.HEADER_SIZE]
         unpacked_header = struct.unpack(cls.HEADER_FORMAT, header_data)
-        
+
         # Extract the metadata fields from the unpacked tuple
-        (ctime, ctime_nsec, mtime, mtime_nsec, dev, ino,
-         mode, uid, gid, size) = unpacked_header[:10]
-        
+        (ctime, ctime_nsec, mtime, mtime_nsec, dev, ino, mode, uid, gid, size) = (
+            unpacked_header[:10]
+        )
+
         # The OID is the next part, convert the 20 bytes back to a hex string
         oid_bytes = unpacked_header[10]
-        oid_hex = binascii.hexlify(oid_bytes).decode('ascii')
-        
+        oid_hex = binascii.hexlify(oid_bytes).decode("ascii")
+
         # The flags are the last part of the fixed header
         flags = unpacked_header[11]
 
         # The rest of the data contains the path. Find the first null byte.
         path_start_index = cls.HEADER_SIZE
         try:
-            null_index = data.index(b'\x00', path_start_index)
+            null_index = data.index(b"\x00", path_start_index)
             path_bytes = data[path_start_index:null_index]
-            path = Path(path_bytes.decode('utf-8'))
+            path = Path(path_bytes.decode("utf-8"))
         except ValueError:
             # Fallback if no null terminator is found (should not happen with valid data)
-            path = Path(data[path_start_index:].decode('utf-8', 'ignore'))
+            path = Path(data[path_start_index:].decode("utf-8", "ignore"))
 
         # Construct the Entry object with the parsed data
         return cls(
-            ctime, ctime_nsec, mtime, mtime_nsec, dev, ino,
-            mode, uid, gid, size, oid_hex, flags, path
+            ctime,
+            ctime_nsec,
+            mtime,
+            mtime_nsec,
+            dev,
+            ino,
+            mode,
+            uid,
+            gid,
+            size,
+            oid_hex,
+            flags,
+            path,
         )
 
     @classmethod
-    def create(cls, path: Path, oid: str, _stat: os.stat_result) -> 'Entry':
+    def create(cls, path: Path, oid: str, _stat: os.stat_result) -> "Entry":
         path = Path(path) if not isinstance(path, Path) else path
         exec_perms = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         is_executable = bool(_stat.st_mode & exec_perms)
         mode = Entry.EXECUTABLE_MODE if is_executable else Entry.REGULAR_MODE
-        flags = min(len(str(path).encode('utf-8')), Entry.MAX_PATH_SIZE)
+        flags = min(len(str(path).encode("utf-8")), Entry.MAX_PATH_SIZE)
 
         return cls(
-            _stat.st_ctime, _stat.st_ctime_ns,
-            _stat.st_mtime, _stat.st_mtime_ns,
-            _stat.st_dev, _stat.st_ino,
-            mode, _stat.st_uid, _stat.st_gid, _stat.st_size,
-            oid, flags, path
+            _stat.st_ctime,
+            _stat.st_ctime_ns,
+            _stat.st_mtime,
+            _stat.st_mtime_ns,
+            _stat.st_dev,
+            _stat.st_ino,
+            mode,
+            _stat.st_uid,
+            _stat.st_gid,
+            _stat.st_size,
+            oid,
+            flags,
+            path,
         )
-    
+
     def to_bytes(self) -> bytes:
         import binascii
 
         header = struct.pack(
             "!10I",
-            _u32(int(self.ctime)),      _u32(self.ctime_nsec),
-            _u32(int(self.mtime)),      _u32(self.mtime_nsec),
-            _u32(self.dev),             _u32(self.ino),
-            _u32(self._mode),           _u32(self.uid),
-            _u32(self.gid),             _u32(self.size),
+            _u32(int(self.ctime)),
+            _u32(self.ctime_nsec),
+            _u32(int(self.mtime)),
+            _u32(self.mtime_nsec),
+            _u32(self.dev),
+            _u32(self.ino),
+            _u32(self._mode),
+            _u32(self.uid),
+            _u32(self.gid),
+            _u32(self.size),
         )
 
         # 20 raw bytes from 40-char hex OID
@@ -391,18 +424,19 @@ class Entry:
         flags = struct.pack("!H", self.flags)
 
         # Null-terminated path
-        path_bytes = str(self.path).encode('utf-8') + b'\x00'
+        path_bytes = str(self.path).encode("utf-8") + b"\x00"
 
         result = header + oid_bytes + flags + path_bytes
 
         # Pad to ENTRY_BLOCK (8-byte) boundary
         while len(result) % Entry.ENTRY_BLOCK != 0:
-            result += b'\x00'
+            result += b"\x00"
 
         return result
 
     def key(self) -> tuple[Path, int]:
         return (self.path, self.stage)
+
 
 class Checksum:
     class EndOfFile(Exception):
@@ -426,7 +460,7 @@ class Checksum:
 
         if len(data) != size:
             raise Checksum.EndOfFile
-        
+
         self.digest.update(data)
         return data
 
@@ -435,4 +469,3 @@ class Checksum:
 
         if data != self.digest.digest():
             raise Exception("Checksum does not match data stored on disk.")
-

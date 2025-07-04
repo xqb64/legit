@@ -4,7 +4,7 @@ from collections import defaultdict
 
 class XDelta:
     BLOCK_SIZE = 16
-    
+
     def __init__(self, source, index):
         self.source = source
         self.index = index
@@ -37,6 +37,7 @@ class XDelta:
 
     def generate_ops(self):
         from legit.pack_delta import Delta
+
         m_offset, m_size = self.longest_match()
         if m_size == 0:
             return self.push_insert()
@@ -81,9 +82,13 @@ class XDelta:
             remaining -= 1
 
         return s
-    
+
     def expand_match(self, m_offset, m_size):
-        while self.insert and m_offset > 0 and self.source[m_offset - 1] == self.insert[-1]:
+        while (
+            self.insert
+            and m_offset > 0
+            and self.source[m_offset - 1] == self.insert[-1]
+        ):
             if m_size == MAX_COPY_SIZE:
                 break
 
@@ -92,7 +97,7 @@ class XDelta:
             m_size += 1
 
             self.insert.pop()
-        
+
         self.offset += m_size
         return [m_offset, m_size]
 
@@ -103,7 +108,7 @@ class XDelta:
 
     def flush_insert(self, size=None):
         from legit.pack_delta import Delta
-        
+
         if size and len(self.insert) < size:
             return
         if not self.insert:

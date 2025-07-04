@@ -78,7 +78,7 @@ class StatusCmd(Base):
         self.repo.index.load_for_update()
         self.status_state = self.repo.status()
         self.repo.index.write_updates()
-    
+
         self.print_results()
 
         self.exit(0)
@@ -89,7 +89,7 @@ class StatusCmd(Base):
         except IndexError:
             fmt = None
 
-        if fmt == '--porcelain':
+        if fmt == "--porcelain":
             self.print_porcelain_format()
         else:
             self.print_long_format()
@@ -132,32 +132,48 @@ class StatusCmd(Base):
 
     def print_long_format(self) -> None:
         assert self.status_state is not None
-    
+
         self.print_branch_status()
         self.print_pending_commit_status()
 
-        self.print_changes("Changes to be committed", self.status_state.index_changes, 'green')
-        self.print_changes("Unmerged paths", self.status_state.conflicts, "red", "conflict") 
-        self.print_changes("Changes not staged for commit", self.status_state.workspace_changes, 'red')
-        self.print_changes("Untracked files", {p: '' for p in sorted(self.status_state.untracked)}, 'red')
+        self.print_changes(
+            "Changes to be committed", self.status_state.index_changes, "green"
+        )
+        self.print_changes(
+            "Unmerged paths", self.status_state.conflicts, "red", "conflict"
+        )
+        self.print_changes(
+            "Changes not staged for commit", self.status_state.workspace_changes, "red"
+        )
+        self.print_changes(
+            "Untracked files",
+            {p: "" for p in sorted(self.status_state.untracked)},
+            "red",
+        )
 
         self.print_commit_status()
 
-    def print_changes(self, message: str, changeset: MutableMapping[str, str], color: str, label_set: str = "normal") -> None:
+    def print_changes(
+        self,
+        message: str,
+        changeset: MutableMapping[str, str],
+        color: str,
+        label_set: str = "normal",
+    ) -> None:
         if not changeset:
             return
 
         labels = UI_LABELS[label_set]
         width = UI_WIDTHS[label_set]
-        
+
         self.println(message)
-        self.println('')
+        self.println("")
 
         for path, ty in changeset.items():
-            status = labels[ty].ljust(width, ' ') if ty else ''
+            status = labels[ty].ljust(width, " ") if ty else ""
             self.println("\t" + self.fmt(color, f"{status}{path}"))
 
-        self.println('')
+        self.println("")
 
     def print_commit_status(self) -> None:
         assert self.status_state is not None
@@ -183,8 +199,14 @@ class StatusCmd(Base):
     def status_for_path(self, path: str) -> str:
         assert self.status_state is not None
         if path in self.status_state.conflicts:
-            return CONFLICT_SHORT_STATUS[tuple(sorted(self.status_state.conflicts[path]))]
+            return CONFLICT_SHORT_STATUS[
+                tuple(sorted(self.status_state.conflicts[path]))
+            ]
         else:
-            left = SHORT_STATUS.get(cast(str, self.status_state.index_changes.get(path)), ' ')
-            right = SHORT_STATUS.get(cast(str, self.status_state.workspace_changes.get(path)), ' ')
+            left = SHORT_STATUS.get(
+                cast(str, self.status_state.index_changes.get(path)), " "
+            )
+            right = SHORT_STATUS.get(
+                cast(str, self.status_state.workspace_changes.get(path)), " "
+            )
             return left + right
