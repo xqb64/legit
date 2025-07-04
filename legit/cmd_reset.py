@@ -56,7 +56,6 @@ class Reset(Base):
                 self.args.pop(0)
         except Revision.InvalidObject:
             self.commit_oid = self.repo.refs.read_head()
-            print(f"self.commit_oid is: {self.commit_oid}")
 
     def reset_path(self, path: Optional[Path]) -> None:
         listing = self.repo.database.load_tree_list(self.commit_oid, path)

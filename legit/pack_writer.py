@@ -85,10 +85,11 @@ class Writer:
 
         obj = entry.delta or self.database.load_raw(entry.oid)
 
-        header = VarIntLE.write(obj.size, 4)
+        header = VarIntLE.write(entry.packed_size, 4)
         header_list = list(header)
-        header_list[0] |= (TYPE_CODES[entry.ty] << 4)
+        header_list[0] |= (entry.packed_type << 4)
         self.write(bytes(header_list))
+        self.write(entry.delta_prefix)
         compressed = zlib.compress(obj.data, self.compression)
         self.write(compressed)
 

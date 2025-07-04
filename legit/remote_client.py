@@ -11,13 +11,11 @@ class RemoteClientMixin:
         self.remote_refs = {}
 
         for line in self.conn.recv_until(None):
-            print(line)
             m = self.REF_LINE.match(line)
             if not m:
                 continue
 
             oid, ref = m.groups()
-            print(f"{type(oid)=}")
             
             if oid != RemoteClientMixin.ZERO_OID:
                 self.remote_refs[ref] = oid.lower()
@@ -53,7 +51,6 @@ class RemoteClientMixin:
             ssh += ["-l", uri.username]
         if uri.port:
             ssh += ["-p", str(uri.port)]
-        print(ssh + argv)
         return ssh + argv 
 
     def report_ref_update(self, ref_names, error, old_oid=None, new_oid=None, is_ff=False):

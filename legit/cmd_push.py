@@ -38,6 +38,8 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         self.send_update_requests()
         self.send_objects()
         
+        self.conn.output.close()
+        
         self.print_summary()
         self.recv_report_status()
 
@@ -63,14 +65,11 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         local_refs = list(sorted(ref.path for ref in self.repo.refs.list_all_refs()))
         targets = Refspec.expand(self.push_specs, local_refs)
 
-        print(f"targets: {targets=}")
- 
         for target, (source, forced) in targets.items():
             self.select_update(target, source, forced)
  
         for ref, values in self.updates.items():
             *_, old, new = values
-            print(f"send_update: {ref=}, {old=}, {new=}")
             self.send_update(ref, old, new)
  
         self.conn.send_packet(None)
@@ -137,7 +136,6 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
       # 1. First, read the single "unpack" status line from the server.
       # This packet indicates if the server successfully received the data.
       unpack_line = self.conn.recv_packet()
-      print(unpack_line)
       if unpack_line:
           unpack_match = self.UNPACK_LINE.match(unpack_line)
           if unpack_match:
