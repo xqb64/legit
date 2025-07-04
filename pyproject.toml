@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "legit"               # change if you plan to upload to PyPI and the name is taken
+version = "0.1.0"            # bump as you wish
+description = "A tiny git-like VCS clone."
+readme = "README.md"         # optional, but nice
+authors = [{ name = "Your Name", email = "you@example.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.11"   # or whatever you need
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Software Development :: Version Control",
+]
+
+# Tell setuptools to include the legit package (and all sub-packages)
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["legit*"]
+
+# Optional: provide a `legit` shell command in addition to `python -m legit`
+[project.scripts]
+legit = "legit.__main__:main"
+

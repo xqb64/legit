@@ -1,0 +1,206 @@
+from typing import Generator, Optional
+from legit.cmd_base import Base
+from legit.commit import Commit
+from legit.refs import Refs
+from legit.repository import Repository
+from legit.print_diff import PrintDiffMixin, Target
+from legit.revision import Revision
+from legit.rev_list import RevList
+
+
+class Log(PrintDiffMixin, Base):
+    def define_options(self) -> None:
+        self.decorate = "auto" 
+        self.abbrev = False
+        self.format = "medium"
+        self.patch = False
+        self.combined = False
+
+        self.define_print_diff_options()
+
+        positional = []
+        for arg in self.args:
+            if arg.startswith("--decorate="):
+                _, when = arg.split("=", 1)
+                self.decorate = when or "short"
+                continue
+            elif arg == "--no-decorate":
+                self.decorate = "no"
+                continue
+
+            if arg == "--abbrev-commit":
+                self.abbrev = True
+                continue
+            elif arg == "--no-abbrev-commit":
+                self.abbrev = False
+                continue
+
+            if arg.startswith("--pretty=") or arg.startswith("--format="):
+                _, fmt = arg.split("=", 1)
+                self.format = fmt
+                continue
+
+            if arg == "--oneline":
+                self.abbrev = True
+                self.format = "oneline"
+                continue
+            
+            if arg == "-p" or arg == "-u" or arg == "--patch":
+                self.patch = True
+                continue
+
+            if any(x in self.args for x in ("-s", "--no-patch")):
+                self.patch = False
+                continue
+
+            if arg == "--cc":
+                self.combined = self.patch = True
+                continue
+            
+            positional.append(arg)
+
+        self.args = positional
+            
+
+    def run(self) -> None:
+        """
+        Executes the log command, parsing options and displaying commit history.
+        """
+        self.define_options()
+        self.blank_line: bool = False
+        
+        self.define_print_diff_options()
+        self.setup_pager()
+
+        self.reverse_refs = self.repo.refs.reverse_refs()
+        self.current_ref = self.repo.refs.current_ref()
+    
+        self.rev_list: RevList = RevList(self.repo, self.args)
+        
+        for commit in self.rev_list.each():
+            self.show_commit(commit)
+        
+        self.exit(0)
+
+    def show_commit(self, commit: Commit) -> None:
+        match self.format:
+            case c if c == "medium":
+                self.show_commit_medium(commit)
+            case c if c == "oneline":
+                self.show_commit_oneline(commit)
+
+        self.show_patch(commit)
+
+    def show_patch(self, commit: Commit) -> None:
+        if not self.patch:
+            return
+        if commit.is_merge():
+            return self.show_merge_patch(commit)
+
+        diff = self.rev_list.tree_diff(commit.parent, commit.oid)
+        paths = sorted(diff.keys())
+
+        self._blank_line()
+
+        for path in paths:
+            old_item, new_item = diff[path]
+            self.print_diff(self.from_diff_item(path, old_item), self.from_diff_item(path, new_item))
+
+    def show_merge_patch(self, commit: Commit) -> Optional[str]:
+        if not self.combined:
+            return
+
+        diffs = [self.rev_list.tree_diff(oid, commit.oid) for oid in commit.parents]
+        if not diffs:
+            return
+
+        paths = [
+            path for path in diffs[0].keys()
+            if all(path in diff for diff in diffs[1:])
+        ]
+
+        self._blank_line()
+
+        for path in paths:
+            parents = [self.from_diff_item(path, diff[path][0]) for diff in diffs]
+            child = self.from_diff_item(path, diffs[0][path][1])
+
+            self.print_combined_diff(parents, child)
+
+    def from_diff_item(self, path, item) -> Target:
+        if item is not None:
+            blob = self.repo.database.load(item.oid)
+            return Target(path, item.oid, oct(item.mode)[2:], blob.data)
+        else:
+            return Target(path, '0' * 40, None, '')
+
+    def show_commit_medium(self, commit: Commit) -> None:
+        author = commit.author
+
+        self._blank_line()
+        self.println(self.fmt("yellow", f"commit {self._abbrev(commit)}") + self._decorate(commit))
+
+        if commit.is_merge():
+            oids = [self.repo.database.short_oid(oid) for oid in commit.parents]
+            self.println(f"Merge: {' '.join(oids)}")
+
+        self.println(f"Author: {author.name} <{author.email}>")
+        self.println(f"Date:   {author.readable_time()}")
+        self._blank_line()
+
+        for line in commit.message.splitlines():
+            self.println(f"    {line}")
+
+    def show_commit_oneline(self, commit: Commit) -> None:
+        _id = self.fmt('yellow', self._abbrev(commit)) + self._decorate(commit) 
+        self.println(f"{_id} {commit.title_line()}") 
+
+    def is_target(self, ref):
+        return ref.is_head() and not self.current_ref.is_head()
+
+    def _decorate(self, commit: Commit) -> str:
+        if self.decorate == 'auto':
+            if not self.isatty:
+                return ''
+        elif self.decorate == 'no':
+            return ''
+
+        refs = self.reverse_refs[commit.oid]
+        if not refs:
+            return ''
+
+        head = [r for r in refs if self.is_target(r)]
+        refs = [r for r in refs if not self.is_target(r)]
+
+        names = [self.decoration_name(head[0] if head else None, ref) for ref in refs]
+
+        return self.fmt("yellow", " (") + self.fmt("yellow", ", ").join(names) + self.fmt("yellow", ")")
+    
+    def decoration_name(self, head, ref):
+        if self.decorate == 'short' or self.decorate == 'auto':
+            name = ref.short_name()
+        elif self.decorate == 'full':
+            name = ref.path
+
+        name = self.fmt(self.ref_color(ref), name)
+
+        if head and ref == self.current_ref:
+            name = self.fmt(self.ref_color(head), f"{head.path} -> {name}")
+
+        return name
+
+    def ref_color(self, ref):
+        return ["bold", "cyan"] if ref.is_head() else ["bold", "green"]
+    
+    def _blank_line(self) -> None:
+        if self.format == 'oneline':
+            return
+        if self.blank_line:
+            self.println('')
+        self.blank_line = True
+
+    def _abbrev(self, commit: Commit) -> str:
+        if self.abbrev:
+            return self.repo.database.short_oid(commit.oid)
+        else:
+            return commit.oid
