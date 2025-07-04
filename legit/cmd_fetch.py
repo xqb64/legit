@@ -90,7 +90,8 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
             pass
 
     def recv_objects(self):
-        self.recv_packed_objects(SIGNATURE)
+        unpack_limit = self.repo.config.get(["fetch", "unpackLimit"])
+        self.recv_packed_objects(unpack_limit, SIGNATURE)
 
     def update_remote_refs(self):
         self.stderr.write("From {self.fetch_url}\n")

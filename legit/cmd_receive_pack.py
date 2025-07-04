@@ -31,9 +31,10 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
 
     def recv_objects(self) -> None:
         self.unpack_error = None
+        unpack_limit = self.repo.config.get(["receive", "unpackLimit"])
         try:
             if any(vals and vals[-1] for vals in self.requests.values()):
-                self.recv_packed_objects()
+                self.recv_packed_objects(unpack_limit)
 
             self.report_status("unpack ok")
         except Exception as e:

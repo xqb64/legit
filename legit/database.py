@@ -10,6 +10,8 @@ from legit.commit import Commit
 from legit.blob import Blob
 from legit.tree_diff import TreeDiff
 from legit.pathfilter import PathFilter
+from legit.temp_file import TempFile
+
 
 
 TYPES: MutableMapping[str, Type[Blob | Commit | Tree]] = {
@@ -37,11 +39,13 @@ class Database:
         self.path: Path = path
         self.objects: MutableMapping[str, Blob | Commit | Tree] = {}
 
-
     def load_info(self, oid: str) -> Raw:
         ty, size, _ = self.read_object_header(oid, 128)
         return Raw(ty, size, None)
 
+    @property
+    def pack_path(self):
+        return self.path / "pack"
 
     def has(self, oid: str) -> bool:
         object_path = self.path / str(oid[:2]) / str(oid[2:])
@@ -124,24 +128,6 @@ class Database:
         rest      = bytes(decompressed[null_idx + 1:])
     
         return obj_type, obj_size, rest
-
-#    def read_object_header(self, oid, read_bytes=None):
-#        """
-#        Read the Git object header for oid. Optionally read only the first read_bytes from file.
-#        Returns (type, size, remainder_bytes).
-#        """
-#        path = self.path / str(oid[:2]) / str(oid[2:])
-#        with open(path, 'rb') as f:
-#            raw = f.read(read_bytes) if read_bytes else f.read()
-#    
-#        data = zlib.decompress(raw)
-#        space_idx = data.find(b' ')
-#        type_ = data[:space_idx].decode('utf-8')
-#        null_idx = data.find(b'\x00', space_idx + 1)
-#        size = int(data[space_idx + 1:null_idx].decode('utf-8'))
-#        rest = data[null_idx + 1:]
-#    
-#        return type_, size, rest
     
     def read_object(self, oid):
         """
@@ -224,24 +210,10 @@ class Database:
         object_path = self.path / str(oid[:2]) / str(oid[2:])
         if object_path.exists():
             return
-
-        dirname = object_path.parent
-        temp_path = dirname / self.generate_temp_name()
-
-        flags = os.O_RDWR | os.O_CREAT | os.O_EXCL
-        mode = 0o644
-
-        try:
-            file = os.fdopen(os.open(temp_path, flags, mode), "rb+")
-        except FileNotFoundError:
-            dirname.mkdir(exist_ok=True, parents=True)
-            file = os.fdopen(os.open(temp_path, flags, mode), "rb+")
-
-        compressed = zlib.compress(content)
-        file.write(compressed)
-        file.close()
-
-        temp_path.rename(object_path)
+        
+        file = TempFile(object_path.parent, "tmp_obj")
+        file.write(zlib.compress(content, zlib.Z_BEST_SPEED))
+        file.move(object_path.name)
 
     def prefix_match(self, name: str) -> list[str]:
         object_path = self.path / str(name[:2]) / str(name[2:])
