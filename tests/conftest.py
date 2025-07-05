@@ -1,14 +1,15 @@
-from datetime import datetime 
-import shutil
-from typing import Optional
-import pytest
-from pathlib import Path
 from io import StringIO
+from datetime import datetime 
+from typing import Optional
+import shutil
+
+import pytest
 from freezegun import freeze_time
 
 from legit.repository import Repository
 from legit.command import Command
 from legit.revision import Revision
+from legit.editor import Editor
 
 
 @pytest.fixture
@@ -159,5 +160,17 @@ def legit_cmd(repo_path):
         cmd = Command.execute(repo_path, env, ["legit"] + list(argv), stdin, stdout, stderr)
         return cmd, stdin, stdout, stderr
     return _legit_cmd
+
+
+@pytest.fixture
+def stub_editor(monkeypatch):
+    def factory(message_to_return: str):
+        def fake_edit(path, command=None, *, block):
+            if block:
+                block(Editor(path, command))
+            return message_to_return
+        monkeypatch.setattr(Editor, 'edit', fake_edit)
+    return factory
+
 
 

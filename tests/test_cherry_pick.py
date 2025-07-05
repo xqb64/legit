@@ -15,17 +15,6 @@ from tests.cmd_helpers import (
 )
 
 
-@pytest.fixture
-def stub_editor(monkeypatch):
-    def factory(message_to_return: str):
-        def fake_edit(path, command=None, *, block):
-            if block:
-                block(Editor(path, command))
-            return message_to_return
-        monkeypatch.setattr(Editor, 'edit', fake_edit)
-    return factory
-
-
 class CherryPickHistorySetup:
     @pytest.fixture
     def commit_tree(self, write_file, legit_cmd, commit):
