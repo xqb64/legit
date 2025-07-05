@@ -68,7 +68,7 @@ class Migration:
         self.update_workspace()
         self.update_index()
 
-    def blob_data(self, oid: str) -> str:
+    def blob_data(self, oid: str) -> bytes:
         """Return raw blob bytes for an object id (thin wrapper)."""
         blob = self.repo.database.load(oid)
         assert isinstance(blob, Blob)

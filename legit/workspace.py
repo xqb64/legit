@@ -132,7 +132,7 @@ class Workspace:
             yield path.relative_to(self.path)
         else:
             raise Workspace.MissingFile(
-                f'pathspec "{path.relative_to(self.path)}" did not match any files'
+                f"pathspec '{path.relative_to(self.path)}' did not match any files"
             )
 
     def list_dir(self, dirname: str) -> MutableMapping[Path, os.stat_result]:
@@ -151,12 +151,12 @@ class Workspace:
 
         return stats
 
-    def read_file(self, path: Path) -> str:
+    def read_file(self, path: Path) -> bytes:
         try:
             with open(self.path / path, 'rb') as f:
                 return f.read()
         except PermissionError:
-            raise Workspace.NoPermission(f'open("{path.name}"): Permission denied')
+            raise Workspace.NoPermission(f"open('{path.name}'): Permission denied")
 
     def stat_file(self, path: Path) -> Optional[os.stat_result]:
         try:
@@ -164,4 +164,4 @@ class Workspace:
         except FileNotFoundError:
             return None
         except PermissionError:
-            raise Workspace.NoPermission(f'stat("{path.name}"): Permission denied')
+            raise Workspace.NoPermission(f"stat('{path.name}'): Permission denied")
