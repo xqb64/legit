@@ -35,3 +35,12 @@ def assert_noent(repo_path: Path, name: str):
     assert not (repo_path / name).exists(), f"{name} should not exist in the workspace"
 
 
+def assert_index(repo, expected: dict[str, str]):
+    files = {}
+    repo.index.load()
+
+    for entry in repo.index.entries.values():
+        files[str(entry.path)] = repo.database.load(entry.oid).data.decode('utf-8')
+
+    assert files == expected
+
