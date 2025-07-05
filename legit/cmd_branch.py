@@ -1,4 +1,3 @@
-from abc import update_abstractmethods
 import enum
 
 from legit.cmd_base import Base
@@ -29,14 +28,21 @@ class Branch(FastForwardMixin, Base):
         for arg in args_iter:
             if arg in ("-v", "--verbose"):
                 self.options["verbose"] += 1
-            elif arg in ("-d", "-D", "--delete"):
+            elif arg == "-vv":
+                self.options["verbose"] += 2
+            elif arg == '-D':
                 self.options["delete"] = True
-            elif arg in ("-f", "-D"):
+                self.options["force"] = True
+            elif arg in ("-d", "--delete"):
+                self.options["delete"] = True
+            elif arg in ("-f", "--force"):
                 self.options["force"] = True
             elif arg in ("-a", "--all"):
                 self.options["all"] = True
             elif arg in ("-r", "--remotes"):
                 self.options["remotes"] = True
+            elif arg == "--set-upstream-to":
+                self.options["upstream"] = next(args_iter)
             elif arg.startswith("--set-upstream-to="):
                 self.options["upstream"] = arg.split("=", 1)[1]
             elif arg == "-u":
@@ -77,7 +83,7 @@ class Branch(FastForwardMixin, Base):
         except Refs.InvalidBranch as e:
             self.stderr.write(f"error: {e}\n")
             self.exit(1)
-        except Remotes.InvalidRemote as e:
+        except Remotes.InvalidBranch as e:
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
 
@@ -87,7 +93,7 @@ class Branch(FastForwardMixin, Base):
         except IndexError:
             branch_name = self.repo.refs.current_ref().short_name()
 
-        if not self.options["upstream"] == Upstream.UNSET:
+        if self.options["upstream"] == Upstream.UNSET:
             self.repo.remotes.unset_upstream(branch_name)
         else:
             self.set_upstream(branch_name, self.options["upstream"])
@@ -130,7 +136,8 @@ class Branch(FastForwardMixin, Base):
         commit = self.repo.database.load(ref.read_oid())
         short = self.repo.database.short_oid(commit.oid)
         space = " " * (max_width - len(ref.short_name()))
-        return f"{space} {short} {commit.title_line()}"
+        upstream = self.upstream_info(ref) or ''
+        return f"{space} {short}{upstream} {commit.title_line()}"
 
     def upstream_info(self, ref):
         divergence = self.repo.divergence(ref)
@@ -156,7 +163,7 @@ class Branch(FastForwardMixin, Base):
         if not info:
             return ""
 
-        return " [{', '.join(info)}]"
+        return f" [{', '.join(info)}]"
 
     def create_branch(self) -> None:
         try:
@@ -218,5 +225,5 @@ class Branch(FastForwardMixin, Base):
         branch_oid = self.repo.refs.read_ref(branch_name)
 
         if self.fast_forward_error(branch_oid, head_oid):
-            self.stderr.write(f"error: The branch '{branch_name}' is not fully merged.")
+            self.stderr.write(f"error: The branch '{branch_name}' is not fully merged.\n")
             self.exit(1)

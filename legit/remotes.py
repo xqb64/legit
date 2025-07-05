@@ -99,7 +99,12 @@ class Refspec:
             spec.source, spec.target = spec.target, spec.source
             _map.update(spec.match_refs([ref]))
 
-        return _map.keys()[0]
+        matches = list(sorted(_map.keys()))
+
+        if not matches:
+            return None
+
+        return matches[0]
 
     @staticmethod
     def parse(spec: str) -> "Refspec":
@@ -171,7 +176,7 @@ class Remote:
         self.config.open()
 
     def set_upstream(self, branch: str, upstream: str) -> str:
-        ref_name = Refspec.invert(self.fetch_specs(), upstream)
+        ref_name = Refspec.invert(self.fetch_specs, upstream)
         if ref_name is None:
             return None
 
@@ -184,9 +189,9 @@ class Remote:
 
     def get_upstream(self, branch: str) -> str | None:
         merge = self.config.get(["branch", branch, "merge"])
-        targets = Refspec.expand(self.fetch_specs(), [merge])
+        targets = Refspec.expand(self.fetch_specs, [merge])
 
-        return targets.keys()[0]
+        return list(sorted(targets.keys()))[0]
 
     @property
     def push_specs(self):

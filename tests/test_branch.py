@@ -1,6 +1,8 @@
+import textwrap
+
 import pytest
 
-from tests.cmd_helpers import assert_stdout, assert_stderr
+from tests.cmd_helpers import assert_stdout, assert_stderr, assert_status
 
 
 class TestBranchWithChainOfCommits:
@@ -118,3 +120,165 @@ class TestBranchWithChainOfCommits:
         assert cmd.status == 1
         assert_stderr(stderr, "error: branch 'no-such-branch' not found.\n")
 
+class TestBranchWhenDiverged:
+    @pytest.fixture(autouse=True)
+    def setup(self, write_file, legit_cmd, commit):
+        for msg in ["first", "second", "third"]:
+            write_file("file.txt", msg)
+            legit_cmd("add", ".")
+            commit(msg)
+
+        legit_cmd("branch", "topic")
+        legit_cmd("checkout", "topic")
+
+        write_file("file.txt", "changed")
+        
+        legit_cmd("add", ".")
+        commit("changed")
+       
+        legit_cmd("checkout", "master")
+ 
+    def test_it_deletes_a_merged_branch(self, repo, legit_cmd):
+        head = repo.refs.read_head() 
+
+        legit_cmd("checkout", "topic")
+        cmd, _, stdout, _ = legit_cmd("branch", "--delete", "master")
+
+        assert_status(cmd, 0)
+        expected = f"Deleted branch 'master' (was {repo.database.short_oid(head)}).\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_refuses_to_delete_the_branch(self, legit_cmd):
+        cmd, *_, stderr = legit_cmd("branch", "--delete", "topic")
+
+        assert_status(cmd, 1)
+        assert_stderr(stderr, "error: The branch 'topic' is not fully merged.\n")
+
+    def test_it_deletes_the_branch_with_force(self, repo, legit_cmd):
+        head = repo.refs.read_ref("topic")
+
+        cmd, _, stdout, _ = legit_cmd("branch", "-D", "topic")
+
+        assert_status(cmd, 0)
+        expected = f"Deleted branch 'topic' (was {repo.database.short_oid(head)}).\n"
+        assert_stdout(stdout, expected)
+
+
+class TestBranchTrackingRemote:
+    @pytest.fixture(autouse=True)
+    def setup(self, write_file, legit_cmd, commit, repo):
+        legit_cmd("remote", "add", "origin", "ssh://example.com/repo")
+        self.upstream = "refs/remotes/origin/master"
+
+        for msg in ["first", "second", "remote"]:
+            write_file("file.txt", msg)
+            legit_cmd("add", ".")
+            commit(msg)
+
+        repo.refs.update_ref(self.upstream, repo.refs.read_head())
+
+        legit_cmd("reset", "--hard", "@^")
+        for msg in ["third", "local"]:
+            write_file("file.txt", msg)
+            legit_cmd("add", ".")
+            commit(msg)
+
+        self.head = repo.database.short_oid(repo.refs.read_head())
+        self.remote = repo.database.short_oid(repo.refs.read_ref(self.upstream))
+
+    def test_it_displays_no_divergence_for_unlinked_branches(self, legit_cmd):
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+
+        expected = f"* master {self.head} local\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_displays_divergence_for_linked_branches(self, legit_cmd):
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+
+        expected = f"* master {self.head} [ahead 2, behind 1] local\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_displays_branch_ahead_of_upstream(self, repo, legit_cmd, resolve_revision):
+        repo.refs.update_ref(self.upstream, resolve_revision("master~2"))
+
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+
+        expected = f"* master {self.head} [ahead 2] local\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_displays_branch_behind_upstream(self, repo, legit_cmd, resolve_revision):
+        master = resolve_revision("@~2")
+        oid = repo.database.short_oid(master)
+
+        legit_cmd("reset", master)
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+
+        expected = f"* master {oid} [behind 1] second\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_displays_upstream_branch_name(self, legit_cmd):
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        *_, stdout, _ = legit_cmd("branch", "-vv")
+
+        expected = f"* master {self.head} [origin/master, ahead 2, behind 1] local\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_displays_upstream_name_with_no_divergence(self, legit_cmd):
+        legit_cmd("reset", "--hard", "origin/master")
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        *_, stdout, _ = legit_cmd("branch", "-vv")
+
+        expected = f"* master {self.remote} [origin/master] remote\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_fails_if_upstream_ref_does_not_exist(self, legit_cmd):
+        cmd, *_, stderr = legit_cmd("branch", "--set-upstream-to", "origin/nope")
+
+        assert_status(cmd, 1)
+        assert_stderr(stderr, "error: the requested upstream branch 'origin/nope' does not exist\n")
+
+    def test_it_fails_if_upstream_remote_does_not_exist(self, repo, legit_cmd):
+        repo.refs.update_ref("refs/remotes/nope/master", repo.refs.read_head())
+
+        cmd, *_, stderr = legit_cmd("branch", "--set-upstream-to", "nope/master")
+
+        assert_status(cmd, 128)
+        expected = (
+            "fatal: Cannot setup tracking information; "
+            "starting point 'refs/remotes/nope/master' is not a branch\n"
+        )
+        assert_stderr(stderr, expected)
+
+    def test_it_creates_branch_tracking_its_start_point(self, write_file, legit_cmd, commit, repo):
+        legit_cmd("branch", "--track", "topic", "origin/master")
+        legit_cmd("checkout", "topic")
+
+        write_file("file.txt", "topic")
+        legit_cmd("add", ".")
+        commit("topic")
+        oid = repo.database.short_oid(repo.refs.read_head())
+
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+        expected = f"  master {self.head} local\n* topic  {oid} [ahead 1] topic\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_unlinks_branch_from_upstream(self, legit_cmd):
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+        legit_cmd("branch", "--unset-upstream")
+        *_, stdout, _ = legit_cmd("branch", "--verbose")
+
+        expected = f"* master {self.head} local\n"
+        assert_stdout(stdout, expected)
+
+    def test_it_resolves_upstream_revision(self, resolve_revision, legit_cmd):
+        legit_cmd("branch", "--set-upstream-to", "origin/master")
+
+        origin_master = resolve_revision("origin/master")
+        master_head   = resolve_revision("master")
+
+        assert origin_master != master_head
+        assert origin_master == resolve_revision("@{U}")
+        assert origin_master == resolve_revision("master@{upstream}")

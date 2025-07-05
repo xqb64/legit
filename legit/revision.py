@@ -107,7 +107,7 @@ class Revision:
     PARENT_PATTERN = re.compile(r"^(.+)\^(\d*)$")
     ANCESTOR_PATTERN = re.compile(r"^(.+)~(\d+)$")
 
-    UPSTREAM_PATTERN = re.compile(r"^(.*)@\{u(pstream)}?\}$", re.IGNORECASE)
+    UPSTREAM_PATTERN = re.compile(r"^(.*)@\{u(pstream)?\}$", re.IGNORECASE)
 
     REF_ALIASES = {
         "@": "HEAD",
@@ -242,10 +242,18 @@ class Revision:
 
 
 class Upstream:
-    def __init__(self, rev: str) -> None:
+    def __init__(self, rev: Revision.Ref | Revision.Parent | Revision.Ancestor) -> None:
         self.rev = rev
 
-    @staticmethod
-    def resolve(context):
-        name = context.upstream(rev.name)
-        return context.read_ref(name)
+    def resolve(self, context: "Revision") -> Optional[str]:
+        if isinstance(self.rev, Revision.Ref):
+            branch_name = self.rev.name
+        else:
+            branch_name = "HEAD"
+        
+        upstream_name = context.upstream(branch_name)
+        if upstream_name is None:
+            return None
+            
+        return context.read_ref(upstream_name)
+   
