@@ -29,7 +29,7 @@ class Branch(FastForwardMixin, Base):
         for arg in args_iter:
             if arg in ("-v", "--verbose"):
                 self.options["verbose"] += 1
-            elif arg in ("-d", "-D"):
+            elif arg in ("-d", "-D", "--delete"):
                 self.options["delete"] = True
             elif arg in ("-f", "-D"):
                 self.options["force"] = True
@@ -201,6 +201,8 @@ class Branch(FastForwardMixin, Base):
         try:
             oid = self.repo.refs.delete_branch(branch_name)
             short = self.repo.database.short_oid(oid)
+            self.repo.remotes.unset_upstream(branch_name)
+
             self.println(f"Deleted branch '{branch_name}' (was {short}).")
         except Refs.InvalidBranch as e:
             self.stderr.write(f"error: {e}\n")
