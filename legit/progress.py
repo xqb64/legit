@@ -37,6 +37,7 @@ class Progress:
         self.write_at = current_time
         self.clear_line()
         self.output.write(self.status_line())
+        self.output.flush()
 
     def stop(self):
         if not self.message:
