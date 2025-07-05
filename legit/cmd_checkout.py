@@ -74,7 +74,7 @@ class Checkout(Base):
         self, revision: Revision, e: Revision.InvalidObject
     ) -> None:
         for err in revision.errors:
-            self.stderr.write(f"error: {err}" + "\n")
+            self.stderr.write(f"error: {err.msg}" + "\n")
             for line in err.hint:
                 self.stderr.write(f"hint: {line}" + "\n")
         self.stderr.write(f"error: {e}" + "\n")

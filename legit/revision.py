@@ -246,14 +246,6 @@ class Upstream:
         self.rev = rev
 
     def resolve(self, context: "Revision") -> Optional[str]:
-        if isinstance(self.rev, Revision.Ref):
-            branch_name = self.rev.name
-        else:
-            branch_name = "HEAD"
-        
-        upstream_name = context.upstream(branch_name)
-        if upstream_name is None:
-            return None
-            
+        upstream_name = context.upstream(self.rev.name)
         return context.read_ref(upstream_name)
    
