@@ -36,16 +36,16 @@ def repo_path(tmp_path):
     """
     return tmp_path / "test_repo"
 
+
 @pytest.fixture(autouse=True)
 def setup_and_teardown(repo_path):
     """
     Initialize a repository before each test and clean up afterward.
     """
-    # initialize repository (e.g., `init` command)
     Command.execute(repo_path, {}, ["legit", "init"], StringIO(), StringIO(), StringIO())
     yield
-    # teardown: remove the repo directory
     shutil.rmtree(repo_path, ignore_errors=True)
+
 
 @pytest.fixture
 def repo(repo_path):
@@ -54,6 +54,7 @@ def repo(repo_path):
     """
     git_dir = repo_path / ".git"
     return Repository(git_dir)
+
 
 @pytest.fixture
 def commit(legit_cmd):
@@ -98,6 +99,7 @@ def mkdir(repo_path):
         path.mkdir(parents=True, exist_ok=True)
     return _mkdir
 
+
 @pytest.fixture
 def touch(repo_path):
     """
@@ -107,6 +109,7 @@ def touch(repo_path):
         path = repo_path / name
         path.touch()
     return _touch
+
 
 @pytest.fixture
 def delete(repo_path):
@@ -121,6 +124,7 @@ def delete(repo_path):
             path.unlink(missing_ok=True)
     return _delete
 
+
 @pytest.fixture
 def make_executable(repo_path):
     """
@@ -131,6 +135,7 @@ def make_executable(repo_path):
         path.chmod(0o755)
     return _make_executable
 
+
 @pytest.fixture
 def make_unreadable(repo_path):
     """
@@ -140,6 +145,7 @@ def make_unreadable(repo_path):
         path = repo_path / name
         path.chmod(0o200)
     return _make_unreadable
+
 
 @pytest.fixture
 def legit_cmd(repo_path):
@@ -155,31 +161,3 @@ def legit_cmd(repo_path):
     return _legit_cmd
 
 
-def assert_status(cmd, expected):
-    assert cmd.status == expected, f"Expected status {expected}, got {cmd.status}"
-
-
-def assert_stdout(stdout, expected):
-    stdout.seek(0)
-    data = stdout.read()
-    assert data == expected, f"Expected stdout {expected!r}, got {data!r}"
-
-
-def assert_stderr(stderr, expected):
-    stderr.seek(0)
-    data = stderr.read()
-    assert data == expected, f"Expected stderr {expected!r}, got {data!r}"
-
-
-def assert_noent(repo_path, filename: str):
-    target_path = repo_path / filename
-    assert not target_path.exists(), f"Expected path '{target_path}' to not exist, but it does."
-
-
-@pytest.fixture
-def committed_repo(write_file, legit_cmd, commit):
-    write_file("1.txt", "one")
-    write_file("a/2.txt", "two")
-    write_file("a/b/3.txt", "three")
-    legit_cmd("add", ".")
-    commit("commit message")
