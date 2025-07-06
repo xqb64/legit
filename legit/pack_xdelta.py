@@ -114,5 +114,5 @@ class XDelta:
         if not self.insert:
             return
 
-        self.ops.append(Delta.Insert(''.join(self.insert)))
+        self.ops.append(Delta.Insert(bytes(self.insert)))
         self.insert = []

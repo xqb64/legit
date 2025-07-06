@@ -44,7 +44,7 @@ class Delta:
     class Insert:
         """Represents an 'insert' instruction in a delta."""
 
-        def __init__(self, data: str):
+        def __init__(self, data: bytes):
             self.data = data
 
         @classmethod
