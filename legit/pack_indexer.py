@@ -1,13 +1,13 @@
-from types import CoroutineType, coroutine
 import zlib
 import hashlib
 import struct
 from collections import defaultdict
-from legit.pack import Record, RefDelta
+from legit.pack import OfsDelta, Record, RefDelta, IDX_SIGNATURE, IDX_MAX_OFFSET
 from legit.temp_file import TempFile
 from legit.pack_writer import HEADER_FORMAT, SIGNATURE, VERSION
 from legit.pack_reader import Reader
 from legit.pack_expander import Expander
+from legit.pack_stream import Stream
 
 
 class Indexer:
@@ -52,15 +52,16 @@ class Indexer:
 
     def index_object(self):
         offset = self.stream.offset
-        with self.stream.capture():
-            record, data = self.reader.read_record()
-        crc32 = zlib.crc32(data)
+        record, data = self.stream.capture(lambda: self.reader.read_record())
 
+        crc32 = zlib.crc32(data)
         self.pack_file.write(data)
 
         if isinstance(record, Record):
             oid = self.database.hash_object(record)
             self.index[oid] = [offset, crc32]
+        elif isinstance(record, OfsDelta):
+            self.pending[offset - record.base_ofs].append([offset, crc32])
         elif isinstance(record, RefDelta):
             self.pending[record.base_oid].append([offset, crc32])
 
@@ -72,7 +73,9 @@ class Indexer:
 
         path = self.database.pack_path / filename
         self.pack = open(path, "rb")
-        self.reader = Reader(self.pack)
+
+        pack_stream = Stream(self.pack)
+        self.reader = Reader(pack_stream)
 
     def read_record_at(self, offset):
         self.pack.seek(offset)
@@ -83,8 +86,9 @@ class Indexer:
         if self.progress is not None:
             self.progress.start("Resolving deltas", deltas)
 
-        for oid, (offset, _) in self.index.items():
+        for oid, (offset, _) in list(self.index.items()):
             record = self.read_record_at(offset)
+            self.resolve_delta_base(record, offset)
             self.resolve_delta_base(record, oid)
 
         if self.progress is not None:
@@ -94,7 +98,7 @@ class Indexer:
         if not (pending := self.pending.pop(oid, None)):
             return
 
-        for offsfet, crc32 in pending:
+        for offset, crc32 in pending:
             self.resolve_pending(record, offset, crc32)
 
     def resolve_pending(self, record, offset, crc32):
@@ -107,11 +111,12 @@ class Indexer:
 
         if self.progress is not None:
             self.progress.tick()
-
+        
+        self.resolve_delta_base(obj, offset)
         self.resolve_delta_base(obj, oid)
 
     def write_index(self):
-        self.object_ids = sorted(self.index.keys)
+        self.object_ids = sorted(self.index.keys())
 
         self.write_object_table()
         self.write_crc32()

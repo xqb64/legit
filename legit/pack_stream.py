@@ -11,16 +11,25 @@ class Stream:
         self.buffer = bytearray(buffer)
         self._capture = None
 
-    @contextmanager
-    def capture(self):
-        """A context manager to capture all bytes read within its scope."""
+    @property
+    def eof(self) -> bool:
+        if self.buffer:
+            return False
+        
+        data = self.input.read(1)
+        if not data:
+            return True  # End of stream
+        
+        self.buffer.extend(data)
+        return False
+
+    def capture(self, block):
         self._capture = bytearray()
-        try:
-            yield
-        finally:
-            if self._capture is not None:
-                self.digest.update(self._capture)
-            self._capture = None
+        block_result = block()
+        result = (block_result, bytes(self._capture))
+        self.digest.update(self._capture)
+        self._capture = None
+        return result
 
     def verify_checksum(self):
         expected = self.digest.digest()
@@ -93,14 +102,8 @@ class Stream:
         return bytes(from_buf) + (from_io or b"")
 
     def update_state(self, data: bytes):
-        """
-        Updates the digest and capture buffer state after a read.
-        """
         self.offset += len(data)
-        # If we are inside a 'with stream.capture()' block...
         if self._capture is not None:
-            # Use efficient in-place extension instead of concatenation.
             self._capture.extend(data)
         else:
-            # Otherwise, update the main SHA-1 digest.
             self.digest.update(data)

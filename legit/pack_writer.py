@@ -16,6 +16,7 @@ class Writer:
         self.database = database
         self.compression = options.get("compression", zlib.Z_DEFAULT_COMPRESSION)
         self.progress = options.get("progress")
+        self.allow_ofs = options.get("allow_ofs")
         self.offset = 0
 
     def write_objects(self, rev_list):
@@ -40,7 +41,7 @@ class Writer:
         self.pack_list = []
         if self.progress is not None:
             self.progress.start("Counting objects")
-        for obj, path in rev_list.each():
+        for obj, path in rev_list:
             self.add_to_pack_list(obj, path)
 
             if self.progress is not None:
@@ -53,7 +54,7 @@ class Writer:
         from legit.commit import Commit
 
         info = self.database.load_info(obj.oid)
-        self.pack_list.append(Entry(obj.oid, info, path))
+        self.pack_list.append(Entry(obj.oid, info, path, self.allow_ofs))
 
     def write_header(self):
         header = struct.pack(HEADER_FORMAT, SIGNATURE, VERSION, len(self.pack_list))

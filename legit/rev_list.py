@@ -131,6 +131,19 @@ class RevList:
         else:
             self.queue.append(commit)
 
+    def __iter__(self) -> Generator[Commit]:
+        if self.limited:
+            self.limit_list()
+
+        if self.objects:
+            self.mark_edges_uninteresting()
+
+        for commit in self.traverse_commits():
+            yield commit, None
+
+        for obj in self.traverse_pending():
+            yield obj, self.paths.get(obj.oid)
+
     def each(self) -> Generator[Commit]:
         if self.limited:
             self.limit_list()

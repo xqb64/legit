@@ -7,6 +7,14 @@ class Raw:
         self.ty = ty
         self.size = size
         self.data = data
+    
+    def __eq__(self, other):
+        if not isinstance(other, Raw):
+            return NotImplemented
+        return (self.ty, self.size, self.data) == (other.ty, other.size, other.data)
+
+    def __repr__(self):
+        return f"Raw(type={self.ty!r}, size={self.size!r}, dtaa={self.data!r})"
 
 
 class Loose:

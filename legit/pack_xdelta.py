@@ -11,7 +11,7 @@ class XDelta:
 
     @staticmethod
     def create_index(source):
-        blocks = len(source) / XDelta.BLOCK_SIZE
+        blocks = len(source) // XDelta.BLOCK_SIZE
         index = defaultdict(list)
 
         for i in range(int(blocks)):

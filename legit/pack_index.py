@@ -59,7 +59,7 @@ class Index:
 
     def oid_position(self, oid):
         prefix = int(oid[:2], 16)
-        packed = struct.pack(">20s", bytes(oid, "ascii"))
+        packed = bytes.fromhex(oid)
 
         low = 0 if prefix == 0 else self.fanout[prefix - 1]
         high = self.fanout[prefix] - 1
@@ -68,7 +68,7 @@ class Index:
 
     def binary_search(self, target, low, high):
         while low <= high:
-            mid = (low + high) / 2
+            mid = (low + high) // 2
 
             self.input.seek(self.offset_for(self.OID_LAYER, mid))
             oid = self.input.read(20)

@@ -1,22 +1,22 @@
-import io
 import zlib
 import struct
 
 from legit.pack import (
+    OFS_DELTA,
     REF_DELTA,
     InvalidPack,
     HEADER_SIZE,
     HEADER_FORMAT,
     SIGNATURE,
     VERSION,
-    TYPE_CODES,
     COMMIT,
     BLOB,
     TREE,
     Record,
     RefDelta,
+    OfsDelta,
 )
-from legit.numbers import VarIntLE
+from legit.numbers import VarIntBE, VarIntLE
 from legit.pack_expander import Expander
 
 
@@ -43,8 +43,14 @@ class Reader:
 
         if ty in [COMMIT, BLOB, TREE]:
             return Record(TYPE_CODES_REVERSED[ty], size)
+    
+        elif ty == OFS_DELTA:
+            delta = self.read_ofs_delta()
+            size = Expander.expand(delta.delta_data).target_size
 
-        if ty == REF_DELTA:
+            return OfsDelta(delta.base_ofs, size)
+
+        elif ty == REF_DELTA:
             delta = self.read_ref_delta()
             size = Expander(delta.delta_data).target_size
 
@@ -57,28 +63,23 @@ class Reader:
             decompressed_data = self.read_zlib_stream()
             return Record(TYPE_CODES_REVERSED.get(ty), decompressed_data)
 
-        elif ty == 7:
+        elif ty == OFS_DELTA:
+            return self.read_ofs_delta() 
+
+        elif ty == REF_DELTA:
             return self.read_ref_delta()
-
-        elif ty == 6:
-            # Skip the variable-length offset
-            byte = self.input.readbyte()
-            while byte & 0x80:
-                byte = self.input.readbyte()
-
-            # Skip the zlib-compressed delta data
-            self.read_zlib_stream()
-
-            # Return None to indicate the object was skipped
-            return None
 
         else:
             raise InvalidPack(f"Unknown pack object type: {ty}")
 
+    def read_ofs_delta(self):
+        offset = VarIntBE.read(self.input)
+        return OfsDelta(offset, self.read_zlib_stream())
+
     def read_ref_delta(self):
         base_oid = self.input.read(20).hex()
         delta_data = self.read_zlib_stream()
-        return RefDelta(base_oid, delta_dat)
+        return RefDelta(base_oid, delta_data)
 
     def read_record_header(self):
         byte, size = VarIntLE.read(self.input, 4)

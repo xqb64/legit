@@ -18,7 +18,6 @@ class VarIntLE:
         first = stream.readbyte()
 
         value = first & (2**shift - 1)
-        shift = 4
         byte = first
 
         while byte >= 0x80:
@@ -27,6 +26,30 @@ class VarIntLE:
             shift += 7
 
         return first, value
+
+
+class VarIntBE:
+    @staticmethod
+    def write(value: int):
+        _bytes = [value & 0x7f]
+        value >>= 7
+        while value > 0:
+            value -= 1
+            _bytes.append(0x80 | value & 0x7f)
+            value >>= 7
+
+        return bytes(reversed(_bytes))
+
+    @staticmethod
+    def read(_input):
+        byte = _input.readbyte()
+        value = byte & 0x7f
+
+        while byte >= 0x80:
+            byte = _input.readbyte()
+            value = ((value + 1) << 7) | (byte & 0x7f)
+
+        return value
 
 
 class PackedInt56LE:

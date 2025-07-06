@@ -1,4 +1,4 @@
-from legit.pack import Record, RefDelta
+from legit.pack import OfsDelta, Record, RefDelta
 from legit.pack_expander import Expander
 
 
@@ -8,6 +8,7 @@ class Unpacker:
         self.reader = reader
         self.stream = stream
         self.progress = progress
+        self.offsets = {}
 
     def process_pack(self):
         if self.progress is not None:
@@ -24,16 +25,24 @@ class Unpacker:
         self.stream.verify_checksum()
 
     def process_record(self):
-        with self.stream.capture():
-            record, _ = self.reader.read_record()
-            record = self.resolve(record)
+        offset = self.stream.offset
+        record, data = self.stream.capture(lambda: self.reader.read_record())
+        record = self.resolve(record, offset)
+        if record is not None:
             self.database.store(record)
+            self.offsets[offset] = record.oid
 
-    def resolve(self, record):
+    def resolve(self, record, offset):
         if isinstance(record, Record):
             return record
+        elif isinstance(record, OfsDelta):
+            return self.resolve_ofs_delta(record, offset)
         elif isinstance(record, RefDelta):
             return self.resolve_ref_delta(record)
+
+    def resolve_ofs_delta(self, delta, offset):
+        oid = self.offsets[offset - delta.base_ofs]
+        return self.resolve_delta(oid, delta.delta_data)
 
     def resolve_ref_delta(self, delta):
         return self.resolve_delta(delta.base_oid, delta.delta_data)
@@ -41,4 +50,4 @@ class Unpacker:
     def resolve_delta(self, oid, delta_data):
         base = self.database.load_raw(oid)
         data = Expander.expand(base.data, delta_data)
-        return Record(base.type(), data)
+        return Record(base.ty, data)

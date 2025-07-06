@@ -1,11 +1,15 @@
-from io import StringIO
+from io import BytesIO
 from legit.numbers import VarIntLE
 from legit.pack_delta import Delta
+from legit.pack_stream import Stream
+
+
+GIT_MAX_COPY = 0x10000
 
 
 class Expander:
     def __init__(self, delta):
-        self.delta = StringIO(delta)
+        self.delta = Stream(BytesIO(delta))
         self.source_size = self.read_size()
         self.target_size = self.read_size()
 
@@ -25,11 +29,15 @@ class Expander:
                 target += insert.data
             else:
                 copy = Delta.Copy.parse(self.delta, byte)
-                target += source.encode()[copy.offset : copy.offset + copy.size]
+                size = copy.size if copy.size != 0 else GIT_MAX_COPY
+                target += source[copy.offset : copy.offset + size]
+
+        self.check_size(target, self.target_size)
+        return target
 
     def read_size(self):
         return VarIntLE.read(self.delta, 7)[1]
 
     def check_size(self, buffer, size):
-        if len(buffer.encode()) != size:
+        if len(buffer) != size:
             raise Exception("failed to apply delta")
