@@ -11,7 +11,7 @@ class Progress:
         self.message = None
 
     def start(self, message, total=None):
-        if not self.output.isatty:
+        if not self.output.isatty():
             return
 
         self.message = message
@@ -68,7 +68,7 @@ class Progress:
     def format_count(self):
         if self.total:
             percent = 100 if self.total == 0 else 100 * self.count / self.total
-            return f"{percent}% ({self.count} / {self.total})"
+            return f"{percent:.2f}% ({self.count} / {self.total})"
         else:
             return f"({self.count})"
 
