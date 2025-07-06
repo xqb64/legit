@@ -33,13 +33,18 @@ class Delta:
             byte_array[0] |= 0x80
             return bytes(byte_array)
 
+        def __eq__(self, other: object) -> bool:
+            if not isinstance(other, Delta.Copy):
+                return NotImplemented
+            return self.offset == other.offset and self.size == other.size
+    
         def __repr__(self) -> str:
             return f"Copy(offset={self.offset}, size={self.size})"
 
     class Insert:
         """Represents an 'insert' instruction in a delta."""
 
-        def __init__(self, data: bytes):
+        def __init__(self, data: str):
             self.data = data
 
         @classmethod
@@ -55,6 +60,12 @@ class Delta:
                 raise ValueError("Insert data must be between 1 and 127 bytes.")
             return struct.pack(f"B{len(self.data)}s", len(self.data), self.data)
 
+        def __eq__(self, other: object) -> bool:
+            """Checks for value equality with another Insert object."""
+            if not isinstance(other, Delta.Insert):
+                return NotImplemented
+            return self.data == other.data
+    
         def __repr__(self) -> str:
             return f"Insert(data={self.data!r})"
 
