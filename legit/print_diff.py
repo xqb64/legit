@@ -102,7 +102,7 @@ class PrintDiffMixin:
             self.print_diff_hunk(hunk)
 
     def print_diff_hunk(self, hunk: Hunk) -> None:
-        self.println(self.fmt("frag", hunk.header()))
+        self.println(self.diff_fmt("frag", hunk.header()))
         for edit in hunk.edits:
             self.print_diff_edit(edit)
 
