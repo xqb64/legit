@@ -8,7 +8,7 @@ from legit.pack_xdelta import XDelta
 #   +----------------+----------------+----------------+
 
 
-def assert_delta(source: str, target: str, expected):
+def assert_delta(source: bytes, target: bytes, expected):
     delta = XDelta.create_index(source)
     actual = delta.compress(target)
     assert actual == expected
