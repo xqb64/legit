@@ -1,10 +1,7 @@
-from typing import Generator, Optional
+from typing import Optional
 from legit.cmd_base import Base
 from legit.commit import Commit
-from legit.refs import Refs
-from legit.repository import Repository
 from legit.print_diff import PrintDiffMixin, Target
-from legit.revision import Revision
 from legit.rev_list import RevList
 
 
@@ -22,15 +19,15 @@ class Log(PrintDiffMixin, Base):
 
         positional = []
         for arg in self.args:
+            print(f"{arg=}")
             if arg.startswith("--decorate="):
-                _, when = arg.split("=", 1)
-                self.decorate = when or "short"
+                self.decorate = arg.split("=", 1)[1] or "short"
             elif arg == "--no-decorate":
                 self.decorate = "no"
-            elif arg == "--abbrev-commit":
-                self.abbrev = True
             elif arg == "--no-abbrev-commit":
                 self.abbrev = False
+            elif arg == "--abbrev-commit":
+                self.abbrev = True
             elif arg.startswith("--pretty=") or arg.startswith("--format="):
                 _, fmt = arg.split("=", 1)
                 self.format = fmt

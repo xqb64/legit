@@ -69,7 +69,7 @@ def commit(legit_cmd):
             env = {}
     
         if when is None:
-            when = datetime.now()
+            when = datetime.now().astimezone()
     
         with freeze_time(when):
             return legit_cmd("commit", "-m", message, env=env)

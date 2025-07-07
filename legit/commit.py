@@ -39,15 +39,6 @@ class Commit:
 
     @classmethod
     def parse(cls, data: bytes) -> "Commit":
-        """
-        Parse the raw `commit` object payload exactly like the Ruby version.
-
-        * **Multiple headers per key** are kept (e.g. several `parent` lines).
-        * We stop at the first *empty* line and treat everything after it as the
-          commit message, preserving all newlines exactly.
-        * The return value’s first argument is a `list[str]` of parents,
-          mirroring the Ruby array, even when it is empty.
-        """
         text = data.decode("utf-8", errors="replace")
 
         headers: dict[str, list[str]] = defaultdict(list)
@@ -73,11 +64,13 @@ class Commit:
         if not author_values:
             raise ValueError("commit object missing 'author' header")
 
+        committer_values = headers.get("committer", author_values)
+
         return cls(
             parents=headers.get("parent", []),
             tree=tree_values[0],
             author=Author.parse(author_values[0]),
-            committer=Author.parse(headers.get("committer")[0]),
+            committer=Author.parse(committer_values[0]),
             message=message,
         )
 

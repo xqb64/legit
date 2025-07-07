@@ -211,9 +211,9 @@ def log(
 
     cmd_args = ["log"]
 
-    if abbrev is True:
+    if abbrev:
         cmd_args.append("--abbrev-commit")
-    elif abbrev is False:
+    else:
         cmd_args.append("--no-abbrev-commit")
 
     if format_ != "medium":
