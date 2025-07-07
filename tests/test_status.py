@@ -1,39 +1,18 @@
 import textwrap
 
 import pytest
-from io import StringIO
 
-from legit.command import Command
-from legit.repository import Repository
-
-from tests.conftest import (
-    assert_status,
+from tests.cmd_helpers import (
     assert_stdout,
-    assert_noent,
-    assert_stderr,
 )
 
 
 def assert_status(legit_cmd, output):
-    cmd, stdin, stdout, stderr = legit_cmd("status", "--porcelain")
+    *_, stdout, _ = legit_cmd("status", "--porcelain")
     assert_stdout(stdout, output)
 
 
-def test_list_untracked_files_in_name_order(write_file, legit_cmd):
-    write_file("file.txt", "")
-    write_file("another.txt", "")
-    
-    expected = textwrap.dedent(
-        """\
-        ?? another.txt
-        ?? file.txt
-        """
-    )
-
-    assert_status(legit_cmd, expected)
-
-
-def test_lists_files_as_untracked_if_they_are_not_in_the_index(write_file, commit, legit_cmd):
+def test_it_lists_files_as_untracked_if_they_are_not_in_the_index(write_file, commit, legit_cmd):
     write_file("committed.txt", "")
     legit_cmd("add", ".")
     commit("commit message")
@@ -49,7 +28,21 @@ def test_lists_files_as_untracked_if_they_are_not_in_the_index(write_file, commi
     assert_status(legit_cmd, expected)
 
 
-def test_lists_untracked_directories_and_not_their_contents(write_file, legit_cmd):
+def test_it_lists_untracked_files_in_name_order(write_file, legit_cmd):
+    write_file("file.txt", "")
+    write_file("another.txt", "")
+    
+    expected = textwrap.dedent(
+        """\
+        ?? another.txt
+        ?? file.txt
+        """
+    )
+
+    assert_status(legit_cmd, expected)
+
+
+def test_it_lists_untracked_directories_and_not_their_contents(write_file, legit_cmd):
     write_file("file.txt", "")
     write_file("dir/another.txt", "")
 
@@ -63,7 +56,7 @@ def test_lists_untracked_directories_and_not_their_contents(write_file, legit_cm
     assert_status(legit_cmd, expected)
 
 
-def test_lists_untracked_files_inside_tracked_directories(write_file, commit, legit_cmd):
+def test_it_lists_untracked_files_inside_tracked_directories(write_file, commit, legit_cmd):
     write_file("a/b/inner.txt", "")
     legit_cmd("add", ".")
     commit("commit message")
@@ -81,14 +74,14 @@ def test_lists_untracked_files_inside_tracked_directories(write_file, commit, le
     assert_status(legit_cmd, expected)
 
 
-def test_does_not_list_empty_untracked_directories(mkdir, legit_cmd):
+def test_it_does_not_list_empty_untracked_directories(mkdir, legit_cmd):
     mkdir("outer")
     expected = ""
     
     assert_status(legit_cmd, expected)
 
 
-def test_lists_untracked_directories_that_indirectly_contain_files(write_file, legit_cmd):
+def test_it_lists_untracked_directories_that_indirectly_contain_files(write_file, legit_cmd):
     write_file("outer/inner/file.txt", "")
 
     expected = textwrap.dedent(
@@ -100,62 +93,78 @@ def test_lists_untracked_directories_that_indirectly_contain_files(write_file, l
     assert_status(legit_cmd, expected)
 
 
-@pytest.mark.usefixtures("committed_repo")
 class TestIndexWorkspaceChanges:
-    def test_no_changes_prints_nothing(self, legit_cmd):
+    @pytest.fixture(autouse=True)
+    def setup(self, write_file, legit_cmd, commit):
+        write_file("1.txt", "one")
+        write_file("a/2.txt", "two")
+        write_file("a/b/3.txt", "three")
+    
+        _ = legit_cmd("add", ".")
+        commit("commit message")
+
+    def test_it_no_changes_prints_nothing(self, legit_cmd):
         assert_status(legit_cmd, "")
 
-    def test_reports_modified_files(self, write_file, legit_cmd):
+    def test_it_reports_modified_files(self, write_file, legit_cmd):
         write_file("1.txt", "changed")
         write_file("a/2.txt", "modified")
         assert_status(legit_cmd, " M 1.txt\n M a/2.txt\n")
 
-    def test_reports_changed_mode(self, make_executable, legit_cmd):
+    def test_it_reports_changed_mode(self, make_executable, legit_cmd):
         make_executable("a/2.txt")
         assert_status(legit_cmd, " M a/2.txt\n")
 
-    def test_reports_modified_files_with_unchanged_size(self, write_file, legit_cmd):
+    def test_it_reports_modified_files_with_unchanged_size(self, write_file, legit_cmd):
         write_file("a/b/3.txt", "hello")
         assert_status(legit_cmd, " M a/b/3.txt\n")
 
-    def test_prints_nothing_when_file_is_touched(self, touch, legit_cmd):
+    def test_it_prints_nothing_when_file_is_touched(self, touch, legit_cmd):
         touch("1.txt")
         assert_status(legit_cmd, "")
     
-    def test_reports_deleted_files(self, delete, legit_cmd):
+    def test_it_reports_deleted_files(self, delete, legit_cmd):
         delete("a/2.txt")
         assert_status(legit_cmd, " D a/2.txt\n")
 
 
-@pytest.mark.usefixtures("committed_repo")
 class TestHeadIndexChanges:
-    def test_reports_file_added_to_tracked_directory(self, legit_cmd, write_file):
+    @pytest.fixture(autouse=True)
+    def setup(self, write_file, legit_cmd, commit):
+        write_file("1.txt", "one")
+        write_file("a/2.txt", "two")
+        write_file("a/b/3.txt", "three")
+    
+        _ = legit_cmd("add", ".")
+        commit("commit message")
+
+    def test_it_reports_file_added_to_tracked_directory(self, legit_cmd, write_file):
         write_file("a/4.txt", "four")
         legit_cmd("add", ".")
         assert_status(legit_cmd, "A  a/4.txt\n")
 
-    def test_reports_file_added_to_untracked_directory(self, legit_cmd, write_file):
+    def test_it_reports_file_added_to_untracked_directory(self, legit_cmd, write_file):
         write_file("d/e/5.txt", "five")
         legit_cmd("add", ".")
         assert_status(legit_cmd, "A  d/e/5.txt\n")
 
-    def test_reports_modified_modes(self, legit_cmd, make_executable):
+    def test_it_reports_modified_modes(self, legit_cmd, make_executable):
         make_executable("1.txt")
         legit_cmd("add", ".")
         assert_status(legit_cmd, "M  1.txt\n")
 
-    def test_reports_modified_contents(self, legit_cmd, write_file):
+    def test_it_reports_modified_contents(self, legit_cmd, write_file):
         write_file("a/b/3.txt", "changed")
         legit_cmd("add", ".")
         assert_status(legit_cmd, "M  a/b/3.txt\n")
 
-    def test_reports_deleted_files(self, legit_cmd, delete):
+    def test_it_reports_deleted_files(self, legit_cmd, delete):
         delete("1.txt")
         delete(".git/index")
         legit_cmd("add", ".")
         assert_status(legit_cmd, "D  1.txt\n")
 
-    def test_reports_all_deleted_files_inside_directories(self, legit_cmd, delete):
+    def test_it_reports_all_deleted_files_inside_directories(self, legit_cmd, delete):
         delete("a")
         delete(".git/index")
         legit_cmd("add", ".")
