@@ -66,7 +66,10 @@ class Base:
             self.status = 0
         except ExitSignal as e:
             self.status = e.status
-
+        
+        self.stdout.flush()
+        self.stderr.flush()
+        
         if getattr(self, "pager", None) is not None:
             self.stdout.close()
             assert self.pager is not None
@@ -89,6 +92,13 @@ class Base:
         try:
             self.stdout.write(string + "\n")
             self.stdout.flush()
+        except BrokenPipeError:
+            self.exit(0)
+
+    def eprintln(self, string: str) -> None:
+        try:
+            self.stderr.write(string + "\n")
+            self.stderr.flush()
         except BrokenPipeError:
             self.exit(0)
 

@@ -1,6 +1,9 @@
 from legit.protocol import Remotes
 from legit.repository import Repository
 from functools import cache
+from typing import Optional
+from pathlib import Path
+from itertools import chain
 
 
 class RemoteAgentMixin:
@@ -14,13 +17,21 @@ class RemoteAgentMixin:
     def repo(self):
         return Repository(self.detect_git_dir())
 
-    def detect_git_dir(self):
-        path = self.expanded_pathname(self.args[0])
-        ancestors = (path,) + path.parents
+    def detect_git_dir(self) -> Optional[Path]:
+        """
+        Walk up from `self.args[0]`, returning the first directory that is
+        (a) itself a Git repository *or* (b) contains a `.git` directory.
 
-        dirs = [p for ancestor in ancestors for p in (ancestor, ancestor / ".git")]
+        Returns ``None`` if nothing is found.
+        """
+        start: Path = self.expanded_path(self.args[0])
 
-        return [d for d in dirs if self.is_git_repository(d)][0]
+        for ancestor in chain([start], start.parents):
+            for candidate in (ancestor, ancestor / ".git"):
+                if self.is_git_repository(candidate):
+                    return candidate
+
+        return None
 
     def is_git_repository(self, dirname) -> None:
         return (

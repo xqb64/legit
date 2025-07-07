@@ -23,6 +23,8 @@ from legit.cmd_config import Config
 from legit.cmd_remote import Remote
 from legit.cmd_fetch import Fetch
 from legit.cmd_push import Push
+from legit.cmd_upload_pack import UploadPack
+from legit.cmd_receive_pack import ReceivePack
 
 
 class Command:
@@ -47,6 +49,8 @@ class Command:
         "remote": Remote,
         "fetch": Fetch,
         "push": Push,
+        "upload-pack": UploadPack,
+        "receive-pack": ReceivePack,
     }
 
     @staticmethod

@@ -17,42 +17,54 @@ class Remotes:
 
         def send_packet(self, line):
             if line is None:
-                return self.output.write(b"0000")
+                try:
+                    self.output.write(b"0000")
+                except TypeError:
+                    self.output.write("0000")
+
+                self.output.flush()
+                return
 
             line = self.append_caps(line)
 
             size = len(line.encode("utf-8")) + 5
             header = f"{size:04x}"
 
-            self.output.write(header.encode())
-            self.output.write(line.encode())
-            self.output.write(b"\n")
+            try:
+                self.output.write(header.encode())
+                self.output.write(line.encode())
+                self.output.write(b"\n")
+            except TypeError:
+                self.output.write(header)
+                self.output.write(line)
+                self.output.write("\n")
+
             self.output.flush()
 
         def recv_packet(self):
             import re
 
-            head_bytes = self.input.read(4)
+            head = self.input.read(4)
 
-            try:
-                head_str = head_bytes.decode("ascii")
-            except UnicodeDecodeError:
-                return None if not head_bytes else head_bytes
+            if isinstance(head, bytes):
+                head = head.decode()
 
-            if not re.match(r"^[0-9a-f]{4}$", head_str, re.IGNORECASE):
-                return head_bytes
+            if not re.match(r"^[0-9a-f]{4}$", head, re.IGNORECASE):
+                return head
 
-            size = int(head_str, 16)
+            size = int(head, 16)
             if size == 0:
                 return None
 
             body = self.input.read(size - 4)
-            if body.endswith(b"\n"):
+            
+            if isinstance(body, bytes):
+                body = body.decode()
+
+            if body.endswith("\n"):
                 body = body[:-1]
 
-            body_str = body.decode("utf-8", errors="replace")
-
-            return self.detect_caps(body_str)
+            return self.detect_caps(body)
 
         def recv_until(self, terminator):
             """

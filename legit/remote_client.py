@@ -11,6 +11,8 @@ class RemoteClientMixin:
         self.remote_refs = {}
 
         for line in self.conn.recv_until(None):
+            if isinstance(line, bytes):
+                line = line.decode()
             m = self.REF_LINE.match(line)
             if not m:
                 continue
@@ -27,6 +29,7 @@ class RemoteClientMixin:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=self.stderr,
+            bufsize=-1,
         )
 
         input_stream = proc.stdout

@@ -9,6 +9,7 @@ from legit.fast_forward import FastForwardMixin
 
 class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
     UPLOAD_PACK = "git-upload-pack"
+    CAPABILITIES = ["ofs-delta"]
 
     def define_options(self) -> None:
         self.options = {"force": False, "uploader": ""}
@@ -27,13 +28,23 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.define_options()
         self.configure()
 
-        self.start_agent("fetch", self.uploader, self.fetch_url)
+        self.start_agent("fetch", self.uploader, self.fetch_url, self.CAPABILITIES)
+        self.println("started agent")
 
         self.recv_references()
+        self.println("recvd references")
+
         self.send_want_list()
+        self.println("sent want list")
+
         self.send_have_list()
+        self.println("sent have list")
+
         self.recv_objects()
+        self.println("recvd objects")
+
         self.update_remote_refs()
+        self.println("updated remote refs")
 
         self.exit(0 if not self.errors else 1)
 
@@ -106,7 +117,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.recv_packed_objects(unpack_limit, SIGNATURE)
 
     def update_remote_refs(self):
-        self.stderr.write("From {self.fetch_url}\n")
+        self.eprintln("From {self.fetch_url}")
 
         self.errors = {}
 

@@ -443,5 +443,48 @@ def push(force: bool, receive_pack: str | None, refs: tuple[str, ...]) -> None:
     run_cmd("push", *cmd_args)
 
 
+def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: tuple[str, ...]):
+    """
+    Shared helper: call the internal Command.execute exactly the way
+    Git expects, while *not* interpreting any protocol options that
+    follow ours.
+    """
+    # Forward the leading <repo> plus every remaining arg Git passed.
+    run_cmd(cmd_name, str(repo), *extra)
+
+
+@cli.command(
+    name="upload-pack",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+    help="Internal helper; invoked by Git during fetch/pull.",
+)
+@click.argument(
+    "repo",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+)
+@click.pass_context
+def upload_pack(ctx: click.Context, repo: Path) -> None:
+    # All args after <repo> are protocol flags Git tacks on; pass them verbatim.
+    _plumbing(ctx, "upload-pack", repo, ctx.args)
+
+
+@cli.command(
+    name="receive-pack",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+    help="Internal helper; invoked by Git during push.",
+)
+@click.argument(
+    "repo",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+)
+@click.pass_context
+def receive_pack(ctx: click.Context, repo: Path) -> None:
+    _plumbing(ctx, "receive-pack", repo, ctx.args)
 if __name__ == "__main__":
     cli()

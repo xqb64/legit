@@ -27,7 +27,8 @@ class UploadPack(RemoteAgentMixin, SendObjectsMixin, Base):
 
         for line in self.conn.recv_until(terminator):
             m = pattern.match(line)
-            result.add(m.group(1))
+            if m is not None:
+                result.add(m.group(1))
 
         return result
 
