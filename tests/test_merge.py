@@ -92,8 +92,6 @@ def assert_index(repo, *expected):
 
 @pytest.fixture
 def assert_executable(repo_path):
-    """Assert that a file in the workspace has the executable bit set."""
-
     def _assert_executable(path: str | Path):
         full = (repo_path / path).resolve()
         mode = full.stat().st_mode

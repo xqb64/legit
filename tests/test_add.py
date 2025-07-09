@@ -2,9 +2,6 @@ from tests.cmd_helpers import assert_stdout, assert_stderr
 
 
 def get_index(repo):
-    """
-    Load the index and return a list of (mode, path) tuples.
-    """
     repo.index.load()
     return sorted(
         [(entry.mode(), str(entry.path)) for entry in repo.index.entries.values()]

@@ -16,13 +16,7 @@ def captured_stderr():
 
 
 class CapturedStderr(TextIOBase):
-    """
-    A file-like that hands subprocess a real fileno() but lets us
-    read() everything later as text.
-    """
-
     def __init__(self):
-        # open a real temp file in text mode
         self._file = tempfile.TemporaryFile(mode="w+")
 
     def fileno(self):
@@ -37,13 +31,11 @@ class CapturedStderr(TextIOBase):
         return self._file.flush()
 
     def read(self, *args):
-        # rewind before reading
         self._file.flush()
         self._file.seek(0)
         return self._file.read(*args).encode()
 
     def readline(self, *args):
-        # rewind before reading a line
         self._file.seek(0)
         return self._file.readline(*args).encode()
 

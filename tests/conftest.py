@@ -23,10 +23,6 @@ def load_commit(repo, resolve_revision):
 
 @pytest.fixture
 def resolve_revision(repo):
-    """
-    Returns a function that can resolve a revision expression to its object ID.
-    """
-
     def _resolve_revision(expression):
         return Revision(repo, expression).resolve()
 
@@ -35,17 +31,11 @@ def resolve_revision(repo):
 
 @pytest.fixture
 def repo_path(tmp_path):
-    """
-    Create a fresh test repository path under pytest's tmp_path.
-    """
     return tmp_path / "test_repo"
 
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown(repo_path):
-    """
-    Initialize a repository before each test and clean up afterward.
-    """
     Command.execute(repo_path, {}, ["legit", "init"], BytesIO(), BytesIO(), BytesIO())
     yield
     shutil.rmtree(repo_path, ignore_errors=True)
@@ -53,9 +43,6 @@ def setup_and_teardown(repo_path):
 
 @pytest.fixture
 def repo(repo_path):
-    """
-    Provide a Repository instance pointed at the .git directory.
-    """
     git_dir = repo_path / ".git"
     repo_instance = Repository(git_dir)
     try:
@@ -86,10 +73,6 @@ def commit(legit_cmd):
 
 @pytest.fixture
 def write_file(repo_path):
-    """
-    Write `contents` to `repo_path/name`, creating parent dirs as needed.
-    """
-
     def _write_file(name: str, contents: str):
         path = repo_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -101,10 +84,6 @@ def write_file(repo_path):
 
 @pytest.fixture
 def mkdir(repo_path):
-    """
-    Make a directory in `repo_path`.
-    """
-
     def _mkdir(name: str):
         path = repo_path / name
         path.mkdir(parents=True, exist_ok=True)
@@ -114,10 +93,6 @@ def mkdir(repo_path):
 
 @pytest.fixture
 def touch(repo_path):
-    """
-    Touch a file in `repo_path`.
-    """
-
     def _touch(name: str):
         path = repo_path / name
         path.touch()
@@ -127,10 +102,6 @@ def touch(repo_path):
 
 @pytest.fixture
 def delete(repo_path):
-    """
-    Delete a file in `repo_path`.
-    """
-
     def _delete(name: str):
         path = repo_path / name
         if path.is_dir():
@@ -143,10 +114,6 @@ def delete(repo_path):
 
 @pytest.fixture
 def make_executable(repo_path):
-    """
-    Make the file at `repo_path/name` executable (0755).
-    """
-
     def _make_executable(name: str):
         path = repo_path / name
         path.chmod(0o755)
@@ -156,10 +123,6 @@ def make_executable(repo_path):
 
 @pytest.fixture
 def make_unreadable(repo_path):
-    """
-    Make the file at `repo_path/name` unreadable (0200).
-    """
-
     def _make_unreadable(name: str):
         path = repo_path / name
         path.chmod(0o200)
@@ -169,9 +132,6 @@ def make_unreadable(repo_path):
 
 @pytest.fixture
 def legit_cmd(repo_path):
-    """
-    Run the command with StringIO streams and return (cmd, stdin, stdout, stderr).
-    """
     to_close = []
 
     def _legit_cmd(*argv, env={}, stdin_data=""):
