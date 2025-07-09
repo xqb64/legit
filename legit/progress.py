@@ -47,6 +47,7 @@ class Progress:
 
         self.clear_line()
         self.output.write(self.status_line())
+        self.output.flush()
 
         self.message = None
 
