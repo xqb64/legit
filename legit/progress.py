@@ -31,7 +31,7 @@ class Progress:
         self.bytes = _bytes
 
         current_time = self.get_time()
-        if current_time < self.write_at + 0.05:
+        if current_time < self.write_at + 0.01:
             return
 
         self.write_at = current_time
