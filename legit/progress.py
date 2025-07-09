@@ -1,3 +1,4 @@
+import math
 import time
 
 
@@ -74,9 +75,6 @@ class Progress:
             return f"({self.count})"
 
     def format_bytes(self):
-        import math
-
         power = math.floor(math.log(self.bytes, SCALE))
         scaled = self.bytes / (SCALE**power)
-
         return "%.2f %s" % (scaled, UNITS[power])
