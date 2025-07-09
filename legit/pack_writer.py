@@ -1,10 +1,10 @@
 import zlib
 import hashlib
 import struct
+import sys
 
-from legit.pack import COMMIT, BLOB, TREE, HEADER_FORMAT, SIGNATURE, VERSION, TYPE_CODES
+from legit.pack import HEADER_FORMAT, SIGNATURE, VERSION
 from legit.numbers import VarIntLE
-from legit.progress import Progress
 from legit.pack_entry import Entry
 from legit.pack_compressor import Compressor
 
@@ -54,9 +54,6 @@ class Writer:
             self.progress.stop()
 
     def add_to_pack_list(self, obj, path):
-        from legit.database import DatabaseEntry
-        from legit.commit import Commit
-
         info = self.database.load_info(obj.oid)
         self.pack_list.append(Entry(obj.oid, info, path, self.allow_ofs))
 
@@ -65,8 +62,6 @@ class Writer:
         self.write(header)
 
     def write_entries(self):
-        import sys
-
         count = len(self.pack_list)
 
         if self.progress is not None:
