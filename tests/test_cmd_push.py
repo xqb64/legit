@@ -78,14 +78,10 @@ from typing import Dict, List
 
 
 def assert_workspace(repo_root: Path, contents: Dict[str, str]):
-    """Assert that *repo_root*'s working directory exactly matches *contents*."""
-
     _assert_workspace(repo_root, contents)
 
 
 class TestSingleBranchInitialPush:
-    """Examples executed **before** any push has occurred."""
-
     @pytest.fixture(autouse=True)
     def _setup(
         self,
@@ -137,7 +133,7 @@ class TestSingleBranchInitialPush:
 
     def test_sends_all_commits_from_local_history(self, legit_cmd, repo):
         legit_cmd("push", "origin", "master")
-        assert_commits = repo, self.remote.repo  # for readability
+        assert_commits = repo, self.remote.repo
         assert commits(assert_commits[0], ["master"]) == commits(
             assert_commits[1], ["master"]
         )
@@ -145,7 +141,6 @@ class TestSingleBranchInitialPush:
     def test_sends_enough_information_to_checkout_commits(self, legit_cmd, repo_path):
         legit_cmd("push", "origin", "master")
 
-        # Reset remote working tree and checkout commits around
         self.remote.legit_cmd(repo_path, "reset", "--hard")
 
         self.remote.legit_cmd(repo_path, "checkout", "master^")
@@ -177,8 +172,6 @@ class TestSingleBranchInitialPush:
 
 
 class TestSingleBranchAfterSuccessfulPush:
-    """The initial push has already completed successfully."""
-
     @pytest.fixture(autouse=True)
     def _setup(self, create_remote_repo, write_commit, legit_cmd, legit_path):
         self.remote = create_remote_repo("push-remote")
@@ -521,7 +514,6 @@ class TestMultipleLocalBranches:
 
     def test_sends_all_commits_history(self, legit_cmd, repo):
         legit_cmd("push", "origin", "refs/heads/*")
-        # 13 objects expected (same as Ruby)
         assert_object_count(self.remote.repo_path, 13)
         local_commits = commits(repo, ["master", "topic"])
         assert local_commits == commits(self.remote.repo, ["master", "topic"])
@@ -557,10 +549,8 @@ class TestMultipleLocalBranches:
         expected = f"To file://{self.remote.repo_path}\n * [new branch] topic -> top\n"
         assert_stderr(stderr, expected)
 
-        # Only that ref exists remotely
         assert_refs(self.remote.repo, ["HEAD", "refs/heads/top"])
 
-        # 10 objects expected (packed)
         assert_object_count(self.remote.repo_path, 10)
 
         local_topic_commits = commits(repo, ["topic"])

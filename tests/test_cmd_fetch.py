@@ -175,11 +175,6 @@ def test_fetch_can_checkout_remote_commits(remote_single_branch, legit_cmd, repo
     assert_workspace(repo_path, {"one.txt": "one"})
 
 
-# ---------------------------------------------------------------------- #
-# unpack-limit behaviour
-# ---------------------------------------------------------------------- #
-
-
 def test_fetch_unpack_limit_keeps_pack(remote_single_branch, legit_cmd, repo_path):
     legit_cmd("config", "fetch.unpackLimit", "5")
     legit_cmd("fetch")
@@ -211,11 +206,6 @@ def test_fetch_unpack_limit_commits_loadable(remote_single_branch, legit_cmd, re
     )
 
 
-# ---------------------------------------------------------------------- #
-# remote ahead
-# ---------------------------------------------------------------------- #
-
-
 def test_fetch_remote_ahead_fast_forward(
     remote_single_branch, legit_cmd, repo, repo_path
 ):
@@ -243,11 +233,6 @@ def test_fetch_remote_ahead_fast_forward(
         f"From file://{remote_single_branch.repo_path}\n"
         f"   {local_head}..{remote_head} master -> origin/master\n",
     )
-
-
-# ---------------------------------------------------------------------- #
-# remote diverged
-# ---------------------------------------------------------------------- #
 
 
 @pytest.fixture
@@ -329,11 +314,6 @@ def test_fetch_diverged_not_forced_ref_unchanged(diverged_not_forced_setup, repo
     assert local_head == commits(repo, ["origin/master"])[0]
 
 
-# ---------------------------------------------------------------------- #
-# multiple-branch remote
-# ---------------------------------------------------------------------- #
-
-
 def test_fetch_multiple_displays_new_branches(remote_multiple_branches, legit_cmd):
     remote = remote_multiple_branches
     cmd, _, _, stderr = legit_cmd("fetch")
@@ -402,11 +382,6 @@ def test_fetch_multiple_checkout_commits(
         repo_path,
         {"one.txt": "one", "dir/two.txt": "dir/two", "four.txt": "four"},
     )
-
-
-# ---------------------------------------------------------------------- #
-# specific-branch fetch
-# ---------------------------------------------------------------------- #
 
 
 @pytest.fixture
