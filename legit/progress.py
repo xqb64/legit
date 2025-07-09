@@ -61,7 +61,7 @@ class Progress:
             line += f", {self.format_bytes()}"
 
         if self.count == self.total:
-            line += ", done."
+            line += ", done.\n"
 
         return line
 
