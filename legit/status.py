@@ -68,11 +68,6 @@ class Status:
                 self.conflicts[str(entry.path)].append(entry.stage)
 
     def check_index_against_workspace(self, entry: Entry) -> None:
-        """
-        Compares an index entry with the corresponding file in the workspace
-        to detect unstaged changes (modified, deleted).
-        """
-        # Attempt to get the file's status from our scan of the workspace.
         stat_result = self.stats.get(entry.path)
 
         status = self.inspector.compare_index_to_workspace(entry, stat_result)

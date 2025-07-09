@@ -62,9 +62,6 @@ class Database:
         return self.path / "pack"
 
     def read_object(self, oid):
-        """
-        Read and parse a Git object by oid, returning the parsed object with its oid set.
-        """
         raw = self.load_raw(oid)
         obj = TYPES[raw.ty].parse(raw.data)
         obj.oid = oid

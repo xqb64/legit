@@ -36,9 +36,6 @@ class Loose:
             return None
 
     def load_raw(self, oid):
-        """
-        Load a raw Git object by its oid, returning a Raw(type, size, data) instance.
-        """
         try:
             ty, size, (data, pos) = self.read_object_header(oid)
             return Raw(ty, size, data[pos:])

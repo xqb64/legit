@@ -42,17 +42,12 @@ def cli(ctx: click.Context) -> None:
     "path", type=click.Path(file_okay=False, path_type=Path), required=False
 )
 def init(path: Path | None) -> None:
-    """Create an empty Legit repository in *PATH* (defaults to current dir)."""
-
     run_cmd("init", *(str(path),) if path is not None else ())
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("paths", nargs=-1, type=click.Path(path_type=Path))
 def add(paths: tuple[Path, ...]) -> None:
-    """Add file contents of *PATHS* to the index (staging area)."""
-
-    # Git treats “legit add” with no paths as an error; here we mimic that.
     if not paths:
         click.echo("error: pathspec required", err=True)
         raise SystemExit(1)
@@ -79,8 +74,6 @@ def add(paths: tuple[Path, ...]) -> None:
 def commit(
     ctx: click.Context, message: Optional[str], file_path: Optional[str]
 ) -> None:
-    """Record changes to the repository."""
-
     if message and file_path:
         raise click.UsageError(
             "Options -m/--message and -F/--file are mutually exclusive."
@@ -98,16 +91,12 @@ def commit(
 @cli.command()
 @click.option("--porcelain", is_flag=True, help="Machine‑readable output.")
 def status(porcelain: bool) -> None:
-    """Show the working tree status."""
-
     run_cmd("status", *("--porcelain",) if porcelain else ())
 
 
 @cli.command(name="diff")
 @click.option("--cached", "--staged", is_flag=True, help="Compare index with HEAD.")
 def diff_cmd(cached: bool) -> None:
-    """Show changes between index/HEAD or index/worktree."""
-
     run_cmd("diff", *("--cached",) if cached else ())
 
 
@@ -126,7 +115,6 @@ def branch(
     name: str | None,
     start: str | None,
 ) -> None:
-    """List, create, or delete branches."""
     flags = []
     if verbose:
         flags.append("-v")
@@ -135,11 +123,9 @@ def branch(
     if force or D:
         flags.append("-f")
     if D and not (delete and force):
-        # If -D used alone, ensure both delete and force get set
         flags = [f for f in flags if f not in ("-d", "-f")]
         flags.extend(["-D"])
 
-    # Build positional args
     args = []
     if name:
         args.append(name)
@@ -152,8 +138,6 @@ def branch(
 @cli.command()
 @click.argument("target")
 def checkout(target: str) -> None:
-    """Switch branches or restore files."""
-
     run_cmd("checkout", target)
 
 
@@ -201,8 +185,6 @@ def log(
     patch: bool,
     revisions_and_paths: tuple[str, ...],
 ):
-    """Display commit history."""
-
     if oneline:
         format_ = "oneline"
         if abbrev is None:
@@ -239,7 +221,6 @@ def log(
 @cli.command()
 @click.argument("refs", nargs=-1)
 def merge(refs: tuple[str, ...]) -> None:
-    """Join two or more development histories together."""
     cmd_args = ["merge"]
     cmd_args.extend(refs)
     run_cmd(*cmd_args)
@@ -264,11 +245,6 @@ def merge(refs: tuple[str, ...]) -> None:
 )
 @click.argument("paths", nargs=-1, required=True)
 def rm(recursive: bool, cached: bool, force: bool, paths: tuple[str, ...]) -> None:
-    """
-    Remove files or directories.
-
-    By default, `rm` removes paths from both the working tree and index.
-    """
     cmd_args = ["rm"]
 
     if recursive:
@@ -319,18 +295,14 @@ def rm(recursive: bool, cached: bool, force: bool, paths: tuple[str, ...]) -> No
 def config(
     file_scope, add, replace_all, get_all, unset, unset_all, remove_section, args
 ):
-    """Get and set repository or global options."""
-
     cmd_args = []
 
-    # Handle file scope options
     if file_scope:
         if file_scope in ["local", "global", "system"]:
             cmd_args.append(f"--{file_scope}")
         else:
             cmd_args.extend(["--file", file_scope])
 
-    # Handle action flags
     action_flags = {
         "--add": add,
         "--replace-all": replace_all,
@@ -340,13 +312,11 @@ def config(
         "--remove-section": remove_section,
     }
 
-    # Add the action flag that was used (if any) to the arguments
     for flag, is_set in action_flags.items():
         if is_set:
             cmd_args.append(flag)
-            break  # Assume only one action flag can be used at a time
+            break
 
-    # Add the remaining positional arguments (key, value, etc.)
     cmd_args.extend(args)
 
     run_cmd("config", *cmd_args)
@@ -358,25 +328,15 @@ def config(
 )
 @click.argument("args", nargs=-1)
 def remote(verbose: bool, args: tuple[str, ...]) -> None:
-    """
-    Manage the set of tracked repositories.
-
-    Subcommands:
-        add <name> <url>      Adds a remote
-        remove <name>         Removes a remote
-    """
     cmd_args = []
 
-    # The first positional argument is the subcommand (e.g., 'add')
     subcommand = args[0] if args else None
 
-    # Pass along any top-level flags like --verbose
     if verbose:
         cmd_args.append("--verbose")
 
     if subcommand:
         cmd_args.append(subcommand)
-        # Pass the rest of the arguments (e.g., the name and url)
         cmd_args.extend(args[1:])
 
     run_cmd("remote", *cmd_args)
@@ -397,9 +357,6 @@ def remote(verbose: bool, args: tuple[str, ...]) -> None:
 )
 @click.argument("refs", nargs=-1)
 def fetch(force: bool, upload_pack: str | None, refs: tuple[str, ...]) -> None:
-    """
-    Download objects and refs from another repository.
-    """
     cmd_args: list[str] = []
 
     if force:
@@ -407,7 +364,6 @@ def fetch(force: bool, upload_pack: str | None, refs: tuple[str, ...]) -> None:
     if upload_pack:
         cmd_args.append(f"--upload-pack={upload_pack}")
 
-    # any remaining positional refs (e.g. <remote> <refspec>…)
     cmd_args.extend(refs)
 
     run_cmd("fetch", *cmd_args)
@@ -425,30 +381,19 @@ def fetch(force: bool, upload_pack: str | None, refs: tuple[str, ...]) -> None:
 )
 @click.argument("refs", nargs=-1, metavar="REF")
 def push(force: bool, receive_pack: str | None, refs: tuple[str, ...]) -> None:
-    """
-    Update remote refs along with associated objects.
-    """
     cmd_args: list[str] = []
 
-    # translate our click flags into legit’s push flags
     if force:
         cmd_args.append("-f")
     if receive_pack:
         cmd_args.append(f"--receive-pack={receive_pack}")
 
-    # any remaining positional refs (e.g. <remote> <refspec>…)
     cmd_args.extend(refs)
 
     run_cmd("push", *cmd_args)
 
 
 def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: tuple[str, ...]):
-    """
-    Shared helper: call the internal Command.execute exactly the way
-    Git expects, while *not* interpreting any protocol options that
-    follow ours.
-    """
-    # Forward the leading <repo> plus every remaining arg Git passed.
     run_cmd(cmd_name, str(repo), *extra)
 
 
@@ -466,7 +411,6 @@ def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: tuple[str, .
 )
 @click.pass_context
 def upload_pack(ctx: click.Context, repo: Path) -> None:
-    # All args after <repo> are protocol flags Git tacks on; pass them verbatim.
     _plumbing(ctx, "upload-pack", repo, ctx.args)
 
 

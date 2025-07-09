@@ -66,9 +66,6 @@ class Remotes:
             return self.detect_caps(body)
 
         def recv_until(self, terminator):
-            """
-            Generator yielding packets until the terminator is encountered.
-            """
             while True:
                 line = self.recv_packet()
                 if line is None or line == terminator:

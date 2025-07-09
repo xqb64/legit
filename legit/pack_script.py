@@ -9,8 +9,7 @@ from legit.rev_list import RevList
 
 gitdir = Path(".git")
 pack_dir = gitdir / "objects" / "pack"
-pack_dir.mkdir(parents=True, exist_ok=True)  # make sure it exists
-
+pack_dir.mkdir(parents=True, exist_ok=True) 
 
 repo = Repository(gitdir)
 rev_list = RevList(repo, ["refs/heads/master"])
@@ -23,10 +22,10 @@ try:
         output=tmp_file,
         database=repo.database,
         options={
-            "compression": 6,  # zlib level (0-9)
-            "progress": None,  # or an instance of your Progress class
+            "compression": 6,  
+            "progress": None,
         },
     )
-    writer.write_objects(rev_list)  # <-- the heavy lifting happens here
+    writer.write_objects(rev_list)
 finally:
     tmp_file.close()

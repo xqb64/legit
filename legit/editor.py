@@ -6,11 +6,6 @@ from typing import Optional, Callable
 
 
 class Editor:
-    """
-    Manages editing content in a user-specified command-line editor.
-    (Docstrings from previous example omitted for brevity)
-    """
-
     DEFAULT_EDITOR = "vi"
 
     def __init__(self, path: os.PathLike, command: Optional[str] = None):
@@ -21,16 +16,9 @@ class Editor:
         self.cleaned_content: Optional[str] = None
 
     def __enter__(self):
-        """Enters the context manager, returning the editor instance."""
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Exits the context, closing the file and launching the editor.
-
-        After the editor is closed by the user, this method reads the file
-        content and stores the cleaned version in `self.cleaned_content`.
-        """
         self._edit_file()
 
     @classmethod
@@ -41,35 +29,14 @@ class Editor:
         *,
         block: Callable[["Editor"], None],
     ) -> Optional[str]:
-        """
-        Class method that mimics the original Ruby 'edit' block pattern.
-
-        It creates a file, runs the provided block to populate it, opens an
-        editor, and returns the final cleaned content.
-
-        Args:
-            path: The path to the file to be edited.
-            command: The editor command to use.
-            block: A callable function that takes the new Editor instance
-                   as its only argument.
-
-        Returns:
-            The cleaned content of the file after editing, or None.
-        """
         editor = cls(path, command)
 
-        # Execute the user-provided block to populate the editor
         if block:
             block(editor)
 
-        # Manually trigger the file-editing and cleanup logic
         editor._edit_file()
 
-        # Return the final content, just like the Ruby version
         return editor.cleaned_content
-
-    # The rest of the private methods (_get_file, _edit_file, _remove_notes)
-    # are unchanged from the previous example.
 
     def _get_file(self):
         if self._file is None:

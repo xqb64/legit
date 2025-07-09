@@ -11,22 +11,14 @@ class Author:
 
     @classmethod
     def parse(cls, string: str) -> Optional["Author"]:
-        """
-        Parse strings like:
-          "Alice <alice@example.com> 1622505600 +0200"
-        into an Author(name, email, datetime).
-        Returns None on bad format.
-        """
         parts = re.split(r"<|>", string)
         if len(parts) != 3:
             return None
 
         name, email, rest = (p.strip() for p in parts)
-        # rest should be "epoch offset", e.g. "1622505600 +0200"
         try:
             epoch_str, offset_str = rest.split()
             epoch = int(epoch_str)
-            # offset_str is like "+HHMM" or "-HHMM"
             sign = 1 if offset_str[0] == "+" else -1
             hours = int(offset_str[1:3])
             minutes = int(offset_str[3:5])

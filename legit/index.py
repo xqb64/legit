@@ -17,7 +17,6 @@ class Hash(Protocol):
 
 
 def _u32(x: int) -> int:
-    """Return the lower 32 bits of x (Git index uses uint32)."""
     return x & 0xFFFFFFFF
 
 
@@ -211,7 +210,7 @@ class Index:
         for _ in range(count):
             entry = reader.read(Index.ENTRY_MIN_SIZE)
 
-            while entry[-1:] != b"\x00":  # Ensure slicing result is bytes
+            while entry[-1:] != b"\x00":
                 entry += reader.read(Index.ENTRY_BLOCK)
 
             self.store_entry(Entry.parse(entry))
@@ -327,39 +326,28 @@ class Entry:
 
     @classmethod
     def parse(cls, data: bytes) -> "Entry":
-        """
-        Parses a byte string to create an Entry instance.
-        This is the inverse of the to_bytes method.
-        """
         import binascii
 
-        # Unpack the fixed-size part of the data
         header_data = data[: cls.HEADER_SIZE]
         unpacked_header = struct.unpack(cls.HEADER_FORMAT, header_data)
 
-        # Extract the metadata fields from the unpacked tuple
         (ctime, ctime_nsec, mtime, mtime_nsec, dev, ino, mode, uid, gid, size) = (
             unpacked_header[:10]
         )
 
-        # The OID is the next part, convert the 20 bytes back to a hex string
         oid_bytes = unpacked_header[10]
         oid_hex = binascii.hexlify(oid_bytes).decode("ascii")
 
-        # The flags are the last part of the fixed header
         flags = unpacked_header[11]
 
-        # The rest of the data contains the path. Find the first null byte.
         path_start_index = cls.HEADER_SIZE
         try:
             null_index = data.index(b"\x00", path_start_index)
             path_bytes = data[path_start_index:null_index]
             path = Path(path_bytes.decode("utf-8"))
         except ValueError:
-            # Fallback if no null terminator is found (should not happen with valid data)
             path = Path(data[path_start_index:].decode("utf-8", "ignore"))
 
-        # Construct the Entry object with the parsed data
         return cls(
             ctime,
             ctime_nsec,
@@ -417,18 +405,14 @@ class Entry:
             _u32(self.size),
         )
 
-        # 20 raw bytes from 40-char hex OID
         oid_bytes = binascii.unhexlify(self.oid)
 
-        # 2-byte unsigned short for flags
         flags = struct.pack("!H", self.flags)
 
-        # Null-terminated path
         path_bytes = str(self.path).encode("utf-8") + b"\x00"
 
         result = header + oid_bytes + flags + path_bytes
 
-        # Pad to ENTRY_BLOCK (8-byte) boundary
         while len(result) % Entry.ENTRY_BLOCK != 0:
             result += b"\x00"
 

@@ -87,29 +87,22 @@ class Base:
         return Color.format(style, string) if self.isatty else string
 
     def run(self) -> None:
-        """Subclasses must override this."""
         raise NotImplementedError(f"{self.__class__.__name__}.run() not implemented")
 
     def println(self, string: str) -> None:
-        # Check if self.stdout is a binary stream (has a .buffer attribute)
         if isinstance(self.stdout, io.BufferedIOBase):
             self.stdout.write((string + "\n").encode("utf-8"))
         else:
-            # Assume it's a text stream (like StringIO)
             self.stdout.write(string + "\n")
 
     def eprintln(self, string: str) -> None:
-        # Check if self.stderr is a binary stream (has a .buffer attribute)
         if isinstance(self.stderr, io.BufferedIOBase):
             self.stderr.write((string + "\n").encode("utf-8"))
         else:
-            # Assume it's a text stream (like CapturedStderr's internal file)
             self.stderr.write(string + "\n")
 
 
 class ExitSignal(Exception):
-    """Internal exception to short-circuit out of `run()` with a status."""
-
     def __init__(self, status: int = 0) -> None:
         super().__init__(f"Exit with status {status}")
         self.status: int | None = status

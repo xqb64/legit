@@ -194,20 +194,12 @@ class RevList:
         self.traverse_tree(entry, _mark)
 
     def traverse_pending(self) -> Generator:
-        """
-        Generator over filesystem objects from pending trees,
-        skipping uninteresting and duplicates.
-        """
         if not self.objects:
             return
         for entry in self.pending:
             yield from self._traverse_objects(entry)
 
     def _traverse_objects(self, entry) -> Generator:
-        """
-        Helper generator that yields a tree entry and its children,
-        skipping entries marked uninteresting or already seen.
-        """
         if self.is_marked(entry.oid, "uninteresting"):
             return
         if not self.mark(entry.oid, "seen"):
@@ -229,32 +221,21 @@ class RevList:
         self.queue = self.output
 
     def still_interesting(self) -> bool:
-        # If there’s nothing queued, it can’t be interesting.
         if not self.queue:
             return False
 
-        # The last output vs the first queued
         oldest_out = self.output[-1] if self.output else None
         newest_in = self.queue[0]
 
-        # If the most‐recently‐output commit is older (or equal) than
-        # the next one coming in, we’re still in order => still interesting.
         if oldest_out and oldest_out.date() <= newest_in.date():
             return True
 
-        # Otherwise, if there’s any commit in the queue that isn’t marked
-        # uninteresting, we’re still interested.
         if any(not self.is_marked(c.oid, "uninteresting") for c in self.queue):
             return True
 
-        # Otherwise, nothing left that’s interesting
         return False
 
     def traverse_commits(self):
-        """
-        Yield each commit in queue order, after optionally adding parents,
-        but skip any already marked uninteresting.
-        """
         while self.queue:
             commit = self.queue.pop(0)
             if not self.limited:

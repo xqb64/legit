@@ -215,8 +215,6 @@ class Refs:
         return self._update_ref_file(path, start_oid)
 
     class StaleValue(Exception):
-        """Raised when the ref has changed since last read."""
-
         pass
 
     def compare_and_swap(
@@ -228,11 +226,9 @@ class Refs:
         path = self.path / name
 
         def guard() -> None:
-            # exactly your Ruby “unless old_oid == read_symref(path)...”
             if old_oid != self.read_symref(path):
                 raise self.StaleValue(f"value of {name} changed since last read")
 
-        # yield to the “block” just like Ruby’s update_ref_file(path, new_oid) { … }
         self._update_ref_file(path, new_oid, guard)
 
     def _update_ref_file(
@@ -244,32 +240,25 @@ class Refs:
         lockfile = Lockfile(path)
 
         try:
-            # hold_for_update
             lockfile.hold_for_update()
 
-            # yield if block_given?
             if callback:
                 callback()
 
             if oid is not None:
-                # write the new OID
                 self.write_lockfile(lockfile, oid)
             else:
-                # delete (rescuing ENOENT)
                 try:
                     path.unlink()
                 except FileNotFoundError:
                     pass
-                # rollback the lock
                 lockfile.rollback()
 
         except Lockfile.MissingParent:
-            # mkdir -p and retry
             path.parent.mkdir(parents=True, exist_ok=True)
             return self._update_ref_file(path, oid, callback)
 
         except Exception:
-            # on *any* other error, rollback and re-raise
             lockfile.rollback()
             raise
 
@@ -296,29 +285,21 @@ class Refs:
         lock = Lockfile(path)
 
         try:
-            # Acquire exclusive lock before touching the file
             lock.hold_for_update()
 
-            # Read the branch’s current SHA (or symref)
             oid = self.read_symref(path)
             if not oid:
                 raise Refs.InvalidBranch(f"branch '{branch_name}' not found.")
 
-            # Remove the ref file and then prune empty parent dirs
             path.unlink()
             self._delete_parent_directories(path)
 
             return oid
 
         finally:
-            # Always roll back the lock (releases it or cleans up)
             lock.rollback()
 
     def _delete_parent_directories(self, path: Path) -> None:
-        """
-        Walk up from `path.parent` and remove any empty directories,
-        stopping once we hit `self.heads_path`.
-        """
         p = path.parent
         while p != self.heads_path and p.exists() and not any(p.iterdir()):
             p.rmdir()

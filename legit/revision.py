@@ -162,7 +162,6 @@ class Revision:
 
     @classmethod
     def valid_ref(cls, revision: str) -> bool:
-        """Return True if the revision string is a valid ref name."""
         return not bool(cls.INVALID_NAME.search(revision))
 
     @classmethod
@@ -238,10 +237,6 @@ class Revision:
         return None
 
     def log_ambiguous_sha1(self, name: str, candidates: list[str]) -> None:
-        """
-        Logs an error when a short SHA-1 prefix `name` matches multiple objects.
-        """
-        # Build a list of formatted object info strings
         objects = []
         for oid in sorted(candidates):
             obj = self.repo.database.load(oid)
@@ -250,7 +245,6 @@ class Revision:
 
             if obj.type() == "commit":
                 assert isinstance(obj, Commit)
-                # include author date and title for commits
                 date = obj.author.short_date()
                 title = obj.title_line()
                 line = f"{info} {date} - {title}"
@@ -259,9 +253,7 @@ class Revision:
 
             objects.append(line)
 
-        # Construct the error message and hint list
         message = f"short SHA1 {name} is ambiguous"
         hint = ["The candidates are:"] + objects
 
-        # Push a HintedError onto the errors list
         self.errors.append(HintedError(message, hint))

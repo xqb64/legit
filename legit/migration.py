@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class Migration:
     class Conflict(Exception):
-        """Raised when the migration detects a workspace conflict."""
+        pass
 
     MESSAGES: Dict[str, Tuple[str, str]] = {
         "stale_file": (
@@ -63,28 +63,24 @@ class Migration:
         }
 
     def apply_changes(self) -> None:
-        """Plan, verify, and apply all workspace/index updates."""
         self.plan_changes()
         self.update_workspace()
         self.update_index()
 
     def blob_data(self, oid: str) -> bytes:
-        """Return raw blob bytes for an object id (thin wrapper)."""
         blob = self.repo.database.load(oid)
         assert isinstance(blob, Blob)
         return blob.data
 
     def plan_changes(self) -> None:
-        """Walk the tree diff once, gathering change-sets and conflicts."""
         for path, (old_item, new_item) in self.tree_diff.items():
             self.check_for_conflict(path, old_item, new_item)
             self.record_change(path, old_item, new_item)
 
-        self.collect_errors()  # may raise Conflict
+        self.collect_errors() 
 
     @staticmethod
     def _ancestor_dirs(p: Path) -> List[Path]:
-        # include the directory itself, plus any parents up to repo-root
         dirs = [p]
         for parent in p.parents:
             if parent == Path("."):
@@ -98,7 +94,6 @@ class Migration:
         old_item: Optional[DatabaseEntry],
         new_item: Optional[DatabaseEntry],
     ) -> None:
-        """Populate *changes*, *mkdirs*, and *rmdirs* like the Ruby method."""
         dir_chain = self._ancestor_dirs(path.parent)
 
         if old_item is None:
@@ -174,19 +169,11 @@ class Migration:
         old_item: Optional[DatabaseEntry],
         new_item: Optional[DatabaseEntry],
     ) -> bool:
-        """
-        The index conflicts when it differs from *both* the current tree
-        and the target tree.
-        """
         return bool(self.inspector.compare_tree_to_index(old_item, entry)) and bool(
             self.inspector.compare_tree_to_index(new_item, entry)
         )
 
     def untracked_parent(self, path: Path) -> Path | None:
-        """
-        Walk up through parents until we find a file that *could* be
-        committed (trackable) even though it isn’t yet in the index.
-        """
         for parent in path.parents:
             if str(parent) == ".":
                 break
@@ -200,10 +187,6 @@ class Migration:
         return None
 
     def collect_errors(self) -> None:
-        """
-        Build the human-readable error blocks and raise Conflict
-        if anything was accumulated.
-        """
         for kind, paths in sorted(self.conflicts.items()):
             if not paths:
                 continue

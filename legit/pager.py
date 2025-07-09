@@ -41,7 +41,6 @@ class Pager:
         os.close(reader_fd)
 
     def wait(self) -> None:
-        """Block until the pager exits."""
         if self._proc:
             self._proc.wait()
             self._proc = None

@@ -7,10 +7,6 @@ from legit.config import ConfigFile, ParseError, Conflict
 
 
 class Config(Base):
-    """
-    Command for getting and setting repository or global options.
-    """
-
     def __init__(self, *args: List[str]):
         super().__init__(*args)
         self.options = {
@@ -25,9 +21,7 @@ class Config(Base):
         self.define_options()
 
     def define_options(self) -> None:
-        """Parses command-line options."""
         args_iter = iter(self.args)
-        # Separate positional args from options
         positional_args = []
         for arg in args_iter:
             if arg == "--local":
@@ -43,7 +37,7 @@ class Config(Base):
                     self.options["file"] = next(args_iter)
                 except StopIteration:
                     self.stderr.write("error: flag -f needs a value\n")
-                    self.exit(129)  # Exit code for incorrect usage
+                    self.exit(129)
             elif arg == "--add":
                 self.options["add"] = next(args_iter, None)
             elif arg == "--replace-all":
@@ -62,7 +56,6 @@ class Config(Base):
         self.args = positional_args
 
     def run(self) -> None:
-        """Main execution logic for the config command."""
         try:
             if self.options["add"]:
                 self._add_variable()
@@ -85,10 +78,8 @@ class Config(Base):
                 value = self.args[1] if len(self.args) > 1 else None
 
                 if value is not None:
-                    # Set a key-value pair
                     self._edit_config(lambda config: config.set(key, value))
                 else:
-                    # Get a key's value
                     self._read_config(lambda config: config.get(key))
 
         except ParseError as e:
@@ -120,7 +111,6 @@ class Config(Base):
         self._read_config(lambda config: config.get_all(key))
 
     def _read_config(self, operation: Callable[[ConfigFile], List[Any]]) -> None:
-        """Handles read-only configuration operations."""
         config = self.repo.config
         if self.options["file"]:
             config = config.file(self.options["file"])
@@ -142,8 +132,6 @@ class Config(Base):
         self.exit(0)
 
     def _edit_config(self, operation: Callable[[ConfigFile], None]) -> None:
-        """Handles write operations on the configuration."""
-        # Default to local scope for edits if not specified
         file_scope = self.options.get("file") or "local"
         config = self.repo.config.file(file_scope)
 
@@ -157,7 +145,6 @@ class Config(Base):
             self.exit(5)
 
     def _parse_key(self, name: str) -> Tuple[str, ...]:
-        """Parses and validates a configuration key string."""
         parts = name.split(".")
 
         if len(parts) < 2:

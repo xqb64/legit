@@ -51,9 +51,6 @@ class Log(PrintDiffMixin, Base):
         self.args = positional
 
     def run(self) -> None:
-        """
-        Executes the log command, parsing options and displaying commit history.
-        """
         self.define_options()
         self.blank_line: bool = False
 

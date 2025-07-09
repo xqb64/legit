@@ -41,28 +41,19 @@ class Tree:
 
     @classmethod
     def parse(cls, payload: bytes) -> "Tree":
-        """
-        Parse the body of a git tree object:
-
-            <mode> SP <name> NUL <20-byte raw SHA-1>
-            … repeated until end of payload
-        """
         entries: MutableMapping[str, DatabaseEntry | Entry | Tree] = {}
         idx = 0
         end = len(payload)
 
         while idx < end:
-            # mode (octal string up to the first space)
             sp = payload.index(b" ", idx)
             mode = int(payload[idx:sp].decode(), 8)
             idx = sp + 1
 
-            # name (utf-8 up to NULL)
             nul = payload.index(b"\x00", idx)
             name = payload[idx:nul].decode("utf-8", errors="replace")
             idx = nul + 1
 
-            # 20-byte object id
             oid_bytes = payload[idx : idx + 20]
             oid = oid_bytes.hex()
             idx += 20

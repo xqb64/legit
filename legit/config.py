@@ -18,17 +18,13 @@ VALID_VARIABLE = re.compile(r"^[a-z][a-z0-9-]*$", re.I)
 
 
 class Conflict(Exception):
-    """Raised when the requested operation would create an ambiguous state."""
-
+    pass
 
 class ParseError(Exception):
-    """Raised when the configuration file contains an invalid line."""
-
+    pass
 
 @dataclass
 class Section:
-    """Represents the *logical* section, not a line in the file."""
-
     name: List[str]
 
     @staticmethod
@@ -139,17 +135,11 @@ class ConfigFile:
     def unset(
         self,
         key: Sequence[str],
-        predicate: Optional[Callable[[List["Line"]], None]] = None,  # noqa: F821
+        predicate: Optional[Callable[[List["Line"]], None]] = None, 
     ) -> None:
-        """
-        Delete *key*.  Before doing so, run *predicate(lines)* where
-        *lines* is the list of matching lines.  If *predicate* is omitted,
-        the default behaviour raises Conflict when more than one value
-        exists—exactly what the Ruby block did.
-        """
-        if predicate is None:  # default check
+        if predicate is None:
 
-            def predicate(lines: List["Line"]) -> None:  # noqa: F821
+            def predicate(lines: List["Line"]) -> None:
                 if len(lines) > 1:
                     raise Conflict(f"{key} has multiple values")
 
