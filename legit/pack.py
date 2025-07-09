@@ -6,7 +6,7 @@ HEADER_FORMAT = ">4sII"
 SIGNATURE = b"PACK"
 VERSION = 2
 
-IDX_SIGNATURE  = 0xff744f63
+IDX_SIGNATURE = 0xFF744F63
 IDX_MAX_OFFSET = 0x80000000
 
 COMMIT = 1
@@ -48,9 +48,8 @@ class RefDelta:
         self.base_oid = base_oid
         self.delta_data = delta_data
 
+
 class OfsDelta:
     def __init__(self, base_ofs, delta_data):
         self.base_ofs = base_ofs
         self.delta_data = delta_data
-
-

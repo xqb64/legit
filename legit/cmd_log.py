@@ -119,7 +119,7 @@ class Log(PrintDiffMixin, Base):
     def from_diff_item(self, path, item) -> Target:
         if item is not None:
             blob = self.repo.database.load(item.oid)
-            return Target(path, item.oid, oct(item.mode)[2:], blob.data.decode('utf-8'))
+            return Target(path, item.oid, oct(item.mode)[2:], blob.data.decode("utf-8"))
         else:
             return Target(path, "0" * 40, None, "")
 

@@ -110,7 +110,7 @@ class Refspec:
     @staticmethod
     def parse(spec: str) -> "Refspec":
         m = Refspec.REFSPEC_FORMAT.match(spec)
-        source = Refspec.canonical(m.group(2)) or ''
+        source = Refspec.canonical(m.group(2)) or ""
         target = Refspec.canonical(m.group(4)) or source
         return Refspec(source, target, m.group(1) == "+")
 
@@ -161,7 +161,7 @@ class Refspec:
                 dst = self.target
 
             mappings[dst] = (ref, self.forced)
-    
+
         return mappings
 
     def __str__(self) -> str:
@@ -217,4 +217,3 @@ class Remote:
     @property
     def uploader(self):
         return self.config.get(["remote", self.name, "uploadpack"])
-

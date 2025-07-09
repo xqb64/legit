@@ -1,5 +1,5 @@
 from io import BytesIO, StringIO
-from datetime import datetime 
+from datetime import datetime
 from typing import BinaryIO, Optional
 import shutil
 
@@ -17,6 +17,7 @@ from legit.editor import Editor
 def load_commit(repo, resolve_revision):
     def _load_commit(expression):
         return repo.database.load(resolve_revision(expression))
+
     return _load_commit
 
 
@@ -25,9 +26,10 @@ def resolve_revision(repo):
     """
     Returns a function that can resolve a revision expression to its object ID.
     """
+
     def _resolve_revision(expression):
         return Revision(repo, expression).resolve()
-    
+
     return _resolve_revision
 
 
@@ -72,10 +74,10 @@ def commit(legit_cmd):
             }
         else:
             env = {}
-    
+
         if when is None:
             when = datetime.now().astimezone()
-    
+
         with freeze_time(when):
             return legit_cmd("commit", "-m", message, env=env)
 
@@ -87,11 +89,13 @@ def write_file(repo_path):
     """
     Write `contents` to `repo_path/name`, creating parent dirs as needed.
     """
+
     def _write_file(name: str, contents: str):
         path = repo_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(contents)
+
     return _write_file
 
 
@@ -100,9 +104,11 @@ def mkdir(repo_path):
     """
     Make a directory in `repo_path`.
     """
+
     def _mkdir(name: str):
         path = repo_path / name
         path.mkdir(parents=True, exist_ok=True)
+
     return _mkdir
 
 
@@ -111,9 +117,11 @@ def touch(repo_path):
     """
     Touch a file in `repo_path`.
     """
+
     def _touch(name: str):
         path = repo_path / name
         path.touch()
+
     return _touch
 
 
@@ -122,12 +130,14 @@ def delete(repo_path):
     """
     Delete a file in `repo_path`.
     """
+
     def _delete(name: str):
         path = repo_path / name
         if path.is_dir():
             shutil.rmtree(path, ignore_errors=True)
         else:
             path.unlink(missing_ok=True)
+
     return _delete
 
 
@@ -136,9 +146,11 @@ def make_executable(repo_path):
     """
     Make the file at `repo_path/name` executable (0755).
     """
+
     def _make_executable(name: str):
         path = repo_path / name
         path.chmod(0o755)
+
     return _make_executable
 
 
@@ -147,9 +159,11 @@ def make_unreadable(repo_path):
     """
     Make the file at `repo_path/name` unreadable (0200).
     """
+
     def _make_unreadable(name: str):
         path = repo_path / name
         path.chmod(0o200)
+
     return _make_unreadable
 
 
@@ -159,13 +173,17 @@ def legit_cmd(repo_path):
     Run the command with StringIO streams and return (cmd, stdin, stdout, stderr).
     """
     to_close = []
+
     def _legit_cmd(*argv, env={}, stdin_data=""):
-        stdin = BytesIO(stdin_data.encode('utf-8'))
+        stdin = BytesIO(stdin_data.encode("utf-8"))
         stdout = BytesIO()
         stderr = CapturedStderr()
         to_close.append(stderr)
-        cmd = Command.execute(repo_path, env, ["legit"] + list(argv), stdin, stdout, stderr)
+        cmd = Command.execute(
+            repo_path, env, ["legit"] + list(argv), stdin, stdout, stderr
+        )
         return cmd, stdin, stdout, stderr
+
     yield _legit_cmd
     for s in to_close:
         s.close()
@@ -178,8 +196,7 @@ def stub_editor(monkeypatch):
             if block:
                 block(Editor(path, command))
             return message_to_return
-        monkeypatch.setattr(Editor, 'edit', fake_edit)
+
+        monkeypatch.setattr(Editor, "edit", fake_edit)
+
     return factory
-
-
-

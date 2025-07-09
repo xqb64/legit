@@ -37,7 +37,7 @@ class Delta:
             if not isinstance(other, Delta.Copy):
                 return NotImplemented
             return self.offset == other.offset and self.size == other.size
-    
+
         def __repr__(self) -> str:
             return f"Copy(offset={self.offset}, size={self.size})"
 
@@ -65,7 +65,7 @@ class Delta:
             if not isinstance(other, Delta.Insert):
                 return NotImplemented
             return self.data == other.data
-    
+
         def __repr__(self) -> str:
             return f"Insert(data={self.data!r})"
 

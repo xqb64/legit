@@ -13,6 +13,7 @@ def commit_file(write_file, legit_cmd, commit):
         write_file("file.txt", msg)
         _ = legit_cmd("add", ".")
         commit(msg, time)
+
     return _commit_file
 
 
@@ -23,11 +24,11 @@ def commit_tree(write_file, legit_cmd, commit):
             write_file(path, contents)
         _ = legit_cmd("add", ".")
         commit(msg, time)
+
     return _commit_tree
 
 
 class TestWithAChainOfCommits:
-    
     #   o---o---o
     #   A   B   C
 
@@ -38,9 +39,8 @@ class TestWithAChainOfCommits:
             commit_file(msg)
 
         _ = legit_cmd("branch", "topic", "@^^")
-        
-        self.commits = [load_commit(rev) for rev in ["@", "@^", "@^^"]]
 
+        self.commits = [load_commit(rev) for rev in ["@", "@^", "@^^"]]
 
     def test_it_prints_a_log_in_medium_format(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log")
@@ -65,8 +65,9 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected_log)
 
-
-    def test_it_prints_a_log_in_medium_format_with_abbreviated_commit_ids(self, legit_cmd,  repo):
+    def test_it_prints_a_log_in_medium_format_with_abbreviated_commit_ids(
+        self, legit_cmd, repo
+    ):
         *_, stdout, _ = legit_cmd("log", "--abbrev-commit")
         expected = textwrap.dedent(f"""\
             commit {repo.database.short_oid(self.commits[0].oid)}
@@ -89,7 +90,6 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-
     def test_it_prints_a_log_in_oneline_format(self, legit_cmd, repo):
         *_, stdout, _ = legit_cmd("log", "--oneline")
         expected = textwrap.dedent(f"""\
@@ -99,8 +99,9 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-
-    def test_it_print_a_log_in_oneline_format_without_abbreviated_commit_ids(self, legit_cmd):
+    def test_it_print_a_log_in_oneline_format_without_abbreviated_commit_ids(
+        self, legit_cmd
+    ):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline")
         expected = textwrap.dedent(f"""\
             {self.commits[0].oid} C
@@ -108,7 +109,6 @@ class TestWithAChainOfCommits:
             {self.commits[2].oid} A
             """)
         assert_stdout(stdout, expected)
-
 
     def test_it_prints_a_log_starting_from_a_specified_commit(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "@^")
@@ -118,7 +118,6 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-
     def test_it_prints_a_log_with_short_decorations(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--decorate=short")
         expected = textwrap.dedent(f"""\
@@ -127,7 +126,6 @@ class TestWithAChainOfCommits:
             {self.commits[2].oid} (topic) A
             """)
         assert_stdout(stdout, expected)
-
 
     def test_it_prints_a_log_with_detached_heads(self, legit_cmd):
         _ = legit_cmd("checkout", "@")
@@ -139,7 +137,6 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-
     def test_it_print_a_log_with_full_decorations(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--decorate=full")
         expected = textwrap.dedent(f"""\
@@ -148,7 +145,6 @@ class TestWithAChainOfCommits:
             {self.commits[2].oid} (refs/heads/topic) A
             """)
         assert_stdout(stdout, expected)
-
 
     def test_it_print_a_log_with_patches(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--patch")
@@ -184,17 +180,26 @@ class TestWithAChainOfCommits:
 class TestWithCommitsChangingDifferentFiles:
     @pytest.fixture(autouse=True)
     def setup(self, commit_tree, load_commit):
-        commit_tree("first", {
-            "a/1.txt": "1",
-            "b/c/2.txt": "2",
-        })
-        commit_tree("second", {
-            "a/1.txt": "10",
-            "b/3.txt": "3",
-        })
-        commit_tree("third", {
-            "b/c/2.txt": "4",
-        })
+        commit_tree(
+            "first",
+            {
+                "a/1.txt": "1",
+                "b/c/2.txt": "2",
+            },
+        )
+        commit_tree(
+            "second",
+            {
+                "a/1.txt": "10",
+                "b/3.txt": "3",
+            },
+        )
+        commit_tree(
+            "third",
+            {
+                "b/c/2.txt": "4",
+            },
+        )
         self.commits = [load_commit(rev) for rev in ["@^^", "@^", "@"]]
 
     def test_it_logs_commits_that_change_a_file(self, legit_cmd):
@@ -214,7 +219,9 @@ class TestWithCommitsChangingDifferentFiles:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_commits_that_change_a_directory_and_one_of_its_files(self, legit_cmd):
+    def test_it_logs_commits_that_change_a_directory_and_one_of_its_files(
+        self, legit_cmd
+    ):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "b", "b/3.txt")
         expected = textwrap.dedent(f"""\
             {self.commits[2].oid} third
@@ -255,7 +262,6 @@ class TestWithCommitsChangingDifferentFiles:
 
 
 class TestWithATreeOfCommits:
-    
     #  m1  m2  m3
     #   o---o---o [master]
     #        \
@@ -266,17 +272,17 @@ class TestWithATreeOfCommits:
     def setup(self, commit_file, legit_cmd, resolve_revision):
         for n in range(1, 4):
             commit_file(f"master-{n}")
-        
+
         _ = legit_cmd("branch", "topic", "master^")
         _ = legit_cmd("checkout", "topic")
-        
+
         self.branch_time = datetime.now().astimezone() + timedelta(seconds=10)
         for n in range(1, 5):
             commit_file(f"topic-{n}", self.branch_time)
-            
+
         self.master = [resolve_revision(f"master~{n}") for n in range(0, 3)]
         self.topic = [resolve_revision(f"topic~{n}") for n in range(0, 4)]
-        
+
     def test_it_logs_the_combined_history_of_multiple_branches(self, legit_cmd):
         *_, stdout, _ = legit_cmd(
             "log", "--pretty=oneline", "--decorate=short", "master", "topic"
@@ -301,23 +307,23 @@ class TestWithATreeOfCommits:
             {self.topic[3]} topic-1
             """)
         assert_stdout(stdout, expected)
-    
+
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "master", "^topic")
         expected = textwrap.dedent(f"""\
             {self.master[0]} master-3
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_excludes_long_branch_when_commit_times_equal(self, legit_cmd, commit_file):
+    def test_it_excludes_long_branch_when_commit_times_equal(
+        self, legit_cmd, commit_file
+    ):
         _ = legit_cmd("branch", "side", "topic^^")
         _ = legit_cmd("checkout", "side")
         for n in range(1, 11):
             commit_file(f"side-{n}", self.branch_time)
-        
-        *_, stdout, _ = legit_cmd(
-            "log", "--pretty=oneline", "side..topic", "^master"
-        )
-    
+
+        *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "side..topic", "^master")
+
         expected = textwrap.dedent(f"""\
             {self.topic[0]} topic-4
             {self.topic[1]} topic-3
@@ -335,7 +341,6 @@ class TestWithATreeOfCommits:
 
 
 class TestWithAGraphOfCommits:
-    
     #   A   B   C   D   J   K
     #   o---o---o---o---o---o [master]
     #        \         /
@@ -345,27 +350,35 @@ class TestWithAGraphOfCommits:
     @pytest.fixture(autouse=True)
     def setup(self, commit_tree, legit_cmd, resolve_revision):
         time = datetime.now().astimezone()
-    
+
         commit_tree("A", {"f.txt": "0", "g.txt": "0"}, time)
         commit_tree("B", {"f.txt": "B", "h.txt": "one\ntwo\nthree\n"}, time)
-    
+
         for n in ["C", "D"]:
-            commit_tree(n, {"f.txt": n, "h.txt": f"{n}\ntwo\nthree\n"}, time + timedelta(seconds=1))
-    
+            commit_tree(
+                n,
+                {"f.txt": n, "h.txt": f"{n}\ntwo\nthree\n"},
+                time + timedelta(seconds=1),
+            )
+
         _ = legit_cmd("branch", "topic", "master~2")
         _ = legit_cmd("checkout", "topic")
-    
+
         for n in ["E", "F", "G", "H"]:
-            commit_tree(n, {"g.txt": n, "h.txt": f"one\ntwo\n{n}\n"}, time + timedelta(seconds=2))
-    
+            commit_tree(
+                n,
+                {"g.txt": n, "h.txt": f"one\ntwo\n{n}\n"},
+                time + timedelta(seconds=2),
+            )
+
         _ = legit_cmd("checkout", "master")
         _ = legit_cmd("merge", "topic^", "-m", "J")
-    
+
         commit_tree("K", {"f.txt": "K"}, time + timedelta(seconds=3))
-    
+
         self.master = [resolve_revision(f"master~{n}") for n in range(6)]
         self.topic = [resolve_revision(f"topic~{n}") for n in range(4)]
-    
+
     def test_it_logs_concurrent_branches_leading_to_a_merge(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline")
         expected = textwrap.dedent(f"""\
@@ -410,7 +423,9 @@ class TestWithAGraphOfCommits:
         assert_stdout(stdout, expected)
 
     def test_it_does_not_show_patches_for_merge_commits(self, legit_cmd):
-        *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--patch", "topic..master", "^master^^^")
+        *_, stdout, _ = legit_cmd(
+            "log", "--pretty=oneline", "--patch", "topic..master", "^master^^^"
+        )
         expected = textwrap.dedent(f"""\
             {self.master[0]} K
             diff --git a/f.txt b/f.txt
@@ -442,7 +457,9 @@ class TestWithAGraphOfCommits:
         assert_stdout(stdout, expected)
 
     def test_it_shows_combined_patches_for_merges(self, legit_cmd):
-        *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--cc", "topic..master", "^master^^^")
+        *_, stdout, _ = legit_cmd(
+            "log", "--pretty=oneline", "--cc", "topic..master", "^master^^^"
+        )
         expected = textwrap.dedent(f"""\
             {self.master[0]} K
             diff --git a/f.txt b/f.txt
@@ -483,7 +500,9 @@ class TestWithAGraphOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_does_not_list_merges_with_treesame_parents_for_prune_paths(self, legit_cmd):
+    def test_it_does_not_list_merges_with_treesame_parents_for_prune_paths(
+        self, legit_cmd
+    ):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "g.txt")
         expected = textwrap.dedent(f"""\
             {self.topic[1]} G
@@ -498,38 +517,46 @@ class TestWithChangesThatAreUndoneOnABranchLeadingToAMerge:
     @pytest.fixture(autouse=True)
     def setup(self, commit_tree, legit_cmd, resolve_revision):
         time = datetime.now().astimezone()
-    
+
         commit_tree("A", {"f.txt": "0", "g.txt": "0"}, time)
         commit_tree("B", {"f.txt": "B", "h.txt": "one\ntwo\nthree\n"}, time)
-    
+
         for n in ["C", "D"]:
-            commit_tree(n, {"f.txt": n, "h.txt": f"{n}\ntwo\nthree\n"}, time + timedelta(seconds=1))
-    
+            commit_tree(
+                n,
+                {"f.txt": n, "h.txt": f"{n}\ntwo\nthree\n"},
+                time + timedelta(seconds=1),
+            )
+
         _ = legit_cmd("branch", "topic", "master~2")
         _ = legit_cmd("checkout", "topic")
-    
+
         for n in ["E", "F", "G", "H"]:
-            commit_tree(n, {"g.txt": n, "h.txt": f"one\ntwo\n{n}\n"}, time + timedelta(seconds=2))
-    
+            commit_tree(
+                n,
+                {"g.txt": n, "h.txt": f"one\ntwo\n{n}\n"},
+                time + timedelta(seconds=2),
+            )
+
         _ = legit_cmd("checkout", "master")
         _ = legit_cmd("merge", "topic^", "-m", "J")
-    
+
         commit_tree("K", {"f.txt": "K"}, time + timedelta(seconds=3))
-    
+
         self.master = [resolve_revision(f"master~{n}") for n in range(6)]
         self.topic = [resolve_revision(f"topic~{n}") for n in range(4)]
-    
+
         time = datetime.now().astimezone()
 
         _ = legit_cmd("branch", "aba", "master~4")
         _ = legit_cmd("checkout", "aba")
-    
+
         commit_tree("C", {"g.txt": "C"}, time + timedelta(seconds=1))
         commit_tree("0", {"g.txt": "0"}, time + timedelta(seconds=1))
-    
+
         _ = legit_cmd("merge", "topic^", "-m", "J")
         commit_tree("K", {"f.txt": "K"}, time + timedelta(seconds=3))
-        
+
     def test_it_does_not_list_commits_on_the_filtered_branch(self, legit_cmd):
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "g.txt")
         expected = textwrap.dedent(f"""\

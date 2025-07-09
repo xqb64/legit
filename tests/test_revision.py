@@ -2,7 +2,12 @@ from typing import Union
 from legit.revision import Revision
 
 
-def assert_parse(expression: str, tree: Union['Revision.Ref', 'Revision.Parent', 'Revision.Ancestor', 'Revision.Upstream']):
+def assert_parse(
+    expression: str,
+    tree: Union[
+        "Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"
+    ],
+):
     assert Revision.parse(expression) == tree
 
 
@@ -33,9 +38,7 @@ def test_it_parses_parent_ref_with_number():
 
 def test_it_parses_chain_of_parent_refs():
     tree = Revision.Parent(
-        Revision.Parent(
-            Revision.Parent(Revision.Ref("master"), 1), 1
-        ), 1
+        Revision.Parent(Revision.Parent(Revision.Ref("master"), 1), 1), 1
     )
     assert_parse("master^^^", tree)
 
@@ -66,12 +69,6 @@ def test_it_parses_upstream_with_no_branch():
 
 def test_it_parses_upstream_with_ancestor_operators():
     tree = Revision.Ancestor(
-        Revision.Parent(
-            Revision.Upstream(Revision.Ref("master")),
-            1
-        ),
-        3
+        Revision.Parent(Revision.Upstream(Revision.Ref("master")), 1), 3
     )
     assert_parse("master@{u}^~3", tree)
-
-

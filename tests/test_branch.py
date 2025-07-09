@@ -43,13 +43,17 @@ class TestBranchWithChainOfCommits:
         _ = legit_cmd("branch", "topic", "@~2")
         assert repo.refs.read_ref("topic") == grandparent_sha
 
-    def test_it_creates_a_branch_relative_to_another_one(self, repo, legit_cmd, resolve_revision):
+    def test_it_creates_a_branch_relative_to_another_one(
+        self, repo, legit_cmd, resolve_revision
+    ):
         _ = legit_cmd("branch", "topic", "@~1")
         _ = legit_cmd("branch", "another", "topic^")
-        
+
         assert repo.refs.read_ref("another") == resolve_revision("HEAD~2")
 
-    def test_it_creates_a_branch_from_short_commit_id(self, repo, legit_cmd, resolve_revision):
+    def test_it_creates_a_branch_from_short_commit_id(
+        self, repo, legit_cmd, resolve_revision
+    ):
         commit_id = resolve_revision("@~2")
         _ = legit_cmd("branch", "topic", repo.database.short_oid(commit_id))
         assert repo.refs.read_ref("topic") == commit_id
@@ -79,7 +83,9 @@ class TestBranchWithChainOfCommits:
         )
         assert_stderr(stderr, expected)
 
-    def test_it_fails_for_parents_of_revisions_that_are_not_commits(self, repo, legit_cmd):
+    def test_it_fails_for_parents_of_revisions_that_are_not_commits(
+        self, repo, legit_cmd
+    ):
         tree_id = repo.database.load(repo.refs.read_head()).tree
         spec = f"{tree_id}^^"
         *_, stderr = legit_cmd("branch", "topic", spec)
@@ -94,10 +100,12 @@ class TestBranchWithChainOfCommits:
         *_, stdout, _ = legit_cmd("branch")
         assert_stdout(stdout, "* master\n  new-feature\n")
 
-    def test_it_lists_existing_branches_with_verbose_info(self, repo, legit_cmd, load_commit):
+    def test_it_lists_existing_branches_with_verbose_info(
+        self, repo, legit_cmd, load_commit
+    ):
         a = load_commit("@^")
         b = load_commit("@")
-        *_, = legit_cmd("branch", "new-feature", "@^")
+        (*_,) = legit_cmd("branch", "new-feature", "@^")
         *_, stdout, _ = legit_cmd("branch", "--verbose")
         expected = (
             f"* master      {repo.database.short_oid(b.oid)} third\n"
@@ -110,7 +118,9 @@ class TestBranchWithChainOfCommits:
         _ = legit_cmd("branch", "bug-fix")
         *_, stdout, _ = legit_cmd("branch", "--delete", "bug-fix")
 
-        assert_stdout(stdout, f"Deleted branch 'bug-fix' (was {repo.database.short_oid(head)}).\n")
+        assert_stdout(
+            stdout, f"Deleted branch 'bug-fix' (was {repo.database.short_oid(head)}).\n"
+        )
 
         names = [r.short_name for r in repo.refs.list_branches()]
         assert "bug-fix" not in names
@@ -119,6 +129,7 @@ class TestBranchWithChainOfCommits:
         cmd, *_, stderr = legit_cmd("branch", "--delete", "no-such-branch")
         assert cmd.status == 1
         assert_stderr(stderr, "error: branch 'no-such-branch' not found.\n")
+
 
 class TestBranchWhenDiverged:
     @pytest.fixture(autouse=True)
@@ -132,14 +143,14 @@ class TestBranchWhenDiverged:
         legit_cmd("checkout", "topic")
 
         write_file("file.txt", "changed")
-        
+
         legit_cmd("add", ".")
         commit("changed")
-       
+
         legit_cmd("checkout", "master")
- 
+
     def test_it_deletes_a_merged_branch(self, repo, legit_cmd):
-        head = repo.refs.read_head() 
+        head = repo.refs.read_head()
 
         legit_cmd("checkout", "topic")
         cmd, _, stdout, _ = legit_cmd("branch", "--delete", "master")
@@ -199,7 +210,9 @@ class TestBranchTrackingRemote:
         expected = f"* master {self.head} [ahead 2, behind 1] local\n"
         assert_stdout(stdout, expected)
 
-    def test_it_displays_branch_ahead_of_upstream(self, repo, legit_cmd, resolve_revision):
+    def test_it_displays_branch_ahead_of_upstream(
+        self, repo, legit_cmd, resolve_revision
+    ):
         repo.refs.update_ref(self.upstream, resolve_revision("master~2"))
 
         legit_cmd("branch", "--set-upstream-to", "origin/master")
@@ -208,7 +221,9 @@ class TestBranchTrackingRemote:
         expected = f"* master {self.head} [ahead 2] local\n"
         assert_stdout(stdout, expected)
 
-    def test_it_displays_branch_behind_upstream(self, repo, legit_cmd, resolve_revision):
+    def test_it_displays_branch_behind_upstream(
+        self, repo, legit_cmd, resolve_revision
+    ):
         master = resolve_revision("@~2")
         oid = repo.database.short_oid(master)
 
@@ -238,7 +253,10 @@ class TestBranchTrackingRemote:
         cmd, *_, stderr = legit_cmd("branch", "--set-upstream-to", "origin/nope")
 
         assert_status(cmd, 1)
-        assert_stderr(stderr, "error: the requested upstream branch 'origin/nope' does not exist\n")
+        assert_stderr(
+            stderr,
+            "error: the requested upstream branch 'origin/nope' does not exist\n",
+        )
 
     def test_it_fails_if_upstream_remote_does_not_exist(self, repo, legit_cmd):
         repo.refs.update_ref("refs/remotes/nope/master", repo.refs.read_head())
@@ -252,7 +270,9 @@ class TestBranchTrackingRemote:
         )
         assert_stderr(stderr, expected)
 
-    def test_it_creates_branch_tracking_its_start_point(self, write_file, legit_cmd, commit, repo):
+    def test_it_creates_branch_tracking_its_start_point(
+        self, write_file, legit_cmd, commit, repo
+    ):
         legit_cmd("branch", "--track", "topic", "origin/master")
         legit_cmd("checkout", "topic")
 
@@ -277,7 +297,7 @@ class TestBranchTrackingRemote:
         legit_cmd("branch", "--set-upstream-to", "origin/master")
 
         origin_master = resolve_revision("origin/master")
-        master_head   = resolve_revision("master")
+        master_head = resolve_revision("master")
 
         assert origin_master != master_head
         assert origin_master == resolve_revision("@{U}")

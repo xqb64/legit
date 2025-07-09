@@ -7,6 +7,7 @@ def assert_diff(legit_cmd, output):
     *_, stdout, _ = legit_cmd("diff")
     assert_stdout(stdout, output)
 
+
 def assert_diff_cached(legit_cmd, output):
     *_, stdout, _ = legit_cmd("diff", "--cached")
     assert_stdout(stdout, output)
@@ -37,13 +38,13 @@ class TestWithFileInIndex:
         make_executable("file.txt")
 
         expected_diff = (
-            "diff --git a/file.txt b/file.txt\n"
-            "old mode 100644\n"
-            "new mode 100755\n"
+            "diff --git a/file.txt b/file.txt\nold mode 100644\nnew mode 100755\n"
         )
         assert_diff(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode_and_contents(self, legit_cmd, make_executable, write_file):
+    def test_it_diffs_a_file_with_changed_mode_and_contents(
+        self, legit_cmd, make_executable, write_file
+    ):
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
 
@@ -103,13 +104,13 @@ class TestWithHeadCommit:
         legit_cmd("add", ".")
 
         expected_diff = (
-            "diff --git a/file.txt b/file.txt\n"
-            "old mode 100644\n"
-            "new mode 100755\n"
+            "diff --git a/file.txt b/file.txt\nold mode 100644\nnew mode 100755\n"
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode_and_contents(self, legit_cmd, make_executable, write_file):
+    def test_it_diffs_a_file_with_changed_mode_and_contents(
+        self, legit_cmd, make_executable, write_file
+    ):
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
         legit_cmd("add", ".")

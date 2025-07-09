@@ -33,7 +33,7 @@ class Repository:
         self.remotes: Remotes = Remotes(self.config.file("local"))
 
     def close(self):
-        if hasattr(self, 'database'):
+        if hasattr(self, "database"):
             self.database.close()
 
     def __del__(self):

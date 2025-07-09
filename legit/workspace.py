@@ -153,7 +153,7 @@ class Workspace:
 
     def read_file(self, path: Path) -> bytes:
         try:
-            with open(self.path / path, 'rb') as f:
+            with open(self.path / path, "rb") as f:
                 return f.read()
         except PermissionError:
             raise Workspace.NoPermission(f"open('{path.name}'): Permission denied")

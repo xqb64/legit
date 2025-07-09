@@ -51,7 +51,7 @@ class Entry:
     @property
     def delta_prefix(self) -> bytes:
         if not self.delta:
-            return b''
+            return b""
 
         if self.ofs:
             return VarIntBE.write(self.offset - self.delta.base.offset)

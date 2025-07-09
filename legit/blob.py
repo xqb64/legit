@@ -17,7 +17,7 @@ class Blob:
         self._oid = value
 
     def __str__(self) -> str:
-        return self.data.decode('utf-8')
+        return self.data.decode("utf-8")
 
     def to_bytes(self) -> bytes:
         return self.data

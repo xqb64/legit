@@ -38,7 +38,12 @@ class Revision:
     class Parent:
         def __init__(
             self,
-            rev: Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"],
+            rev: Union[
+                "Revision.Ref",
+                "Revision.Parent",
+                "Revision.Ancestor",
+                "Revision.Upstream",
+            ],
             n: int,
         ) -> None:
             self.rev = rev
@@ -89,19 +94,21 @@ class Revision:
             return f"(Ancestor(rev={self.rev!r}, n={self.n})"
 
     class Upstream:
-        def __init__(self, rev: 'Revision.Ref | Revision.Parent | Revision.Ancestor') -> None:
+        def __init__(
+            self, rev: "Revision.Ref | Revision.Parent | Revision.Ancestor"
+        ) -> None:
             self.rev = rev
-    
+
         def resolve(self, context: "Revision") -> Optional[str]:
             upstream_name = context.upstream(self.rev.name)
             return context.read_ref(upstream_name)
-    
+
         def __eq__(self, other) -> bool:
             return isinstance(other, Revision.Upstream) and self.rev == other.rev
-    
+
         def __hash__(self) -> int:
             return hash((Revision.Upstream, self.rev))
-    
+
         def __repr__(self) -> str:
             return f"Upstream({self.rev!r})"
 
@@ -159,7 +166,9 @@ class Revision:
         return not bool(cls.INVALID_NAME.search(revision))
 
     @classmethod
-    def parse(cls, revision: str) -> Optional[Union["Ref", "Parent", "Ancestor", "Upstream"]]:
+    def parse(
+        cls, revision: str
+    ) -> Optional[Union["Ref", "Parent", "Ancestor", "Upstream"]]:
         if m := cls.PARENT_PATTERN.match(revision):
             rev = Revision.parse(m.group(1))
             n = 1 if not m.group(2) else int(m.group(2))
@@ -256,4 +265,3 @@ class Revision:
 
         # Push a HintedError onto the errors list
         self.errors.append(HintedError(message, hint))
-

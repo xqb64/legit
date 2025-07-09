@@ -6,7 +6,9 @@ def get_index(repo):
     Load the index and return a list of (mode, path) tuples.
     """
     repo.index.load()
-    return sorted([(entry.mode(), str(entry.path)) for entry in repo.index.entries.values()])
+    return sorted(
+        [(entry.mode(), str(entry.path)) for entry in repo.index.entries.values()]
+    )
 
 
 def test_it_adds_regular_file_to_the_index(write_file, legit_cmd, repo):
@@ -16,7 +18,9 @@ def test_it_adds_regular_file_to_the_index(write_file, legit_cmd, repo):
     assert get_index(repo) == [(0o100644, "hello.txt")]
 
 
-def test_it_adds_executable_file_to_the_index(write_file, make_executable, legit_cmd, repo):
+def test_it_adds_executable_file_to_the_index(
+    write_file, make_executable, legit_cmd, repo
+):
     write_file("hello.txt", "hello")
     make_executable("hello.txt")
     cmd, *_ = legit_cmd("add", "hello.txt")
@@ -38,10 +42,10 @@ def test_it_adds_multiple_files_to_the_index(write_file, legit_cmd, repo):
 def test_it_incrementally_adds_files_to_the_index(write_file, legit_cmd, repo):
     write_file("hello.txt", "hello")
     write_file("world.txt", "world")
-    
+
     _ = legit_cmd("add", "world.txt")
     assert get_index(repo) == [(0o100644, "world.txt")]
-    
+
     _ = legit_cmd("add", "hello.txt")
     assert get_index(repo) == [
         (0o100644, "hello.txt"),
@@ -82,8 +86,7 @@ def test_it_fails_for_unreadable_files(write_file, make_unreadable, legit_cmd, r
     cmd, *_, stderr = legit_cmd("add", "secret.txt")
     assert cmd.status == 128
     expected = (
-        "error: open('secret.txt'): Permission denied\n"
-        "fatal: adding files failed\n"
+        "error: open('secret.txt'): Permission denied\nfatal: adding files failed\n"
     )
     assert_stderr(stderr, expected)
     assert get_index(repo) == []
@@ -95,4 +98,3 @@ def test_it_fails_if_the_index_is_locked(write_file, legit_cmd, repo):
     cmd, *_ = legit_cmd("add", "file.txt")
     assert cmd.status == 128
     assert get_index(repo) == []
-

@@ -43,7 +43,7 @@ class Reader:
 
         if ty in [COMMIT, BLOB, TREE]:
             return Record(TYPE_CODES_REVERSED[ty], size)
-    
+
         elif ty == OFS_DELTA:
             delta = self.read_ofs_delta()
             size = Expander(delta.delta_data).target_size
@@ -63,7 +63,7 @@ class Reader:
             return Record(TYPE_CODES_REVERSED.get(ty), decompressed_data)
 
         elif ty == OFS_DELTA:
-            return self.read_ofs_delta() 
+            return self.read_ofs_delta()
 
         elif ty == REF_DELTA:
             return self.read_ref_delta()
@@ -99,7 +99,7 @@ class Reader:
 
         if decompressor.unused_data:
             self.input.seek(-len(decompressor.unused_data))
-        
+
         output.extend(decompressor.flush())
-    
+
         return bytes(output)

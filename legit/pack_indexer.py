@@ -111,7 +111,7 @@ class Indexer:
 
         if self.progress is not None:
             self.progress.tick()
-        
+
         self.resolve_delta_base(obj, offset)
         self.resolve_delta_base(obj, oid)
 

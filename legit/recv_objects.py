@@ -19,7 +19,7 @@ class RecvObjectsMixin:
             progress = None
 
         reader.read_header()
-            
+
         factory = self.select_processor_class(reader, unpack_limit)
         processor = factory(self.repo.database, reader, stream, progress)
 

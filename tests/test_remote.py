@@ -45,8 +45,14 @@ class TestAddingRemoteWithTrackingBranches:
     @pytest.fixture(autouse=True)
     def add_origin_with_tracking(self, legit_cmd):
         cmd, _, _, _ = legit_cmd(
-            "remote", "add", "origin", "ssh://example.com/repo",
-            "-t", "master", "-t", "topic"
+            "remote",
+            "add",
+            "origin",
+            "ssh://example.com/repo",
+            "-t",
+            "master",
+            "-t",
+            "topic",
         )
         assert cmd.status == 0
 
@@ -79,4 +85,3 @@ class TestRemovingRemote:
         cmd, _, _, stderr = legit_cmd("remote", "remove", "no-such")
         assert_status(cmd, 128)
         assert_stderr(stderr, "fatal: No such remote: no-such\n")
-

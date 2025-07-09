@@ -20,11 +20,11 @@ blob_text_2 = blob_text_1 + "new_content"
 
 
 def tests_it_compresses_a_blob():
-    base = blob_text_2.encode('utf-8')
-    target = blob_text_1.encode('utf-8')
+    base = blob_text_2.encode("utf-8")
+    target = blob_text_1.encode("utf-8")
 
     index = XDelta.create_index(base)
-    delta = b''.join(op.to_bytes() for op in index.compress(target))
+    delta = b"".join(op.to_bytes() for op in index.compress(target))
 
     assert len(delta) == 2
 
@@ -33,6 +33,7 @@ def create_db(path):
     path = path.expanduser().resolve()
     path.mkdir(parents=True, exist_ok=True)
     return Database(path)
+
 
 tests = {
     "unpacking_objects": Unpacker,
@@ -48,7 +49,7 @@ def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
 
     blobs_to_pack = []
     for data in [blob_text_1, blob_text_2]:
-        blob = Blob(data.encode('utf-8'))
+        blob = Blob(data.encode("utf-8"))
         source_db.store(blob)
         entry = DatabaseEntry(blob.oid, 0o644)
         blobs_to_pack.append((entry, None))
@@ -71,12 +72,10 @@ def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
 
     loaded_blobs = [target_db.load(oid) for oid in oids]
 
-    assert loaded_blobs[0].data == blob_text_1.encode('utf-8')
-    assert loaded_blobs[1].data == blob_text_2.encode('utf-8')
+    assert loaded_blobs[0].data == blob_text_1.encode("utf-8")
+    assert loaded_blobs[1].data == blob_text_2.encode("utf-8")
 
     infos = [target_db.load_info(oid) for oid in oids]
 
     assert infos[0] == Raw("blob", 512, None)
     assert infos[1] == Raw("blob", 523, None)
-
-

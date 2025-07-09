@@ -20,14 +20,14 @@ class Remotes:
             if isinstance(ability, str):
                 ability = ability.encode()
             return self.caps_remote is not None and ability in self.caps_remote
-     
+
         def send_packet(self, line):
             log.debug(f"send_packet got {line!r} to transmit")
             if line is None:
                 self.output.write(b"0000")
                 self.output.flush()
                 return
-    
+
             if isinstance(line, str):
                 line = line.encode()
 
@@ -59,7 +59,7 @@ class Remotes:
                 return None
 
             body = self.input.read(size - 4)
-            
+
             if body.endswith(b"\n"):
                 body = body[:-1]
 
@@ -74,7 +74,7 @@ class Remotes:
                 if line is None or line == terminator:
                     break
                 yield line
-    
+
         def append_caps(self, line):
             if self.caps_sent:
                 return line
@@ -89,7 +89,11 @@ class Remotes:
             if not caps_to_send:
                 return line
 
-            return line + sep + " ".join(sorted(list(x.decode() for x in caps_to_send))).encode()
+            return (
+                line
+                + sep
+                + " ".join(sorted(list(x.decode() for x in caps_to_send))).encode()
+            )
 
         def detect_caps(self, line: bytes) -> bytes:
             if self.caps_remote is not None:
@@ -110,5 +114,3 @@ class Remotes:
             self.caps_remote = re.split(rb" +", caps_str.strip()) if caps_str else []
 
             return sep.join(parts)
-
-

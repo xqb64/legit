@@ -54,4 +54,3 @@ def test_it_uncleanly_merges_two_lists_with_head_names():
         bc"""
     )
     assert merge.to_string("left", "right") == expected
-

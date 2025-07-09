@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 logging.disable()
 
+
 class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
     CAPABILITIES = ["no-thin", "report-status", "delete-refs", "ofs-delta"]
 
@@ -20,7 +21,7 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         log.debug("Sending references...")
         self.send_references()
         log.debug("Sent references.")
-        
+
         log.debug("Receiving update requests...")
         self.recv_update_requests()
         log.debug("Received update requests.")
@@ -41,7 +42,7 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         for line in self.conn.recv_until(None):
             old_oid, new_oid, ref = line.split()
             ref = ref.decode()
-            self.requests[ref] = [self.zero_to_none(oid)for oid in (old_oid, new_oid)]
+            self.requests[ref] = [self.zero_to_none(oid) for oid in (old_oid, new_oid)]
 
     def zero_to_none(self, oid: bytes) -> None:
         if oid == self.ZERO_OID:
@@ -89,14 +90,17 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         if self.repo.config.get(["receive", "denyDeletes"]):
             if not new_oid:
                 raise Exception("deletion prohibited")
-    
+
         if self.repo.config.get(["receive", "denyNonFastForwards"]):
             if self.fast_forward_error(old_oid, new_oid):
                 raise Exception("non-fast-forward")
-    
-        if self.repo.config.get(["core", "bare"]) is not False or self.repo.refs.current_ref().path != ref:
+
+        if (
+            self.repo.config.get(["core", "bare"]) is not False
+            or self.repo.refs.current_ref().path != ref
+        ):
             return
-    
+
         if self.repo.config.get(["receive", "denyCurrentBranch"]) is not False:
             if new_oid:
                 raise Exception("branch is currently checked out")
@@ -104,5 +108,3 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         if self.repo.config.get(["receive", "denyDeleteCurrent"]) is not False:
             if not new_oid:
                 raise Exception("deletion of the current branch prohibited")
-
-

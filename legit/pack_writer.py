@@ -43,13 +43,13 @@ class Writer:
 
         if self.progress is not None:
             self.progress.start("Counting objects")
-        
+
         for obj, path in rev_list:
             self.add_to_pack_list(obj, path)
 
             if self.progress is not None:
                 self.progress.tick()
-        
+
         if self.progress is not None:
             self.progress.stop()
 

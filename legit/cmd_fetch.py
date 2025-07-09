@@ -69,7 +69,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
     def send_want_list(self):
         self.targets = Refspec.expand(self.fetch_specs, self.remote_refs.keys())
         wanted = set()
-        
+
         self.local_refs = {}
 
         for target, (source, _) in self.targets.items():
@@ -81,7 +81,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
 
             self.local_refs[target] = local_oid
             wanted.add(remote_oid)
-        
+
         for oid in wanted:
             self.conn.send_packet(f"want {oid}".encode())
 
@@ -96,7 +96,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
 
         for commit, _ in rev_list.each():
             self.conn.send_packet(f"have {commit.oid}".encode())
- 
+
         self.conn.send_packet(b"done")
         for _ in self.conn.recv_until(SIGNATURE):
             pass

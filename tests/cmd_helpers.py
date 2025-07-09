@@ -5,19 +5,22 @@ from pathlib import Path
 
 from contextlib import contextmanager
 
+
 @contextmanager
 def captured_stderr():
     cs = CapturedStderr()
     try:
         yield cs
     finally:
-        cs.close()    
+        cs.close()
+
 
 class CapturedStderr(TextIOBase):
     """
     A file-like that hands subprocess a real fileno() but lets us
     read() everything later as text.
     """
+
     def __init__(self):
         # open a real temp file in text mode
         self._file = tempfile.TemporaryFile(mode="w+")
@@ -90,7 +93,6 @@ def assert_index(repo, expected: dict[str, str]):
     repo.index.load()
 
     for entry in repo.index.entries.values():
-        files[str(entry.path)] = repo.database.load(entry.oid).data.decode('utf-8')
+        files[str(entry.path)] = repo.database.load(entry.oid).data.decode("utf-8")
 
     assert files == expected
-

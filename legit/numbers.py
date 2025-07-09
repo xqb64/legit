@@ -31,11 +31,11 @@ class VarIntLE:
 class VarIntBE:
     @staticmethod
     def write(value: int):
-        _bytes = [value & 0x7f]
+        _bytes = [value & 0x7F]
         value >>= 7
         while value != 0:
             value -= 1
-            _bytes.append(0x80 | value & 0x7f)
+            _bytes.append(0x80 | value & 0x7F)
             value >>= 7
 
         return bytes(reversed(_bytes))
@@ -43,11 +43,11 @@ class VarIntBE:
     @staticmethod
     def read(_input):
         byte = _input.readbyte()
-        value = byte & 0x7f
+        value = byte & 0x7F
 
         while byte >= 0x80:
             byte = _input.readbyte()
-            value = ((value + 1) << 7) | (byte & 0x7f)
+            value = ((value + 1) << 7) | (byte & 0x7F)
 
         return value
 

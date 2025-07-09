@@ -6,7 +6,6 @@ from legit.db_loose import Loose
 from legit.db_packed import Packed
 
 
-
 class Backends:
     def __init__(self, path):
         self.path = path
@@ -31,7 +30,11 @@ class Backends:
     def packed(self):
         try:
             pack_dir = Path(self.pack_path)
-            packs = sorted([f for f in pack_dir.iterdir() if f.suffix == ".pack"], key=lambda p: p.stat().st_mtime, reverse=True)
+            packs = sorted(
+                [f for f in pack_dir.iterdir() if f.suffix == ".pack"],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
             return [Packed(path) for path in packs]
         except FileNotFoundError:
             return []

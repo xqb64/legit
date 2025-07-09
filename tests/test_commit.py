@@ -9,6 +9,7 @@ def commit_change(write_file, legit_cmd, commit):
         write_file("file.txt", content)
         _ = legit_cmd("add", ".")
         commit(content)
+
     return _commit_change
 
 
@@ -58,7 +59,9 @@ class TestWithADetachedHead(CommitSetup):
 
         assert branch_before == branch_after
 
-    def test_leaves_HEAD_a_commit_ahead_of_branch(self, repo, commit_change, resolve_revision):
+    def test_leaves_HEAD_a_commit_ahead_of_branch(
+        self, repo, commit_change, resolve_revision
+    ):
         commit_change("change")
 
         assert repo.refs.read_ref("topic") == resolve_revision("@^")
@@ -69,7 +72,9 @@ class TestWithConcurrentBranches(CommitSetup):
     def setup_concurrent_branches(self, legit_cmd):
         _ = legit_cmd("branch", "fork", "@^")
 
-    def test_it_advances_the_branch_from_a_shared_parent(self, legit_cmd, commit_change, resolve_revision):
+    def test_it_advances_the_branch_from_a_shared_parent(
+        self, legit_cmd, commit_change, resolve_revision
+    ):
         commit_change("A")
         commit_change("B")
 
@@ -86,7 +91,9 @@ class TestConfiguringAnAuthor:
         _ = legit_cmd("config", "user.name", "A. N. User")
         _ = legit_cmd("config", "user.email", "user@example.com")
 
-    def test_it_uses_the_author_information_from_the_config(self, write_file, legit_cmd, commit, load_commit):
+    def test_it_uses_the_author_information_from_the_config(
+        self, write_file, legit_cmd, commit, load_commit
+    ):
         write_file("file.txt", "1")
         _ = legit_cmd("add", ".")
         commit("first", None, False)
@@ -109,7 +116,9 @@ class TestReusingMessages:
         _ = legit_cmd("add", ".")
         _ = legit_cmd("commit", "-C", "@")
 
-        messages = [c.message.strip() for (c, _) in list(RevList(repo, ["HEAD"]).each())]
+        messages = [
+            c.message.strip() for (c, _) in list(RevList(repo, ["HEAD"]).each())
+        ]
         assert messages == ["first", "first"]
 
 
@@ -124,10 +133,14 @@ class TestAmendingCommits:
     def test_it_replaces_the_last_commit_message(self, repo, legit_cmd, stub_editor):
         stub_editor("third [amended]\n")
         _ = legit_cmd("commit", "--amend")
-        messages = [c.message.strip() for (c, _) in list(RevList(repo, ["HEAD"]).each())]
+        messages = [
+            c.message.strip() for (c, _) in list(RevList(repo, ["HEAD"]).each())
+        ]
         assert messages == ["third [amended]", "second", "first"]
 
-    def test_it_replaces_the_last_commit_tree(self, write_file, legit_cmd, load_commit, repo):
+    def test_it_replaces_the_last_commit_tree(
+        self, write_file, legit_cmd, load_commit, repo
+    ):
         write_file("another.txt", "1")
         _ = legit_cmd("add", "another.txt")
         _ = legit_cmd("commit", "--amend")
@@ -137,5 +150,3 @@ class TestAmendingCommits:
 
         paths = sorted(str(p) for p in diff.keys())
         assert paths == ["another.txt", "file.txt"]
-
-

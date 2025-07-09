@@ -7,7 +7,7 @@ class Raw:
         self.ty = ty
         self.size = size
         self.data = data
-    
+
     def __eq__(self, other):
         if not isinstance(other, Raw):
             return NotImplemented
@@ -20,7 +20,7 @@ class Raw:
 class Loose:
     def __init__(self, path):
         self.path = path
-    
+
     def close(self):
         pass
 

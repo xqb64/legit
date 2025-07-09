@@ -25,10 +25,10 @@ def create_remote_repo(repo_path: Path):
         created_remote_paths.append(remote_repo_path)
 
         remote_repo.legit_cmd(repo_path, "init", str(remote_repo_path))
-        
+
         remote_repo.legit_cmd(repo_path, "config", "receive.denyCurrentBranch", "false")
         remote_repo.legit_cmd(repo_path, "config", "receive.denyDeleteCurrent", "false")
-        
+
         return remote_repo
 
     yield _create_remote_repo
@@ -44,6 +44,7 @@ def write_commit(write_file, legit_cmd):
         write_file(f"{msg}.txt", msg)
         legit_cmd("add", ".")
         legit_cmd("commit", "-m", msg)
+
     return _write_commit
 
 
@@ -58,9 +59,9 @@ def commits(repo: Repository, revs: list[str], options: dict | None = None):
 
 def assert_object_count(repo_root: Path, expected: int):
     count = sum(1 for p in (repo_root / ".git" / "objects").rglob("*") if p.is_file())
-    assert (
-        count == expected
-    ), f"object-count mismatch – expected {expected}, found {count}"
+    assert count == expected, (
+        f"object-count mismatch – expected {expected}, found {count}"
+    )
 
 
 def assert_refs(repo, refs):
@@ -75,11 +76,11 @@ def legit_path():
 from pathlib import Path
 from typing import Dict, List
 
+
 def assert_workspace(repo_root: Path, contents: Dict[str, str]):
     """Assert that *repo_root*'s working directory exactly matches *contents*."""
 
     _assert_workspace(repo_root, contents)
-
 
 
 class TestSingleBranchInitialPush:
@@ -111,27 +112,24 @@ class TestSingleBranchInitialPush:
         )
 
     def test_displays_new_branch_being_pushed(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 0)
         expected = (
-            f"To file://{self.remote.repo_path}\n"
-            " * [new branch] master -> master\n"
+            f"To file://{self.remote.repo_path}\n * [new branch] master -> master\n"
         )
         assert_stderr(stderr, expected)
 
     def test_maps_local_head_to_remote(self, legit_cmd, repo):
         legit_cmd("push", "origin", "master")
-        assert (
-            repo.refs.read_ref("refs/heads/master")
-            == self.remote.repo.refs.read_ref("refs/heads/master")
-        )
+        assert repo.refs.read_ref(
+            "refs/heads/master"
+        ) == self.remote.repo.refs.read_ref("refs/heads/master")
 
     def test_maps_local_head_to_different_remote_ref(self, legit_cmd, repo):
         legit_cmd("push", "origin", "master:refs/heads/other")
-        assert (
-            repo.refs.read_ref("refs/heads/master")
-            == self.remote.repo.refs.read_ref("refs/heads/other")
-        )
+        assert repo.refs.read_ref(
+            "refs/heads/master"
+        ) == self.remote.repo.refs.read_ref("refs/heads/other")
 
     def test_does_not_create_any_other_remote_refs(self, legit_cmd):
         legit_cmd("push", "origin", "master")
@@ -140,7 +138,9 @@ class TestSingleBranchInitialPush:
     def test_sends_all_commits_from_local_history(self, legit_cmd, repo):
         legit_cmd("push", "origin", "master")
         assert_commits = repo, self.remote.repo  # for readability
-        assert commits(assert_commits[0], ["master"]) == commits(assert_commits[1], ["master"])
+        assert commits(assert_commits[0], ["master"]) == commits(
+            assert_commits[1], ["master"]
+        )
 
     def test_sends_enough_information_to_checkout_commits(self, legit_cmd, repo_path):
         legit_cmd("push", "origin", "master")
@@ -168,13 +168,10 @@ class TestSingleBranchInitialPush:
         assert_workspace(self.remote.repo_path, {"one.txt": "one"})
 
     def test_pushes_ancestor_of_current_head(self, legit_cmd, repo):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "@~1:master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "@~1:master")
         assert_status(cmd, 0)
         local_head = commits(repo, ["master^"])[0]
-        expected = (
-            f"To file://{self.remote.repo_path}\n"
-            f" * [new branch] @~1 -> master\n"
-        )
+        expected = f"To file://{self.remote.repo_path}\n * [new branch] @~1 -> master\n"
         assert_stderr(stderr, expected)
         assert commits(repo, ["master^"])[0] == commits(self.remote.repo, ["master"])[0]
 
@@ -192,18 +189,15 @@ class TestSingleBranchAfterSuccessfulPush:
         legit_cmd("push", "origin", "master")
 
     def test_everything_up_to_date_on_second_push(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 0)
         assert_stderr(stderr, "Everything up-to-date\n")
         assert_refs(self.remote.repo, ["HEAD", "refs/heads/master"])
 
     def test_deletes_remote_branch_by_refspec(self, legit_cmd, repo):
-        cmd, *_ , stderr = legit_cmd("push", "origin", ":master")
+        cmd, *_, stderr = legit_cmd("push", "origin", ":master")
         assert_status(cmd, 0)
-        expected = (
-            f"To file://{self.remote.repo_path}\n"
-            " - [deleted] master\n"
-        )
+        expected = f"To file://{self.remote.repo_path}\n - [deleted] master\n"
         assert_stderr(stderr, expected)
         assert_refs(repo, ["HEAD", "refs/heads/master"])
         assert_refs(self.remote.repo, ["HEAD"])
@@ -230,7 +224,7 @@ class TestSingleBranchLocalAhead:
         self.remote_head = commits(self.remote.repo, ["master"])[0]
 
     def test_displays_fast_forward_on_changed_branch(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 0)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -239,8 +233,10 @@ class TestSingleBranchLocalAhead:
         assert_stderr(stderr, expected)
 
     def test_succeeds_when_remote_denies_non_fast_forward(self, legit_cmd, repo_path):
-        self.remote.legit_cmd(repo_path, "config", "receive.denyNonFastForwards", "true")
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        self.remote.legit_cmd(
+            repo_path, "config", "receive.denyNonFastForwards", "true"
+        )
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 0)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -275,7 +271,7 @@ class TestSingleBranchRemoteDiverged:
         self.remote_head = commits(self.remote.repo, ["master"])[0]
 
     def test_forced_update_if_requested(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master", "-f")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master", "-f")
         assert_status(cmd, 0)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -288,17 +284,14 @@ class TestSingleBranchRemoteDiverged:
         assert self.local_head == commits(repo, ["origin/master"])[0]
 
     def test_deletes_remote_branch_by_refspec(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", ":master")
+        cmd, *_, stderr = legit_cmd("push", "origin", ":master")
         assert_status(cmd, 0)
-        expected = (
-            f"To file://{self.remote.repo_path}\n"
-            " - [deleted] master\n"
-        )
+        expected = f"To file://{self.remote.repo_path}\n - [deleted] master\n"
         assert_stderr(stderr, expected)
         assert_refs(self.remote.repo, ["HEAD"])
 
     def test_rejected_without_force(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 1)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -308,7 +301,7 @@ class TestSingleBranchRemoteDiverged:
 
     def test_rejection_message_after_fetch(self, legit_cmd):
         legit_cmd("fetch")
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         expected = (
             f"To file://{self.remote.repo_path}\n"
             " ! [rejected] master -> master (non-fast-forward)\n"
@@ -319,9 +312,11 @@ class TestSingleBranchRemoteDiverged:
         assert self.local_head == commits(repo, ["origin/master"])[0]
 
     def test_remote_denies_non_fast_forward(self, legit_cmd, repo_path):
-        self.remote.legit_cmd(repo_path, "config", "receive.denyNonFastForwards", "true")
+        self.remote.legit_cmd(
+            repo_path, "config", "receive.denyNonFastForwards", "true"
+        )
         legit_cmd("fetch")
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master", "-f")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master", "-f")
         assert_status(cmd, 1)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -332,7 +327,9 @@ class TestSingleBranchRemoteDiverged:
 
 class TestRemoteDeniesUpdatingCurrentBranch:
     @pytest.fixture(autouse=True)
-    def _setup(self, create_remote_repo, write_commit, legit_cmd, legit_path, repo_path):
+    def _setup(
+        self, create_remote_repo, write_commit, legit_cmd, legit_path, repo_path
+    ):
         self.remote = create_remote_repo("push-remote")
 
         for msg in ("one", "dir/two", "three"):
@@ -341,10 +338,12 @@ class TestRemoteDeniesUpdatingCurrentBranch:
         legit_cmd("remote", "add", "origin", f"file://{self.remote.repo_path}")
         legit_cmd("config", "remote.origin.receivepack", f"{legit_path} receive-pack")
 
-        self.remote.legit_cmd(repo_path, "config", "--unset", "receive.denyCurrentBranch")
+        self.remote.legit_cmd(
+            repo_path, "config", "--unset", "receive.denyCurrentBranch"
+        )
 
     def test_rejects_push(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "master")
+        cmd, *_, stderr = legit_cmd("push", "origin", "master")
         assert_status(cmd, 1)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -360,7 +359,6 @@ class TestRemoteDeniesUpdatingCurrentBranch:
     def test_does_not_update_local_origin_ref(self, legit_cmd, repo):
         legit_cmd("push", "origin", "master")
         assert repo.refs.read_ref("refs/remotes/origin/master") is None
-
 
 
 class TestRemoteDeniesDeletingCurrentBranch:
@@ -379,10 +377,12 @@ class TestRemoteDeniesDeletingCurrentBranch:
         legit_cmd("remote", "add", "origin", f"file://{self.remote.repo_path}")
         legit_cmd("config", "remote.origin.receivepack", f"{legit_path} receive-pack")
         legit_cmd("push", "origin", "master")
-        self.remote.legit_cmd(repo_path, "config", "--unset", "receive.denyDeleteCurrent")
+        self.remote.legit_cmd(
+            repo_path, "config", "--unset", "receive.denyDeleteCurrent"
+        )
 
     def test_rejects_deletion(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", ":master")
+        cmd, *_, stderr = legit_cmd("push", "origin", ":master")
         assert_status(cmd, 1)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -417,7 +417,7 @@ class TestRemoteDeniesDeletingAnyBranch:
         self.remote.legit_cmd(repo_path, "config", "receive.denyDeletes", "true")
 
     def test_rejects_deletion(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", ":master")
+        cmd, *_, stderr = legit_cmd("push", "origin", ":master")
         assert_status(cmd, 1)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -454,12 +454,12 @@ class TestConfiguredUpstreamBranch:
         for msg in ("one", "dir/two"):
             write_commit(msg)
         legit_cmd("push", "origin", "master")
-        write_commit("three") 
+        write_commit("three")
 
         legit_cmd("branch", "--set-upstream-to", "origin/master")
 
     def test_pushes_current_branch_to_upstream(self, legit_cmd, repo):
-        cmd, *_ , stderr = legit_cmd("push")
+        cmd, *_, stderr = legit_cmd("push")
         assert_status(cmd, 0)
         new_oid, old_oid = commits(repo, ["master"])[:2]
         expected = (
@@ -467,11 +467,9 @@ class TestConfiguredUpstreamBranch:
             f"   {old_oid}..{new_oid} master -> master\n"
         )
         assert_stderr(stderr, expected)
-        assert (
-            repo.refs.read_ref("refs/heads/master")
-            == self.remote.repo.refs.read_ref("refs/heads/master")
-        )
-
+        assert repo.refs.read_ref(
+            "refs/heads/master"
+        ) == self.remote.repo.refs.read_ref("refs/heads/master")
 
 
 class TestMultipleLocalBranches:
@@ -490,7 +488,7 @@ class TestMultipleLocalBranches:
         legit_cmd("config", "remote.origin.receivepack", f"{legit_path} receive-pack")
 
     def test_displays_new_branches_on_wildcard_push(self, legit_cmd):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "refs/heads/*")
+        cmd, *_, stderr = legit_cmd("push", "origin", "refs/heads/*")
         assert_status(cmd, 0)
         expected = (
             f"To file://{self.remote.repo_path}\n"
@@ -501,24 +499,20 @@ class TestMultipleLocalBranches:
 
     def test_maps_heads_to_heads(self, legit_cmd, repo):
         legit_cmd("push", "origin", "refs/heads/*")
-        assert (
-            repo.refs.read_ref("refs/heads/master")
-            == self.remote.repo.refs.read_ref("refs/heads/master")
-        )
-        assert (
-            repo.refs.read_ref("refs/heads/topic")
-            == self.remote.repo.refs.read_ref("refs/heads/topic")
+        assert repo.refs.read_ref(
+            "refs/heads/master"
+        ) == self.remote.repo.refs.read_ref("refs/heads/master")
+        assert repo.refs.read_ref("refs/heads/topic") == self.remote.repo.refs.read_ref(
+            "refs/heads/topic"
         )
 
     def test_maps_heads_to_other_namespace(self, legit_cmd, repo):
         legit_cmd("push", "origin", "refs/heads/*:refs/other/*")
-        assert (
-            repo.refs.read_ref("refs/heads/master")
-            == self.remote.repo.refs.read_ref("refs/other/master")
-        )
-        assert (
-            repo.refs.read_ref("refs/heads/topic")
-            == self.remote.repo.refs.read_ref("refs/other/topic")
+        assert repo.refs.read_ref(
+            "refs/heads/master"
+        ) == self.remote.repo.refs.read_ref("refs/other/master")
+        assert repo.refs.read_ref("refs/heads/topic") == self.remote.repo.refs.read_ref(
+            "refs/other/topic"
         )
 
     def test_no_other_remote_refs_created(self, legit_cmd):
@@ -558,12 +552,9 @@ class TestMultipleLocalBranches:
         )
 
     def test_push_specific_branch_only(self, legit_cmd, repo):
-        cmd, *_ , stderr = legit_cmd("push", "origin", "refs/heads/*ic:refs/heads/*")
+        cmd, *_, stderr = legit_cmd("push", "origin", "refs/heads/*ic:refs/heads/*")
         assert_status(cmd, 0)
-        expected = (
-            f"To file://{self.remote.repo_path}\n"
-            " * [new branch] topic -> top\n"
-        )
+        expected = f"To file://{self.remote.repo_path}\n * [new branch] topic -> top\n"
         assert_stderr(stderr, expected)
 
         # Only that ref exists remotely
@@ -600,18 +591,23 @@ class TestReceiverHasStoredPack:
 
         legit_cmd("remote", "add", "alice", f"file://{self.alice.repo_path}")
         legit_cmd(
-            "config", "remote.alice.receivepack", f"{legit_path} receive-pack",
+            "config",
+            "remote.alice.receivepack",
+            f"{legit_path} receive-pack",
         )
 
         legit_cmd("push", "alice", "refs/heads/*")
 
     def test_push_packed_objects_to_another_repo(self, legit_path, repo, repo_path):
-        self.alice.legit_cmd(repo_path, "remote", "add", "bob", f"file://{self.bob.repo_path}")
-        self.alice.legit_cmd(repo_path,
-            "config", "remote.bob.receivepack", f"{legit_path} receive-pack",
+        self.alice.legit_cmd(
+            repo_path, "remote", "add", "bob", f"file://{self.bob.repo_path}"
+        )
+        self.alice.legit_cmd(
+            repo_path,
+            "config",
+            "remote.bob.receivepack",
+            f"{legit_path} receive-pack",
         )
         self.alice.legit_cmd(repo_path, "push", "bob", "refs/heads/*")
 
         assert commits(repo, ["master"]) == commits(self.bob.repo, ["master"])
-
-

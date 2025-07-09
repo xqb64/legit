@@ -152,4 +152,3 @@ def test_does_not_compress_unindexed_bytes():
             Delta.Insert(b"a quick brown fox"),
         ],
     )
-

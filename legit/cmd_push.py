@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 logging.disable()
 
+
 class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
     CAPABILITIES = ["report-status"]
     RECEIVE_PACK = "git-receive-pack"
@@ -53,7 +54,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         log.debug("sent objects")
 
         self.conn.output.close()
-        
+
         log.debug("printing summary")
         self.print_summary()
         log.debug("printed summary")
@@ -61,7 +62,6 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         log.debug("receiving report status")
         self.recv_report_status()
         log.debug("received report status")
-        
 
         self.exit(0 if not self.errors else 1)
 
@@ -100,9 +100,9 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
 
         for target, (source, forced) in targets.items():
             self.select_update(target, source, forced)
-    
+
         log.debug(f"About to send updates. self.updates contains: {self.updates}")
-        
+
         for ref, values in self.updates.items():
             *_, old, new = values
             self.send_update(ref, old, new)
@@ -193,7 +193,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         ref = m.group(2).decode()
 
         error = None if status == b"ok" else m.group(3).strip().decode()
-        
+
         if error:
             self.errors.append([ref, error])
 

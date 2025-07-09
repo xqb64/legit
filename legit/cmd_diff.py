@@ -97,7 +97,7 @@ class Diff(PrintDiffMixin, Base):
         entry = self.status_state.head_tree[path]
         blob = self.repo.database.load(entry.oid)
         assert isinstance(blob, Blob)
-        return Target(path, entry.oid, oct(entry.mode)[2:], blob.data.decode('utf-8'))
+        return Target(path, entry.oid, oct(entry.mode)[2:], blob.data.decode("utf-8"))
 
     def from_index(self, path: Path, stage: int = 0) -> "Target":
         entry = self.repo.index.entry_for_path(path, stage)
@@ -106,13 +106,13 @@ class Diff(PrintDiffMixin, Base):
 
         blob = self.repo.database.load(entry.oid)
         assert isinstance(blob, Blob)
-        return Target(path, entry.oid, oct(entry.mode())[2:], blob.data.decode('utf-8'))
+        return Target(path, entry.oid, oct(entry.mode())[2:], blob.data.decode("utf-8"))
 
     def from_file(self, path: Path) -> "Target":
         blob = Blob(self.repo.workspace.read_file(path))
         oid = self.repo.database.hash_object(blob)
         mode = Entry.mode_for_stat(self.status_state.stats[path])
-        return Target(path, oid, oct(mode)[2:], blob.data.decode('utf-8'))
+        return Target(path, oid, oct(mode)[2:], blob.data.decode("utf-8"))
 
     def from_nothing(self, path: Path) -> "Target":
         return Target(path, Diff.NULL_OID, None, "")

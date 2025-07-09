@@ -15,7 +15,9 @@ class GraphBuilder:
 
     def commit(self, parents, message):
         parent_oids = [self.commits[p] for p in parents]
-        author = Author("A. U. Thor", "author@example.com", datetime.datetime.now().astimezone())
+        author = Author(
+            "A. U. Thor", "author@example.com", datetime.datetime.now().astimezone()
+        )
         commit = Commit(parent_oids, "0" * 40, author, author, message)
         self.db.store(commit)
         self.commits[message] = commit.oid
@@ -42,6 +44,7 @@ def ancestor(builder, db):
         common = CommonAncestors(db, builder.commits[left], [builder.commits[right]])
         msgs = [db.load(oid).message for oid in common.find()]
         return msgs[0] if len(msgs) == 1 else sorted(msgs)
+
     return _ancestor
 
 
@@ -51,11 +54,11 @@ def merge_base(builder, db):
         bases = Bases(db, builder.commits[left], builder.commits[right])
         msgs = [db.load(oid).message for oid in bases.find()]
         return msgs[0] if len(msgs) == 1 else sorted(msgs)
+
     return _merge_base
 
 
 class TestLinearHistory:
-    
     #   o---o---o---o
     #   A   B   C   D
 
@@ -80,7 +83,6 @@ class TestLinearHistory:
 
 
 class TestForkingHistory:
-
     #          E   F   G   H
     #          o---o---o---o
     #         /         \
@@ -118,7 +120,6 @@ class TestForkingHistory:
 
 
 class TestWithMerge:
-
     #   A   B   C   G   H
     #   o---o---o---o---o
     #        \     /
@@ -142,7 +143,6 @@ class TestWithMerge:
 
 
 class TestMergeFurtherFromOneParent:
-
     #   A   B   C   G   H   J
     #   o---o---o---o---o---o
     #        \     /
@@ -165,7 +165,6 @@ class TestMergeFurtherFromOneParent:
 
 
 class TestCommitsBetweenAncestorAndMerge:
-
     #   A   B   C       H   J
     #   o---o---o-------o---o
     #        \         /
@@ -190,7 +189,6 @@ class TestCommitsBetweenAncestorAndMerge:
 
 
 class TestStaleResultsHistory:
-
     #   A   B   C             H   J
     #   o---o---o-------------o---o
     #        \      E        /
@@ -217,7 +215,6 @@ class TestStaleResultsHistory:
 
 
 class TestManyCommonAncestors:
-    
     #         L   M   N   P   Q   R   S   T
     #         o---o---o---o---o---o---o---o
     #        /       /       /       /
@@ -227,16 +224,22 @@ class TestManyCommonAncestors:
     #              o---o---o---o---o---o
     #              U   V   W   X   Y   Z
 
-
     @pytest.fixture(autouse=True)
     def setup_chain(self, builder):
         b = builder
         pads1 = [f"pad-1-{i}" for i in range(1, 5)]
         pads2 = [f"pad-2-{i}" for i in range(1, 5)]
-        backbone = [None, "A", "B", "C"] + pads1 + ["D", "E"] + pads2 + ["F", "G"] + ["H", "J", "K"]
+        backbone = (
+            [None, "A", "B", "C"]
+            + pads1
+            + ["D", "E"]
+            + pads2
+            + ["F", "G"]
+            + ["H", "J", "K"]
+        )
 
         b.chain(backbone)
-        
+
         b.chain(["B", "L", "M"])
         b.commit(["M", "D"], "N")
         b.chain(["N", "P"])
@@ -244,7 +247,7 @@ class TestManyCommonAncestors:
         b.chain(["Q", "R"])
         b.commit(["R", "H"], "S")
         b.chain(["S", "T"])
-        
+
         b.chain(["C", "U", "V"])
         b.commit(["V", "E"], "W")
         b.chain(["W", "X"])
@@ -256,4 +259,3 @@ class TestManyCommonAncestors:
 
     def test_it_finds_the_best_common_ancestor(self, merge_base):
         assert merge_base("T", "Z") == "G"
-

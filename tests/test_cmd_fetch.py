@@ -18,7 +18,6 @@ from tests.cmd_helpers import (
 from tests.remote_repo import RemoteRepo
 
 
-
 def commits(repo: Repository, revs: list[str], options: dict | None = None):
     if options is None:
         options = {}
@@ -30,14 +29,15 @@ def commits(repo: Repository, revs: list[str], options: dict | None = None):
 
 def assert_object_count(repo_root: Path, expected: int):
     count = sum(1 for p in (repo_root / ".git" / "objects").rglob("*") if p.is_file())
-    assert (
-        count == expected
-    ), f"object-count mismatch – expected {expected}, found {count}"
+    assert count == expected, (
+        f"object-count mismatch – expected {expected}, found {count}"
+    )
 
 
 @pytest.fixture
 def legit_path():
     return Path(shutil.which("legit") or "legit")
+
 
 @pytest.fixture
 def remote_single_branch(repo_path, legit_cmd, legit_path):
@@ -54,11 +54,15 @@ def remote_single_branch(repo_path, legit_cmd, legit_path):
 
         remote.write_file(repo_path, f"{msg}.txt", msg)
         remote.legit_cmd(repo_path, "add", ".")
-        remote.legit_cmd(repo_path, "commit", "-m", msg,
+        remote.legit_cmd(
+            repo_path,
+            "commit",
+            "-m",
+            msg,
             env={
                 "GIT_AUTHOR_NAME": "Remote A. U. Thor",
                 "GIT_AUTHOR_EMAIL": "remote@example.com",
-            }
+            },
         )
 
     for msg in ("one", "dir/two", "three"):
@@ -96,10 +100,10 @@ def remote_multiple_branches(legit_cmd, legit_path, repo_path):
 def test_fetch_displays_new_branch(remote_single_branch, legit_cmd, repo_path):
     remote = remote_single_branch
     cmd, stdin, stdout, stderr = legit_cmd("fetch")
-    
+
     assert_status(cmd, 0)
     assert_stderr(
-            stderr,
+        stderr,
         f"From file://{remote.path(repo_path)}\n"
         " * [new branch] master -> origin/master\n",
     )
@@ -107,42 +111,37 @@ def test_fetch_displays_new_branch(remote_single_branch, legit_cmd, repo_path):
 
 def test_fetch_maps_remote_head_to_local(remote_single_branch, legit_cmd, repo):
     legit_cmd("fetch")
-    assert (
-        remote_single_branch.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/remotes/origin/master")
-    )
+    assert remote_single_branch.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/remotes/origin/master")
 
 
 def test_fetch_maps_remote_head_to_alternate_ref(remote_single_branch, legit_cmd, repo):
     legit_cmd("fetch", "origin", "refs/heads/*:refs/remotes/other/prefix-*")
-    assert (
-        remote_single_branch.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/remotes/other/prefix-master")
-    )
+    assert remote_single_branch.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/remotes/other/prefix-master")
 
 
 def test_fetch_shorthand_refs(remote_single_branch, legit_cmd, repo):
     legit_cmd("fetch", "origin", "master:topic")
-    assert (
-        remote_single_branch.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/heads/topic")
-    )
+    assert remote_single_branch.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/heads/topic")
 
 
 def test_fetch_shorthand_head_refs(remote_single_branch, legit_cmd, repo):
     legit_cmd("fetch", "origin", "master:heads/topic")
-    assert (
-        remote_single_branch.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/heads/topic")
-    )
+    assert remote_single_branch.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/heads/topic")
 
 
 def test_fetch_shorthand_remote_refs(remote_single_branch, legit_cmd, repo):
     legit_cmd("fetch", "origin", "master:remotes/topic")
-    assert (
-        remote_single_branch.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/remotes/topic")
-    )
+    assert remote_single_branch.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/remotes/topic")
 
 
 def test_fetch_does_not_create_other_refs(remote_single_branch, legit_cmd, repo):
@@ -192,8 +191,10 @@ def test_fetch_unpack_limit_commits_loadable(remote_single_branch, legit_cmd, re
     legit_cmd("fetch")
 
     pack_dir = repo.git_path / "objects" / "pack"
-    
-    repo.database.backend.stores = [repo.database.backend.loose] + repo.database.backend.packed()
+
+    repo.database.backend.stores = [
+        repo.database.backend.loose
+    ] + repo.database.backend.packed()
 
     import os
 
@@ -215,13 +216,16 @@ def test_fetch_unpack_limit_commits_loadable(remote_single_branch, legit_cmd, re
 # ---------------------------------------------------------------------- #
 
 
-def test_fetch_remote_ahead_fast_forward(remote_single_branch, legit_cmd, repo, repo_path):
+def test_fetch_remote_ahead_fast_forward(
+    remote_single_branch, legit_cmd, repo, repo_path
+):
     legit_cmd("fetch")
     local_head = commits(repo, ["origin/master"])[0]
 
     remote_single_branch.write_file("one.txt", "changed")
     remote_single_branch.legit_cmd(repo_path, "add", ".")
-    remote_single_branch.legit_cmd(repo_path,
+    remote_single_branch.legit_cmd(
+        repo_path,
         "commit",
         "-m",
         "changed",
@@ -252,7 +256,8 @@ def diverged_setup(remote_single_branch, legit_cmd, repo, repo_path):
 
     remote_single_branch.write_file("one.txt", "changed")
     remote_single_branch.legit_cmd(repo_path, "add", ".")
-    remote_single_branch.legit_cmd(repo_path,
+    remote_single_branch.legit_cmd(
+        repo_path,
         "commit",
         "--amend",
         env={
@@ -343,26 +348,22 @@ def test_fetch_multiple_displays_new_branches(remote_multiple_branches, legit_cm
 
 def test_fetch_multiple_maps_heads(remote_multiple_branches, legit_cmd, repo):
     legit_cmd("fetch")
-    assert (
-        remote_multiple_branches.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/remotes/origin/master")
-    )
-    assert (
-        remote_multiple_branches.repo.refs.read_ref("refs/heads/topic")
-        == repo.refs.read_ref("refs/remotes/origin/topic")
-    )
+    assert remote_multiple_branches.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/remotes/origin/master")
+    assert remote_multiple_branches.repo.refs.read_ref(
+        "refs/heads/topic"
+    ) == repo.refs.read_ref("refs/remotes/origin/topic")
 
 
 def test_fetch_multiple_maps_to_other_ref(remote_multiple_branches, legit_cmd, repo):
     legit_cmd("fetch", "origin", "refs/heads/*:refs/remotes/other/prefix-*")
-    assert (
-        remote_multiple_branches.repo.refs.read_ref("refs/heads/master")
-        == repo.refs.read_ref("refs/remotes/other/prefix-master")
-    )
-    assert (
-        remote_multiple_branches.repo.refs.read_ref("refs/heads/topic")
-        == repo.refs.read_ref("refs/remotes/other/prefix-topic")
-    )
+    assert remote_multiple_branches.repo.refs.read_ref(
+        "refs/heads/master"
+    ) == repo.refs.read_ref("refs/remotes/other/prefix-master")
+    assert remote_multiple_branches.repo.refs.read_ref(
+        "refs/heads/topic"
+    ) == repo.refs.read_ref("refs/remotes/other/prefix-topic")
 
 
 def test_fetch_multiple_no_extra_refs(remote_multiple_branches, legit_cmd, repo):
@@ -385,7 +386,9 @@ def test_fetch_multiple_retrieves_all_commits(
     assert remote_commits == commits(repo, [], {"all": True})
 
 
-def test_fetch_multiple_checkout_commits(remote_multiple_branches, legit_cmd, repo_path):
+def test_fetch_multiple_checkout_commits(
+    remote_multiple_branches, legit_cmd, repo_path
+):
     legit_cmd("fetch")
 
     legit_cmd("checkout", "origin/master")
@@ -419,8 +422,7 @@ def test_fetch_specific_branch_message(specific_branch_setup):
     remote, _, stderr, _ = specific_branch_setup
     assert_stderr(
         stderr,
-        f"From file://{remote.repo_path}\n"
-        " * [new branch] topic -> origin/top\n",
+        f"From file://{remote.repo_path}\n * [new branch] topic -> origin/top\n",
     )
 
 
@@ -438,5 +440,3 @@ def test_fetch_specific_branch_retrieves_only_topic(specific_branch_setup, repo)
     remote_commits = commits(remote.repo, ["topic"])
     assert len(remote_commits) == 3
     assert remote_commits == commits(repo, [], {"all": True})
-
-

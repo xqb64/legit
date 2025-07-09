@@ -17,11 +17,14 @@ class TestWithNoHeadCommit:
         _ = legit_cmd("add", ".")
 
     def assert_unchanged_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "a.txt": "1",
-            "outer/b.txt": "2",
-            "outer/inner/c.txt": "3",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "2",
+                "outer/inner/c.txt": "3",
+            },
+        )
 
     def test_it_removes_everything_from_the_index(self, legit_cmd, repo, repo_path):
         legit_cmd("reset")
@@ -30,10 +33,13 @@ class TestWithNoHeadCommit:
 
     def test_it_removes_a_single_file_from_the_index(self, legit_cmd, repo, repo_path):
         legit_cmd("reset", "a.txt")
-        assert_index(repo, {
-            "outer/b.txt": "2",
-            "outer/inner/c.txt": "3",
-        })
+        assert_index(
+            repo,
+            {
+                "outer/b.txt": "2",
+                "outer/inner/c.txt": "3",
+            },
+        )
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_removes_a_directory_from_the_index(self, legit_cmd, repo, repo_path):
@@ -67,112 +73,152 @@ class TestWithAHeadCommit:
         assert repo.refs.read_head() == self.head_oid
 
     def assert_unchanged_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "outer/b.txt": "4",
-            "outer/d.txt": "5",
-            "outer/e.txt": "7",
-            "outer/inner/c.txt": "6",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "outer/b.txt": "4",
+                "outer/d.txt": "5",
+                "outer/e.txt": "7",
+                "outer/inner/c.txt": "6",
+            },
+        )
 
-    def test_it_restores_a_file_removed_from_the_index(self, legit_cmd, repo, repo_path):
+    def test_it_restores_a_file_removed_from_the_index(
+        self, legit_cmd, repo, repo_path
+    ):
         _ = legit_cmd("reset", "a.txt")
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "4",
-            "outer/d.txt": "5",
-            "outer/inner/c.txt": "6",
-        })
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "4",
+                "outer/d.txt": "5",
+                "outer/inner/c.txt": "6",
+            },
+        )
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_resets_a_file_modified_in_index(self, legit_cmd, repo, repo_path):
         _ = legit_cmd("reset", "outer/inner")
-        assert_index(repo, {
-            "outer/b.txt": "4",
-            "outer/d.txt": "5",
-            "outer/inner/c.txt": "3",
-        })
+        assert_index(
+            repo,
+            {
+                "outer/b.txt": "4",
+                "outer/d.txt": "5",
+                "outer/inner/c.txt": "3",
+            },
+        )
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_removes_a_file_added_to_the_index(self, legit_cmd, repo, repo_path):
         _ = legit_cmd("reset", "outer/d.txt")
-        assert_index(repo, {
-            "outer/b.txt": "4",
-            "outer/inner/c.txt": "6",
-        })
+        assert_index(
+            repo,
+            {
+                "outer/b.txt": "4",
+                "outer/inner/c.txt": "6",
+            },
+        )
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_resets_a_file_to_specific_commit(self, legit_cmd, repo, repo_path):
         _ = legit_cmd("reset", "@^", "outer/b.txt")
-        assert_index(repo, {
-            "outer/b.txt": "2",
-            "outer/d.txt": "5",
-            "outer/inner/c.txt": "6",
-        })
+        assert_index(
+            repo,
+            {
+                "outer/b.txt": "2",
+                "outer/d.txt": "5",
+                "outer/inner/c.txt": "6",
+            },
+        )
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_resets_the_whole_index(self, legit_cmd, repo, repo_path):
         _ = legit_cmd("reset")
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "4",
-            "outer/inner/c.txt": "3",
-        })
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "4",
+                "outer/inner/c.txt": "3",
+            },
+        )
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_resets_the_index_and_moves_head(self, legit_cmd, repo, repo_path):
         _ = legit_cmd("reset", "@^")
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "2",
-            "outer/inner/c.txt": "3",
-        })
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "2",
+                "outer/inner/c.txt": "3",
+            },
+        )
         assert repo.refs.read_head() == repo.database.load(self.head_oid).parent
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_moves_head_and_leaves_the_index_unchanged(self, legit_cmd, repo, repo_path):
+    def test_it_moves_head_and_leaves_the_index_unchanged(
+        self, legit_cmd, repo, repo_path
+    ):
         _ = legit_cmd("reset", "--soft", "@^")
-        assert_index(repo, {
-            "outer/b.txt": "4",
-            "outer/d.txt": "5",
-            "outer/inner/c.txt": "6",
-        })
+        assert_index(
+            repo,
+            {
+                "outer/b.txt": "4",
+                "outer/d.txt": "5",
+                "outer/inner/c.txt": "6",
+            },
+        )
         assert repo.refs.read_head() == repo.database.load(self.head_oid).parent
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_resets_the_index_and_the_workspace(self, write_file, delete, legit_cmd, repo):
+    def test_it_resets_the_index_and_the_workspace(
+        self, write_file, delete, legit_cmd, repo
+    ):
         write_file("a.txt/nested", "remove me")
         write_file("outer/b.txt", "10")
         delete("outer/inner")
 
         _ = legit_cmd("reset", "--hard")
         self.assert_unchanged_head(repo)
-        
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "4",
-            "outer/inner/c.txt": "3",
-        })
-        
+
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "4",
+                "outer/inner/c.txt": "3",
+            },
+        )
+
         *_, stdout, _ = legit_cmd("status", "--porcelain")
-        
+
         assert_stdout(stdout, "?? outer/e.txt\n")
 
-    def test_it_lets_you_return_to_the_previous_state_using_orig_head(self, legit_cmd, repo):
+    def test_it_lets_you_return_to_the_previous_state_using_orig_head(
+        self, legit_cmd, repo
+    ):
         _ = legit_cmd("reset", "--hard", "@^")
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "2",
-            "outer/inner/c.txt": "3",
-        })
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "2",
+                "outer/inner/c.txt": "3",
+            },
+        )
         _ = legit_cmd("reset", "--hard", "ORIG_HEAD")
-        assert_index(repo, {
-            "a.txt": "1",
-            "outer/b.txt": "4",
-            "outer/inner/c.txt": "3",
-        })
-
+        assert_index(
+            repo,
+            {
+                "a.txt": "1",
+                "outer/b.txt": "4",
+                "outer/inner/c.txt": "3",
+            },
+        )

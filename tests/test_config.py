@@ -19,7 +19,7 @@ class TestConfig:
 
     def test_it_returns_the_value_of_a_set_variable(self, legit_cmd):
         _ = legit_cmd("config", "core.editor", "ed")
-        
+
         cmd, _, stdout, _ = legit_cmd("config", "--local", "Core.Editor")
         assert_status(cmd, 0)
         assert_stdout(stdout, "ed\n")
@@ -82,7 +82,6 @@ class TestConfig:
 
             cmd, _, _, _ = legit_cmd("config", "--get-all", "remote.origin.fetch")
             assert_status(cmd, 1)
-
 
     def test_it_removes_a_section(self, legit_cmd):
         legit_cmd("config", "core.editor", "ed")

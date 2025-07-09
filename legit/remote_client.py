@@ -16,7 +16,7 @@ class RemoteClientMixin:
                 continue
 
             oid, ref = m.groups()
-            
+
             if isinstance(oid, bytes):
                 oid = oid.decode()
 
@@ -36,7 +36,7 @@ class RemoteClientMixin:
             stderr=self.stderr,
             text=False,
         )
-        
+
         child_stdin = proc.stdin
         child_stdout = proc.stdout
 
@@ -72,7 +72,7 @@ class RemoteClientMixin:
 
         if old_oid == new_oid:
             return
-    
+
         if old_oid is None:
             self.show_ref_update("*", "[new branch]", ref_names)
         elif new_oid is None:
@@ -94,8 +94,7 @@ class RemoteClientMixin:
     def show_ref_update(self, flag, summary, ref_names, reason=None):
         names = [
             self.repo.refs.short_name(
-                name.decode()
-                if isinstance(name, bytes) else name
+                name.decode() if isinstance(name, bytes) else name
             )
             for name in ref_names
             if name is not None

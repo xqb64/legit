@@ -33,7 +33,7 @@ def commit_tree(write_file, legit_cmd, commit, delete, make_executable):
         delete(".git/index")
         _ = legit_cmd("add", ".")
         commit(msg)
-    
+
     return _commit_tree
 
 
@@ -56,6 +56,7 @@ def merge3(commit_tree, legit_cmd):
         _ = legit_cmd("checkout", "master")
         cmd, stdin, stdout, stderr = legit_cmd("merge", "topic", "-m", "M")
         return cmd, stdin, stdout, stderr
+
     return _merge3
 
 
@@ -80,13 +81,14 @@ def assert_no_merge(load_commit):
 def assert_index(repo, *expected):
     repo.index.load()
 
-    actual = sorted(list((str(entry.path), entry.stage) for entry in repo.index.entries.values()))
+    actual = sorted(
+        list((str(entry.path), entry.stage) for entry in repo.index.entries.values())
+    )
 
     assert actual == sorted(expected), (
-        f"Index content mismatch.\n"
-        f"  Expected: {expected}\n"
-        f"  Actual:   {actual}"
+        f"Index content mismatch.\n  Expected: {expected}\n  Actual:   {actual}"
     )
+
 
 @pytest.fixture
 def assert_executable(repo_path):
@@ -130,7 +132,9 @@ class TestFastForwardMerge:
         _ = legit_cmd("branch", "topic", "@^^")
         _ = legit_cmd("checkout", "topic")
 
-        self.cmd, self.stdin, self.stdout, self.stderr = legit_cmd("merge", "master", "-m", "M")
+        self.cmd, self.stdin, self.stdout, self.stderr = legit_cmd(
+            "merge", "master", "-m", "M"
+        )
 
     def test_it_prints_the_fast_forward_message(self, repo, resolve_revision):
         a, b = map(resolve_revision, ["master^^", "master"])
@@ -141,7 +145,7 @@ class TestFastForwardMerge:
             """
         )
         assert_stdout(self.stdout, expected)
-    
+
     def test_it_updates_the_current_branch_head(self, load_commit, legit_cmd):
         commit = load_commit("@")
         assert commit.message.strip() == "C"
@@ -155,15 +159,20 @@ class TestUnconflictedMergeWithTwoFiles:
     def setup(self, merge3):
         merge3(
             {"f.txt": "1", "g.txt": "1"},
-            {"f.txt": "2",             },
-            {              "g.txt": "2"},
+            {
+                "f.txt": "2",
+            },
+            {"g.txt": "2"},
         )
 
     def test_it_puts_the_combined_changes_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "2",
-            "g.txt": "2",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "2",
+                "g.txt": "2",
+            },
+        )
 
     def test_it_creates_a_clean_merge(self, legit_cmd, load_commit):
         assert_clean_merge(legit_cmd, load_commit)
@@ -179,9 +188,12 @@ class TestUnconflictedMergeWithDeletedFile:
         )
 
     def test_it_puts_the_combined_changes_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "2",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "2",
+            },
+        )
 
     def test_it_creates_a_clean_merge(self, legit_cmd, load_commit):
         assert_clean_merge(legit_cmd, load_commit)
@@ -197,10 +209,13 @@ class TestUnconflictedMergeSameAdditionOnBothSides:
         )
 
     def test_it_puts_the_combined_changes_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "1",
-            "g.txt": "2",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "1",
+                "g.txt": "2",
+            },
+        )
 
     def test_it_creates_a_clean_merge(self, legit_cmd, load_commit):
         assert_clean_merge(legit_cmd, load_commit)
@@ -231,7 +246,9 @@ class TestUnconflictedMergeEditAndModeChange:
             {"f.txt": FileMode.EXECUTABLE},
         )
 
-    def test_it_puts_the_combined_changes_in_the_workspace(self, repo_path, assert_executable):
+    def test_it_puts_the_combined_changes_in_the_workspace(
+        self, repo_path, assert_executable
+    ):
         assert_workspace(repo_path, {"f.txt": "2"})
         assert_executable("f.txt")
 
@@ -248,7 +265,9 @@ class TestUnconflictedMergeModeChangeAndEdit:
             {"f.txt": "3"},
         )
 
-    def test_it_puts_the_combined_changes_in_the_workspace(self, repo_path, assert_executable):
+    def test_it_puts_the_combined_changes_in_the_workspace(
+        self, repo_path, assert_executable
+    ):
         assert_workspace(repo_path, {"f.txt": "3"})
         assert_executable("f.txt")
 
@@ -340,15 +359,19 @@ class TestConflictedMergeAddAdd:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_the_conflicted_file_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "1",
-            "g.txt": textwrap.dedent(
-                """<<<<<<< HEAD\n2\n=======\n3\n>>>>>>> topic\n""",
-            )
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "1",
+                "g.txt": textwrap.dedent(
+                    """<<<<<<< HEAD\n2\n=======\n3\n>>>>>>> topic\n""",
+                ),
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 0),
             ("g.txt", 2),
             ("g.txt", 3),
@@ -361,7 +384,7 @@ class TestConflictedMergeAddAdd:
         *_, stdout, _ = legit_cmd("status", "--porcelain")
         expected = "AA g.txt\n"
         assert_stdout(stdout, expected)
-    
+
     def test_shows_combined_diff_against_stages_2_and_3(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff")
 
@@ -379,7 +402,7 @@ class TestConflictedMergeAddAdd:
         )
 
         assert_stdout(stdout, expected)
-   
+
     def test_it_shows_the_diff_against_our_version(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff", "--ours")
         expected = textwrap.dedent(
@@ -423,9 +446,7 @@ class TestConflictedMergeAddAddModeConflict:
     @pytest.fixture(autouse=True)
     def setup(self, merge3):
         self.cmd, self.stdin, self.stdout, self.stderr = merge3(
-            {"f.txt": "1"},
-            {"g.txt": "2"},
-            {"g.txt": ["2"]}
+            {"f.txt": "1"}, {"g.txt": "2"}, {"g.txt": ["2"]}
         )
 
     def test_it_prints_the_merge_conflicts(self):
@@ -437,13 +458,17 @@ class TestConflictedMergeAddAddModeConflict:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_the_conflicted_file_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "1",
-            "g.txt": "2",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "1",
+                "g.txt": "2",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 0),
             ("g.txt", 2),
             ("g.txt", 3),
@@ -454,7 +479,7 @@ class TestConflictedMergeAddAddModeConflict:
 
     def test_shows_combined_diff_against_stages_2_and_3(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff")
-    
+
         expected = (
             "diff --cc g.txt\n"
             "index d8263ee,d8263ee..d8263ee\n"
@@ -462,9 +487,8 @@ class TestConflictedMergeAddAddModeConflict:
             "--- a/g.txt\n"
             "+++ b/g.txt\n"
         )
-    
-        assert_stdout(stdout, expected)
 
+        assert_stdout(stdout, expected)
 
     def test_it_reports_the_conflict_in_the_status(self, legit_cmd):
         *_, stdout, _ = legit_cmd("status", "--porcelain")
@@ -472,7 +496,7 @@ class TestConflictedMergeAddAddModeConflict:
 
     def test_shows_combined_diff_modes_against_stages_2_and_3(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff")
-    
+
         expected = (
             "diff --cc g.txt\n"
             "index d8263ee,d8263ee..d8263ee\n"
@@ -480,7 +504,7 @@ class TestConflictedMergeAddAddModeConflict:
             "--- a/g.txt\n"
             "+++ b/g.txt\n"
         )
-    
+
         assert_stdout(stdout, expected)
 
     def test_it_reports_the_mode_change_in_the_appropriate_diff(self, legit_cmd):
@@ -515,14 +539,18 @@ class TestConflictedMergeFileDirectoryAddition:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_a_namespaced_copy_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "1",
-            "g.txt~HEAD": "2",
-            "g.txt/nested.txt": "3",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "1",
+                "g.txt~HEAD": "2",
+                "g.txt/nested.txt": "3",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 0),
             ("g.txt", 2),
             ("g.txt/nested.txt", 0),
@@ -563,14 +591,18 @@ class TestConflictedMergeDirectoryFileAddition:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_a_namespaced_copy_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "1",
-            "g.txt~topic": "3",
-            "g.txt/nested.txt": "2",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "1",
+                "g.txt~topic": "3",
+                "g.txt/nested.txt": "2",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 0),
             ("g.txt", 3),
             ("g.txt/nested.txt", 0),
@@ -579,7 +611,6 @@ class TestConflictedMergeDirectoryFileAddition:
     def test_it_does_not_write_a_merge_commit(self, load_commit):
         assert_no_merge(load_commit)
 
-    
     def test_it_reports_the_conflict_in_the_status(self, legit_cmd):
         *_, stdout, _ = legit_cmd("status", "--porcelain")
         expected = textwrap.dedent("""\
@@ -611,12 +642,16 @@ class TestConflictedMergeEditEdit:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_the_conflicted_file_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "f.txt": "<<<<<<< HEAD\n2\n=======\n3\n>>>>>>> topic\n",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "<<<<<<< HEAD\n2\n=======\n3\n>>>>>>> topic\n",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 1),
             ("f.txt", 2),
             ("f.txt", 3),
@@ -628,10 +663,10 @@ class TestConflictedMergeEditEdit:
     def test_it_reports_the_conflict_in_the_status(self, legit_cmd):
         *_, stdout, _ = legit_cmd("status", "--porcelain")
         assert_stdout(stdout, "UU f.txt\n")
-   
+
     def test_shows_combined_diff_against_stages_2_and_3(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff")
-    
+
         expected = (
             "diff --cc f.txt\n"
             "index 0cfbf08,00750ed..2603ab2\n"
@@ -644,10 +679,10 @@ class TestConflictedMergeEditEdit:
             "+ 3\n"
             "++>>>>>>> topic\n"
         )
-    
+
         assert_stdout(stdout, expected)
 
-  
+
 class TestConflictedMergeEditDelete:
     @pytest.fixture(autouse=True)
     def setup(self, merge3):
@@ -668,7 +703,8 @@ class TestConflictedMergeEditDelete:
         assert_workspace(repo_path, {"f.txt": "2"})
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 1),
             ("f.txt", 2),
         )
@@ -705,7 +741,8 @@ class TestConflictedMergeDeleteEdit:
         assert_workspace(repo_path, {"f.txt": "3"})
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("f.txt", 1),
             ("f.txt", 3),
         )
@@ -720,6 +757,7 @@ class TestConflictedMergeDeleteEdit:
     def test_it_lists_the_file_as_unmerged_in_the_diff(self, legit_cmd):
         *_, stdout, _ = legit_cmd("diff")
         assert_stdout(stdout, "* Unmerged path f.txt\n")
+
 
 class TestConflictedMergeEditAddParent:
     @pytest.fixture(autouse=True)
@@ -739,13 +777,17 @@ class TestConflictedMergeEditAddParent:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_a_namespaced_copy_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "nest/f.txt": "2",
-            "nest~topic": "3",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "nest/f.txt": "2",
+                "nest~topic": "3",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("nest", 3),
             ("nest/f.txt", 1),
             ("nest/f.txt", 2),
@@ -790,13 +832,17 @@ class TestConflictedMergeEditAddChild:
         assert_stdout(self.stdout, expected)
 
     def test_it_puts_a_namespaced_copy_in_the_workspace(self, repo_path):
-        assert_workspace(repo_path, {
-            "nest/f.txt~HEAD": "2",
-            "nest/f.txt/g.txt": "3",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "nest/f.txt~HEAD": "2",
+                "nest/f.txt/g.txt": "3",
+            },
+        )
 
     def test_it_records_the_conflict_in_the_index(self, repo):
-        assert_index(repo,
+        assert_index(
+            repo,
             ("nest/f.txt", 1),
             ("nest/f.txt", 2),
             ("nest/f.txt/g.txt", 0),
@@ -842,11 +888,14 @@ class TestMultipleCommonAncestors:
         cmd, *_ = legit_cmd("merge", "joiner", "-m", "merge joiner")
         assert cmd.status == 0
 
-        assert_workspace(repo_path, {
-            "f.txt": "3",
-            "g.txt": "2",
-            "h.txt": "1",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "3",
+                "g.txt": "2",
+                "h.txt": "1",
+            },
+        )
 
         *_, stdout, _ = legit_cmd("status", "--porcelain")
         assert_stdout(stdout, "")
@@ -855,15 +904,18 @@ class TestMultipleCommonAncestors:
         _ = legit_cmd("merge", "joiner", "-m", "merge joiner")
 
         commit_tree("H", {"f.txt": "4"})
-        
+
         cmd, *_ = legit_cmd("merge", "topic", "-m", "merge topic")
         assert cmd.status == 0
 
-        assert_workspace(repo_path, {
-            "f.txt": "4",
-            "g.txt": "3",
-            "h.txt": "1",
-        })
+        assert_workspace(
+            repo_path,
+            {
+                "f.txt": "4",
+                "g.txt": "3",
+                "h.txt": "1",
+            },
+        )
 
         *_, stdout, _ = legit_cmd("status", "--porcelain")
         assert_stdout(stdout, "")
@@ -872,11 +924,7 @@ class TestMultipleCommonAncestors:
 class TestConflictResolution:
     @pytest.fixture(autouse=True)
     def setup(self, merge3):
-        merge3(
-            {"f.txt": "1\n"},
-            {"f.txt": "2\n"},
-            {"f.txt": "3\n"}
-        )
+        merge3({"f.txt": "1\n"}, {"f.txt": "2\n"}, {"f.txt": "3\n"})
 
     def test_prevents_commits_with_unmerged_entries(self, legit_cmd, load_commit):
         cmd, *_, stderr = legit_cmd("commit")
@@ -890,7 +938,9 @@ class TestConflictResolution:
         assert_stderr(stderr, expected)
         assert load_commit("@").message.strip() == "B"
 
-    def test_prevents_merge_continue_with_unmerged_entries(self, legit_cmd, load_commit):
+    def test_prevents_merge_continue_with_unmerged_entries(
+        self, legit_cmd, load_commit
+    ):
         cmd, *_, stderr = legit_cmd("merge", "--continue")
         assert cmd.status == 128
         expected = (
@@ -911,7 +961,9 @@ class TestConflictResolution:
         parents = [load_commit(oid).message.strip() for oid in commit.parents]
         assert parents == ["B", "C"]
 
-    def test_allows_merge_continue_after_resolving_conflicts(self, legit_cmd, load_commit):
+    def test_allows_merge_continue_after_resolving_conflicts(
+        self, legit_cmd, load_commit
+    ):
         _ = legit_cmd("add", "f.txt")
         cmd, _, _, _ = legit_cmd("merge", "--continue")
         assert cmd.status == 0
@@ -925,7 +977,9 @@ class TestConflictResolution:
         _ = legit_cmd("merge", "--continue")
         cmd, *_, stderr = legit_cmd("merge", "--continue")
         assert cmd.status == 128
-        assert_stderr(stderr, "fatal: There is no merge in progress (MERGE_HEAD missing).\n")
+        assert_stderr(
+            stderr, "fatal: There is no merge in progress (MERGE_HEAD missing).\n"
+        )
 
     def test_aborts_the_merge(self, legit_cmd):
         cmd, *_ = legit_cmd("merge", "--abort")
@@ -937,7 +991,9 @@ class TestConflictResolution:
         legit_cmd("merge", "--abort")
         cmd, *_, stderr = legit_cmd("merge", "--abort")
         assert cmd.status == 128
-        assert_stderr(stderr, "fatal: There is no merge to abort (MERGE_HEAD missing).\n")
+        assert_stderr(
+            stderr, "fatal: There is no merge to abort (MERGE_HEAD missing).\n"
+        )
 
     def test_prevents_starting_new_merge_while_one_in_progress(self, legit_cmd):
         cmd, *_, stderr = legit_cmd("merge")
@@ -949,4 +1005,3 @@ class TestConflictResolution:
             "fatal: Exiting because of an unresolved conflict.\n"
         )
         assert_stderr(stderr, expected)
-

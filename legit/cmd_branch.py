@@ -30,7 +30,7 @@ class Branch(FastForwardMixin, Base):
                 self.options["verbose"] += 1
             elif arg == "-vv":
                 self.options["verbose"] += 2
-            elif arg == '-D':
+            elif arg == "-D":
                 self.options["delete"] = True
                 self.options["force"] = True
             elif arg in ("-d", "--delete"):
@@ -136,7 +136,7 @@ class Branch(FastForwardMixin, Base):
         commit = self.repo.database.load(ref.read_oid())
         short = self.repo.database.short_oid(commit.oid)
         space = " " * (max_width - len(ref.short_name()))
-        upstream = self.upstream_info(ref) or ''
+        upstream = self.upstream_info(ref) or ""
         return f"{space} {short}{upstream} {commit.title_line()}"
 
     def upstream_info(self, ref):
@@ -225,5 +225,7 @@ class Branch(FastForwardMixin, Base):
         branch_oid = self.repo.refs.read_ref(branch_name)
 
         if self.fast_forward_error(branch_oid, head_oid):
-            self.stderr.write(f"error: The branch '{branch_name}' is not fully merged.\n")
+            self.stderr.write(
+                f"error: The branch '{branch_name}' is not fully merged.\n"
+            )
             self.exit(1)

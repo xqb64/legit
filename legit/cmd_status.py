@@ -125,7 +125,7 @@ class StatusCmd(Base):
         self.hint(f"use 'legit {op} --abort' to cancel the {op} operation")
 
         self.println("")
-    
+
     def print_branch_status(self) -> None:
         current = self.repo.refs.current_ref()
 

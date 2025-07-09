@@ -41,7 +41,7 @@ class Packed:
 
         if isinstance(record, Record):
             return record
-        
+
         elif isinstance(record, OfsDelta):
             base = self.load_raw_at(offset - record.base_ofs)
             return self.expand_delta(base, record)

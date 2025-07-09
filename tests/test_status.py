@@ -12,7 +12,9 @@ def assert_status(legit_cmd, output):
     assert_stdout(stdout, output)
 
 
-def test_it_lists_files_as_untracked_if_they_are_not_in_the_index(write_file, commit, legit_cmd):
+def test_it_lists_files_as_untracked_if_they_are_not_in_the_index(
+    write_file, commit, legit_cmd
+):
     write_file("committed.txt", "")
     legit_cmd("add", ".")
     commit("commit message")
@@ -31,7 +33,7 @@ def test_it_lists_files_as_untracked_if_they_are_not_in_the_index(write_file, co
 def test_it_lists_untracked_files_in_name_order(write_file, legit_cmd):
     write_file("file.txt", "")
     write_file("another.txt", "")
-    
+
     expected = textwrap.dedent(
         """\
         ?? another.txt
@@ -56,7 +58,9 @@ def test_it_lists_untracked_directories_and_not_their_contents(write_file, legit
     assert_status(legit_cmd, expected)
 
 
-def test_it_lists_untracked_files_inside_tracked_directories(write_file, commit, legit_cmd):
+def test_it_lists_untracked_files_inside_tracked_directories(
+    write_file, commit, legit_cmd
+):
     write_file("a/b/inner.txt", "")
     legit_cmd("add", ".")
     commit("commit message")
@@ -77,11 +81,13 @@ def test_it_lists_untracked_files_inside_tracked_directories(write_file, commit,
 def test_it_does_not_list_empty_untracked_directories(mkdir, legit_cmd):
     mkdir("outer")
     expected = ""
-    
+
     assert_status(legit_cmd, expected)
 
 
-def test_it_lists_untracked_directories_that_indirectly_contain_files(write_file, legit_cmd):
+def test_it_lists_untracked_directories_that_indirectly_contain_files(
+    write_file, legit_cmd
+):
     write_file("outer/inner/file.txt", "")
 
     expected = textwrap.dedent(
@@ -99,7 +105,7 @@ class TestIndexWorkspaceChanges:
         write_file("1.txt", "one")
         write_file("a/2.txt", "two")
         write_file("a/b/3.txt", "three")
-    
+
         _ = legit_cmd("add", ".")
         commit("commit message")
 
@@ -122,7 +128,7 @@ class TestIndexWorkspaceChanges:
     def test_it_prints_nothing_when_file_is_touched(self, touch, legit_cmd):
         touch("1.txt")
         assert_status(legit_cmd, "")
-    
+
     def test_it_reports_deleted_files(self, delete, legit_cmd):
         delete("a/2.txt")
         assert_status(legit_cmd, " D a/2.txt\n")
@@ -134,7 +140,7 @@ class TestHeadIndexChanges:
         write_file("1.txt", "one")
         write_file("a/2.txt", "two")
         write_file("a/b/3.txt", "three")
-    
+
         _ = legit_cmd("add", ".")
         commit("commit message")
 

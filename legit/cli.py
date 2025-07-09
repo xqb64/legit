@@ -485,5 +485,7 @@ def upload_pack(ctx: click.Context, repo: Path) -> None:
 @click.pass_context
 def receive_pack(ctx: click.Context, repo: Path) -> None:
     _plumbing(ctx, "receive-pack", repo, ctx.args)
+
+
 if __name__ == "__main__":
     cli()

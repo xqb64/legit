@@ -11,10 +11,13 @@ class RemoteAgentMixin:
 
     def accept_client(self, name, capabilities=None):
         capabilities = capabilities or []
+
         def as_bin(stream):
             return stream.buffer if hasattr(stream, "buffer") else stream
 
-        self.conn = Remotes.Protocol(name, as_bin(self.stdin), as_bin(self.stdout), capabilities)
+        self.conn = Remotes.Protocol(
+            name, as_bin(self.stdin), as_bin(self.stdout), capabilities
+        )
 
     @property
     @cache

@@ -24,7 +24,7 @@ class UploadPack(RemoteAgentMixin, SendObjectsMixin, Base):
     def recv_oids(self, prefix, terminator):
         pattern = re.compile(f"^{prefix} ([0-9a-f]+)$".encode())
         result = set()
-    
+
         for line in self.conn.recv_until(terminator):
             m = pattern.match(line)
             if m is not None:
