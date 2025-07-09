@@ -20,21 +20,30 @@ class Raw:
 class Loose:
     def __init__(self, path):
         self.path = path
+    
+    def close(self):
+        pass
 
     def has(self, oid: str) -> bool:
         object_path = self.path / str(oid[:2]) / str(oid[2:])
         return object_path.exists()
 
     def load_info(self, oid: str) -> Raw:
-        ty, size, _ = self.read_object_header(oid, 128)
-        return Raw(ty, size, None)
+        try:
+            ty, size, _ = self.read_object_header(oid, 128)
+            return Raw(ty, size, None)
+        except FileNotFoundError:
+            return None
 
     def load_raw(self, oid):
         """
         Load a raw Git object by its oid, returning a Raw(type, size, data) instance.
         """
-        ty, size, (data, pos) = self.read_object_header(oid)
-        return Raw(ty, size, data[pos:])
+        try:
+            ty, size, (data, pos) = self.read_object_header(oid)
+            return Raw(ty, size, data[pos:])
+        except FileNotFoundError:
+            return None
 
     def prefix_match(self, name: str) -> list[str]:
         object_path = self.path / str(name[:2]) / str(name[2:])

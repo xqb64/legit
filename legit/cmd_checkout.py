@@ -81,7 +81,6 @@ class Checkout(Base):
         self.exit(1)
 
     def print_previous_head(self) -> None:
-        assert self.current_oid is not None
         if self.current_ref.is_head() and self.current_oid != self.target_oid:
             self.print_head_position("Previous HEAD position was", self.current_oid)
 

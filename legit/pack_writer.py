@@ -34,18 +34,22 @@ class Writer:
 
     def write(self, data: bytes):
         self.output.write(data)
+        self.output.flush()
         self.digest.update(data)
         self.offset += len(data)
 
     def prepare_pack_list(self, rev_list):
         self.pack_list = []
+
         if self.progress is not None:
             self.progress.start("Counting objects")
+        
         for obj, path in rev_list:
             self.add_to_pack_list(obj, path)
 
             if self.progress is not None:
                 self.progress.tick()
+        
         if self.progress is not None:
             self.progress.stop()
 

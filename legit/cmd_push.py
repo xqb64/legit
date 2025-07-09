@@ -1,4 +1,3 @@
-from hashlib import new
 import re
 
 from legit.cmd_base import Base
@@ -8,13 +7,18 @@ from legit.send_objects import SendObjectsMixin
 from legit.remotes import Remotes, Refspec
 from legit.revision import Revision
 
+import logging
+
+log = logging.getLogger(__name__)
+
+logging.disable()
 
 class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
     CAPABILITIES = ["report-status"]
     RECEIVE_PACK = "git-receive-pack"
 
-    UNPACK_LINE = re.compile(r"^unpack (.+)$")
-    UPDATE_LINE = re.compile(r"^(ok|ng) (\S+)(.*)$")
+    UNPACK_LINE = re.compile(r"^unpack (.+)$".encode())
+    UPDATE_LINE = re.compile(r"^(ok|ng) (\S+)(.*)$".encode())
 
     def define_options(self) -> None:
         self.options = {"force": False}
@@ -32,16 +36,32 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
     def run(self) -> None:
         self.define_options()
         self.configure()
+
+        log.debug("push started, starting agent")
         self.start_agent("push", self.receiver, self.push_url, self.CAPABILITIES)
 
+        log.debug("receiving references")
         self.recv_references()
+        log.debug("recvd references")
+
+        log.debug("sending update requests")
         self.send_update_requests()
+        log.debug("sent update requests")
+
+        log.debug("sending objects")
         self.send_objects()
+        log.debug("sent objects")
 
         self.conn.output.close()
-
+        
+        log.debug("printing summary")
         self.print_summary()
+        log.debug("printed summary")
+
+        log.debug("receiving report status")
         self.recv_report_status()
+        log.debug("received report status")
+        
 
         self.exit(0 if not self.errors else 1)
 
@@ -80,12 +100,15 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
 
         for target, (source, forced) in targets.items():
             self.select_update(target, source, forced)
-
+    
+        log.debug(f"About to send updates. self.updates contains: {self.updates}")
+        
         for ref, values in self.updates.items():
             *_, old, new = values
             self.send_update(ref, old, new)
 
         self.conn.send_packet(None)
+        self.conn.output.flush()
 
     def select_update(self, target, source, forced) -> None:
         if not source:
@@ -116,11 +139,11 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         old_oid = self.none_to_zero(old_oid)
         new_oid = self.none_to_zero(new_oid)
 
-        self.conn.send_packet(f"{old_oid} {new_oid} {ref}")
+        self.conn.send_packet(f"{old_oid} {new_oid} {ref}".encode())
 
     def none_to_zero(self, oid) -> str:
         if oid is None:
-            return self.ZERO_OID
+            return self.ZERO_OID.decode()
         return oid
 
     def send_objects(self) -> None:
@@ -135,6 +158,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         self.send_packet_objects(revs)
 
     def print_summary(self) -> None:
+        log.debug(f"About to print summary. self.updates contains: {self.updates}")
         if not self.updates and not self.errors:
             self.stderr.write("Everything up-to-date\n")
         else:
@@ -143,28 +167,19 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
                 self.report_ref_update(ref_names, error)
 
     def recv_report_status(self) -> None:
-        """
-        Receives the server's status report after a push operation.
-        """
-        # Return if the remote doesn't support 'report-status' or if no updates were sent.
         if not self.conn.capable("report-status") or not self.updates:
             return
 
-        # 1. First, read the single "unpack" status line from the server.
-        # This packet indicates if the server successfully received the data.
         unpack_line = self.conn.recv_packet()
         if unpack_line:
             unpack_match = self.UNPACK_LINE.match(unpack_line)
             if unpack_match:
                 unpack_result = unpack_match.group(1)
-                if unpack_result != "ok":
+                if unpack_result != b"ok":
                     self.stderr.write(f"error: remote unpack failed: {unpack_result}\n")
             else:
-                # If the first line doesn't match, it could be a ref status line.
                 self.handle_status(unpack_line)
 
-        # 2. Loop to process the subsequent "ok" or "ng" status for each ref.
-        # The loop is terminated by a flush-packet, which recv_until(None) handles.
         for line in self.conn.recv_until(None):
             if line:
                 self.handle_status(line)
@@ -175,10 +190,10 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
             return
 
         status = m.group(1)
-        ref = m.group(2)
+        ref = m.group(2).decode()
 
-        error = None if status == "ok" else m.group(3).strip()
-
+        error = None if status == b"ok" else m.group(3).strip().decode()
+        
         if error:
             self.errors.append([ref, error])
 

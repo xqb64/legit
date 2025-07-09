@@ -46,7 +46,7 @@ class Reader:
     
         elif ty == OFS_DELTA:
             delta = self.read_ofs_delta()
-            size = Expander.expand(delta.delta_data).target_size
+            size = Expander(delta.delta_data).target_size
 
             return OfsDelta(delta.base_ofs, size)
 
@@ -58,7 +58,6 @@ class Reader:
 
     def read_record(self) -> "Record | None":
         ty, _ = self.read_record_header()
-
         if ty in [COMMIT, BLOB, TREE]:
             decompressed_data = self.read_zlib_stream()
             return Record(TYPE_CODES_REVERSED.get(ty), decompressed_data)
@@ -82,8 +81,8 @@ class Reader:
         return RefDelta(base_oid, delta_data)
 
     def read_record_header(self):
-        byte, size = VarIntLE.read(self.input, 4)
-        ty = (byte >> 4) & 0x7
+        first, size = VarIntLE.read(self.input, 4)
+        ty = (first >> 4) & 0x7
         return ty, size
 
     def read_zlib_stream(self) -> bytes:
@@ -92,21 +91,15 @@ class Reader:
 
         while not decompressor.eof:
             chunk = self.input.read_nonblock(256)
-            if not chunk and not decompressor.eof:
-                raise InvalidPack(
-                    "Input stream ended unexpectedly during zlib decompression"
-                )
 
             try:
                 output.extend(decompressor.decompress(chunk))
             except zlib.error as e:
                 raise InvalidPack(f"Zlib decompression error: {e}") from e
 
-        # After the loop, decompressor.unused_data holds the over-read bytes.
-        # We use our custom Stream's seek method to "un-read" this data by
-        # prepending it to the internal buffer for the next read operation.
         if decompressor.unused_data:
-            # A negative seek on our Stream wrapper moves data back to the buffer.
             self.input.seek(-len(decompressor.unused_data))
-
+        
+        output.extend(decompressor.flush())
+    
         return bytes(output)

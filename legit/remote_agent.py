@@ -7,10 +7,14 @@ from itertools import chain
 
 
 class RemoteAgentMixin:
-    ZERO_OID = "0" * 40
+    ZERO_OID = b"0" * 40
 
-    def accept_client(self, name, capabilities=[]):
-        self.conn = Remotes.Protocol(name, self.stdin, self.stdout, capabilities)
+    def accept_client(self, name, capabilities=None):
+        capabilities = capabilities or []
+        def as_bin(stream):
+            return stream.buffer if hasattr(stream, "buffer") else stream
+
+        self.conn = Remotes.Protocol(name, as_bin(self.stdin), as_bin(self.stdout), capabilities)
 
     @property
     @cache
@@ -18,12 +22,6 @@ class RemoteAgentMixin:
         return Repository(self.detect_git_dir())
 
     def detect_git_dir(self) -> Optional[Path]:
-        """
-        Walk up from `self.args[0]`, returning the first directory that is
-        (a) itself a Git repository *or* (b) contains a `.git` directory.
-
-        Returns ``None`` if nothing is found.
-        """
         start: Path = self.expanded_path(self.args[0])
 
         for ancestor in chain([start], start.parents):
@@ -48,10 +46,10 @@ class RemoteAgentMixin:
             oid = symref.read_oid()
             if oid is None:
                 continue
-            self.conn.send_packet(f"{oid.lower()} {symref.path}")
+            self.conn.send_packet(f"{oid.lower()} {symref.path}".encode())
             sent = True
 
         if not sent:
-            self.conn.send_packet(f"{self.ZERO_OID} capabilities^{{}}")
+            self.conn.send_packet(f"{'0' * 40} capabilities^{{}}".encode())
 
         self.conn.send_packet(None)

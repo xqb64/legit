@@ -1,4 +1,5 @@
-from os import name
+# legit/remotes.py
+
 import re
 from pathlib import Path
 from typing import Optional
@@ -55,7 +56,7 @@ class Remotes:
         for branch in branches:
             source = Refs.HEADS_DIR / branch
             target = Refs.REMOTES_DIR / name / branch
-            refspec = Refspec(source, target, True)
+            refspec = Refspec(str(source), str(target), True)
 
             self.config.add(["remote", name, "fetch"], str(refspec))
 
@@ -84,9 +85,9 @@ class Remotes:
 class Refspec:
     REFSPEC_FORMAT = re.compile(r"^(\+?)([^:]*)(:([^:]*))?$")
 
-    def __init__(self, source: Path, target: Path, forced: bool) -> None:
-        self.source: Path = source
-        self.target: Path = target
+    def __init__(self, source: str, target: str, forced: bool) -> None:
+        self.source: str = source
+        self.target: str = target
         self.forced: bool = forced
 
     @staticmethod
@@ -109,17 +110,17 @@ class Refspec:
     @staticmethod
     def parse(spec: str) -> "Refspec":
         m = Refspec.REFSPEC_FORMAT.match(spec)
-        source = Refspec.canonical(m.group(2))
+        source = Refspec.canonical(m.group(2)) or ''
         target = Refspec.canonical(m.group(4)) or source
         return Refspec(source, target, m.group(1) == "+")
 
     @staticmethod
-    def canonical(name: str) -> Optional[Path]:
+    def canonical(name: str) -> Optional[str]:
         if not name:
             return None
 
         if not Revision.valid_ref(name):
-            return Path(name)
+            return name
 
         first = Path(name).parts[0]
         dirs = [Refs.REFS_DIR, Refs.HEADS_DIR, Refs.REMOTES_DIR]
@@ -127,10 +128,10 @@ class Refspec:
         matching_dirs = [d for d in dirs if d.name == first]
 
         if not matching_dirs:
-            return Refs.HEADS_DIR / name
+            return str(Refs.HEADS_DIR / name)
         else:
             prefix = matching_dirs[0]
-            return (prefix.parent if prefix else Refs.HEADS_DIR) / name
+            return str((prefix.parent if prefix else Refs.HEADS_DIR) / name)
 
     @staticmethod
     def expand(specs, refs):
@@ -141,10 +142,10 @@ class Refspec:
         return mappings
 
     def match_refs(self, refs: list[str]) -> dict[str, tuple[str, bool]]:
-        if "*" not in str(self.source):
-            return {str(self.target): (str(self.source), self.forced)}
+        if "*" not in self.source:
+            return {self.target: (self.source, self.forced)}
 
-        pattern = re.compile(f"^{str(self.source).replace('*', '(.*)', 1)}$")
+        pattern = re.compile(f"^{self.source.replace('*', '(.*)', 1)}$")
         mappings = {}
 
         for ref in refs:
@@ -155,12 +156,12 @@ class Refspec:
             wildcard_value = match.group(1)
 
             if wildcard_value:
-                dst = str(self.target).replace("*", wildcard_value, 1)
+                dst = self.target.replace("*", wildcard_value, 1)
             else:
-                dst = str(self.target)
+                dst = self.target
 
             mappings[dst] = (ref, self.forced)
-
+    
         return mappings
 
     def __str__(self) -> str:
@@ -216,3 +217,4 @@ class Remote:
     @property
     def uploader(self):
         return self.config.get(["remote", self.name, "uploadpack"])
+

@@ -19,7 +19,10 @@ class SendObjectsMixin:
         write_opts = {
             "compression": pack_compression,
             "progress": Progress(self.stderr),
+            "allow_ofs": self.conn.capable("ofs-delta"),
         }
-        writer = Writer(self.conn.output, self.repo.database, write_opts)
 
+        writer = Writer(self.conn.output, self.repo.database, write_opts)
         writer.write_objects(rev_list)
+
+        self.conn.output.flush()

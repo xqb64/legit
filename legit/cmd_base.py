@@ -1,3 +1,5 @@
+import io
+
 from functools import cache
 from pathlib import Path
 from typing import MutableMapping, TextIO
@@ -87,21 +89,22 @@ class Base:
     def run(self) -> None:
         """Subclasses must override this."""
         raise NotImplementedError(f"{self.__class__.__name__}.run() not implemented")
-
+  
     def println(self, string: str) -> None:
-        try:
-            self.stdout.write(string + "\n")
-            self.stdout.flush()
-        except BrokenPipeError:
-            self.exit(0)
+        # Check if self.stdout is a binary stream (has a .buffer attribute)
+        if isinstance(self.stdout, io.BufferedIOBase):
+            self.stdout.write((string + '\n').encode('utf-8'))
+        else:
+            # Assume it's a text stream (like StringIO)
+            self.stdout.write(string + '\n')
 
     def eprintln(self, string: str) -> None:
-        try:
-            self.stderr.write(string + "\n")
-            self.stderr.flush()
-        except BrokenPipeError:
-            self.exit(0)
-
+        # Check if self.stderr is a binary stream (has a .buffer attribute)
+        if isinstance(self.stderr, io.BufferedIOBase):
+            self.stderr.write((string + '\n').encode('utf-8'))
+        else:
+            # Assume it's a text stream (like CapturedStderr's internal file)
+            self.stderr.write(string + '\n')
 
 class ExitSignal(Exception):
     """Internal exception to short-circuit out of `run()` with a status."""

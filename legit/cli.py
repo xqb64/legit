@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 
+from legit.command import Command
 from legit.cmd_base import Base
 
 
@@ -15,8 +16,6 @@ CONTEXT_SETTINGS = {
 
 
 def run_cmd(cmd_name: str, *args: str) -> None:
-    from legit.command import Command
-
     argv: list[str] = ["legit", cmd_name, *args]
 
     cmd: Base = Command.execute(

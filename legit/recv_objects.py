@@ -8,7 +8,9 @@ from legit.pack_indexer import Indexer
 
 
 class RecvObjectsMixin:
-    def recv_packed_objects(self, unpack_limit=None, prefix: str = ""):
+    UNPACK_LIMIT = 100
+
+    def recv_packed_objects(self, unpack_limit=None, prefix: bytes = b""):
         stream = Stream(self.conn.input, prefix)
         reader = Reader(stream)
         if not self.conn.input is sys.stdin:
@@ -17,7 +19,7 @@ class RecvObjectsMixin:
             progress = None
 
         reader.read_header()
-
+            
         factory = self.select_processor_class(reader, unpack_limit)
         processor = factory(self.repo.database, reader, stream, progress)
 
@@ -33,4 +35,4 @@ class RecvObjectsMixin:
             return Unpacker
 
     def transfer_unpack_limit(self):
-        return self.repo.config.get(["tranfer", "unpackLimit"])
+        return self.repo.config.get(["transfer", "unpackLimit"]) or self.UNPACK_LIMIT

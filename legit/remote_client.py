@@ -4,45 +4,53 @@ from legit.protocol import Remotes
 
 
 class RemoteClientMixin:
-    REF_LINE = re.compile(r"^([0-9a-f]+) (.*)$")
-    ZERO_OID = "0" * 40
+    REF_LINE = re.compile(r"^([0-9a-f]+) (.*)$".encode())
+    ZERO_OID = b"0" * 40
 
     def recv_references(self):
         self.remote_refs = {}
 
         for line in self.conn.recv_until(None):
-            if isinstance(line, bytes):
-                line = line.decode()
             m = self.REF_LINE.match(line)
             if not m:
                 continue
 
             oid, ref = m.groups()
+            
+            if isinstance(oid, bytes):
+                oid = oid.decode()
+
+            if isinstance(ref, bytes):
+                ref = ref.decode()
 
             if oid != RemoteClientMixin.ZERO_OID:
                 self.remote_refs[ref] = oid.lower()
 
-    def start_agent(self, name, program, url, capabilities=[]):
+    def start_agent(self, name, program, url, capabilities=None):
+        capabilities = capabilities or []
         argv = self.build_agent_command(program, url)
         proc = subprocess.Popen(
             argv,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=self.stderr,
-            bufsize=-1,
+            text=False,
         )
+        
+        child_stdin = proc.stdin
+        child_stdout = proc.stdout
 
-        input_stream = proc.stdout
-        output_stream = proc.stdin
-
-        self.conn = Remotes.Protocol(name, input_stream, output_stream, capabilities)
+        self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
     def build_agent_command(self, program, url):
         import shlex
         from urllib.parse import urlparse
 
+        if isinstance(program, list):
+            program = program[0]
+
         uri = urlparse(url)
-        argv = shlex.split(program) + [uri.path.lstrip("/")]
+        argv = shlex.split(program) + [uri.path]
         if uri.scheme == "file":
             return argv
         elif uri.scheme == "ssh":
@@ -64,9 +72,9 @@ class RemoteClientMixin:
 
         if old_oid == new_oid:
             return
-
+    
         if old_oid is None:
-            self.show_ref_update("*", "[new_branch]", ref_names)
+            self.show_ref_update("*", "[new branch]", ref_names)
         elif new_oid is None:
             self.show_ref_update("-", "[deleted]", ref_names)
         else:
@@ -84,10 +92,18 @@ class RemoteClientMixin:
             self.show_ref_update("+", revisions, ref_names, "forced update")
 
     def show_ref_update(self, flag, summary, ref_names, reason=None):
-        names = [self.repo.refs.short_name(name) for name in ref_names]
+        names = [
+            self.repo.refs.short_name(
+                name.decode()
+                if isinstance(name, bytes) else name
+            )
+            for name in ref_names
+            if name is not None
+        ]
 
         message = f" {flag} {summary} {' -> '.join(names)}"
         if reason:
             message += f" ({reason})"
 
         self.stderr.write(message + "\n")
+        self.stderr.flush()

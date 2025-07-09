@@ -29,22 +29,11 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.configure()
 
         self.start_agent("fetch", self.uploader, self.fetch_url, self.CAPABILITIES)
-        self.println("started agent")
-
         self.recv_references()
-        self.println("recvd references")
-
         self.send_want_list()
-        self.println("sent want list")
-
         self.send_have_list()
-        self.println("sent have list")
-
         self.recv_objects()
-        self.println("recvd objects")
-
         self.update_remote_refs()
-        self.println("updated remote refs")
 
         self.exit(0 if not self.errors else 1)
 
@@ -80,7 +69,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
     def send_want_list(self):
         self.targets = Refspec.expand(self.fetch_specs, self.remote_refs.keys())
         wanted = set()
-
+        
         self.local_refs = {}
 
         for target, (source, _) in self.targets.items():
@@ -92,9 +81,9 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
 
             self.local_refs[target] = local_oid
             wanted.add(remote_oid)
-
+        
         for oid in wanted:
-            self.conn.send_packet(f"want {oid}")
+            self.conn.send_packet(f"want {oid}".encode())
 
         self.conn.send_packet(None)
 
@@ -105,10 +94,10 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         options = {"all": True, "missing": True}
         rev_list = RevList(self.repo, [], options)
 
-        for commit in rev_list.each():
-            self.conn.send_packet(f"have {commit.oid}")
-        self.conn.send_packet("done")
-
+        for commit, _ in rev_list.each():
+            self.conn.send_packet(f"have {commit.oid}".encode())
+ 
+        self.conn.send_packet(b"done")
         for _ in self.conn.recv_until(SIGNATURE):
             pass
 
@@ -117,7 +106,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.recv_packed_objects(unpack_limit, SIGNATURE)
 
     def update_remote_refs(self):
-        self.eprintln("From {self.fetch_url}")
+        self.eprintln(f"From {self.fetch_url}")
 
         self.errors = {}
 

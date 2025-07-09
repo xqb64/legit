@@ -170,6 +170,7 @@ class Indexer:
 
 class PackFile:
     def __init__(self, pack_dir, name):
+        pack_dir.mkdir(exist_ok=True, parents=True)
         self.file = TempFile(pack_dir, name)
         self.digest = hashlib.sha1()
 

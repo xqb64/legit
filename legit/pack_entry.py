@@ -40,7 +40,9 @@ class Entry:
     def packed_type(self) -> int:
         if self.delta:
             return OFS_DELTA if self.ofs else REF_DELTA
-        return TYPE_CODES.get(self.ty, -1)
+        if self.ty not in TYPE_CODES:
+            raise ValueError(f"got self.ty: {self.ty}")
+        return TYPE_CODES[self.ty]
 
     @property
     def packed_size(self) -> int:

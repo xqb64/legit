@@ -266,7 +266,7 @@ class Refs:
         except Lockfile.MissingParent:
             # mkdir -p and retry
             path.parent.mkdir(parents=True, exist_ok=True)
-            return self.update_ref_file(path, oid, callback)
+            return self._update_ref_file(path, oid, callback)
 
         except Exception:
             # on *any* other error, rollback and re-raise

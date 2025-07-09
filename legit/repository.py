@@ -32,6 +32,13 @@ class Repository:
         self.config: ConfigStack = ConfigStack(self.git_path)
         self.remotes: Remotes = Remotes(self.config.file("local"))
 
+    def close(self):
+        if hasattr(self, 'database'):
+            self.database.close()
+
+    def __del__(self):
+        self.close()
+
     def divergence(self, ref):
         return Divergence(self, ref)
 

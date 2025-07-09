@@ -33,7 +33,7 @@ class VarIntBE:
     def write(value: int):
         _bytes = [value & 0x7f]
         value >>= 7
-        while value > 0:
+        while value != 0:
             value -= 1
             _bytes.append(0x80 | value & 0x7f)
             value >>= 7

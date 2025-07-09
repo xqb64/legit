@@ -19,7 +19,6 @@ class Log(PrintDiffMixin, Base):
 
         positional = []
         for arg in self.args:
-            print(f"{arg=}")
             if arg.startswith("--decorate="):
                 self.decorate = arg.split("=", 1)[1] or "short"
             elif arg == "--no-decorate":

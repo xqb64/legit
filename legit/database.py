@@ -4,6 +4,7 @@ import zlib
 import os
 import random
 import string
+from functools import lru_cache
 from pathlib import Path
 from legit.tree import DatabaseEntry, Tree
 from legit.commit import Commit
@@ -28,7 +29,14 @@ class Database:
         "commit": Commit,
         "tree": Tree,
     }
+    
+    def close(self):
+        if hasattr(self, 'backend'):
+            self.backend.close()
 
+    def __del__(self):
+        self.close()
+        
     def __init__(self, path: Path) -> None:
         self.path: Path = path
         self.objects: MutableMapping[str, Blob | Commit | Tree] = {}

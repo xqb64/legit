@@ -1,11 +1,12 @@
-from io import StringIO
+from io import BytesIO, StringIO
 from datetime import datetime 
-from typing import Optional
+from typing import BinaryIO, Optional
 import shutil
 
 import pytest
 from freezegun import freeze_time
 
+from tests.cmd_helpers import CapturedStderr
 from legit.repository import Repository
 from legit.command import Command
 from legit.revision import Revision
@@ -43,7 +44,7 @@ def setup_and_teardown(repo_path):
     """
     Initialize a repository before each test and clean up afterward.
     """
-    Command.execute(repo_path, {}, ["legit", "init"], StringIO(), StringIO(), StringIO())
+    Command.execute(repo_path, {}, ["legit", "init"], BytesIO(), BytesIO(), BytesIO())
     yield
     shutil.rmtree(repo_path, ignore_errors=True)
 
@@ -54,7 +55,11 @@ def repo(repo_path):
     Provide a Repository instance pointed at the .git directory.
     """
     git_dir = repo_path / ".git"
-    return Repository(git_dir)
+    repo_instance = Repository(git_dir)
+    try:
+        yield repo_instance
+    finally:
+        repo_instance.close()
 
 
 @pytest.fixture
@@ -153,13 +158,17 @@ def legit_cmd(repo_path):
     """
     Run the command with StringIO streams and return (cmd, stdin, stdout, stderr).
     """
+    to_close = []
     def _legit_cmd(*argv, env={}, stdin_data=""):
-        stdin = StringIO(stdin_data)
-        stdout = StringIO()
-        stderr = StringIO()
+        stdin = BytesIO(stdin_data.encode('utf-8'))
+        stdout = BytesIO()
+        stderr = CapturedStderr()
+        to_close.append(stderr)
         cmd = Command.execute(repo_path, env, ["legit"] + list(argv), stdin, stdout, stderr)
         return cmd, stdin, stdout, stderr
-    return _legit_cmd
+    yield _legit_cmd
+    for s in to_close:
+        s.close()
 
 
 @pytest.fixture

@@ -62,6 +62,10 @@ class Command:
         stdout: TextIO,
         stderr: TextIO,
     ) -> Base:
+        from legit.setup_logging import setup_logging
+
+        setup_logging(level="DEBUG", log_file="/tmp/legit.log")
+
         name = argv[1]
         args = argv[2:]
 
