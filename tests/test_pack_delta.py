@@ -65,7 +65,8 @@ def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
     reader.read_header()
     proc_instance = processor(target_db, reader, stream, None)
     proc_instance.process_pack()
-
+    
+    target_db.close()
     target_db = create_db(Path("../db-target"))
 
     oids = [b[0].oid for b in blobs_to_pack]
@@ -79,3 +80,6 @@ def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
 
     assert infos[0] == Raw("blob", 512, None)
     assert infos[1] == Raw("blob", 523, None)
+
+    source_db.close()
+    target_db.close()

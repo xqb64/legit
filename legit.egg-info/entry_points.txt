@@ -1,0 +1,2 @@
+[console_scripts]
+legit = legit.__main__:main

@@ -8,8 +8,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-logging.disable()
-
 
 class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
     CAPABILITIES = ["no-thin", "report-status", "delete-refs", "ofs-delta"]

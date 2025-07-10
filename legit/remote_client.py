@@ -23,7 +23,7 @@ class RemoteClientMixin:
             if isinstance(ref, bytes):
                 ref = ref.decode()
 
-            if oid != RemoteClientMixin.ZERO_OID:
+            if oid != RemoteClientMixin.ZERO_OID.decode():
                 self.remote_refs[ref] = oid.lower()
 
     def start_agent(self, name, program, url, capabilities=None):
@@ -47,10 +47,14 @@ class RemoteClientMixin:
         from urllib.parse import urlparse
 
         if isinstance(program, list):
-            program = program[0]
+            argv = []
+            for part in program:
+                argv += shlex.split(part)
+        else:
+            argv = shlex.split(program)
 
         uri = urlparse(url)
-        argv = shlex.split(program) + [uri.path]
+        argv += [uri.path]
         if uri.scheme == "file":
             return argv
         elif uri.scheme == "ssh":

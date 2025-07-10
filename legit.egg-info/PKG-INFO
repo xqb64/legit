@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: legit
+Version: 0.1.0
+Summary: A tiny git-like VCS clone.
+Author-email: Your Name <you@example.com>
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Software Development :: Version Control
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown

@@ -11,8 +11,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-logging.disable()
-
 
 class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
     CAPABILITIES = ["report-status"]
