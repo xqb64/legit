@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Sequence, cast
 from legit.myers import Edit, Line
 
 
@@ -29,9 +29,12 @@ class Hunk:
             offset -= HUNK_CONTEXT + 1
 
             a_starts = (
-                [] if offset < 0 else [line.number for line in edits[offset].a_lines]
+                [] if offset < 0 else [
+                    line.number for line in edits[offset].a_lines if line is not None
+                ]
             )
-            b_start = None if offset < 0 else edits[offset].b_line.number
+           
+            b_start = None if offset < 0 else cast(Line, edits[offset].b_line).number
 
             hunk = Hunk(a_starts=a_starts, b_start=b_start, edits=[])
             hunks.append(hunk)
@@ -83,11 +86,11 @@ class Hunk:
         return " ".join([sep, *offsets, sep])
 
     def _format(
-        self, sign: str, lines: List[Optional[Line]], start: Optional[int]
+        self, sign: str, lines: Sequence[Optional[Line]], start: Optional[int]
     ) -> str:
         lines = [ln for ln in lines if ln is not None]
 
-        start_val = lines[0].number if lines else start
+        start_val = cast(Line, lines[0]).number if lines else start
 
         if start_val is None:
             start_val = 0
