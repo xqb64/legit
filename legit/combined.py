@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Generator, Iterable
+from typing import cast, List, Optional, Generator, Iterable
 
 from legit.myers import Edit, Line
 
-SYMBOLS = {
+SYMBOLS: dict[str, str] = {
     "del": "-",
     "ins": "+",
     "eql": " ",
@@ -34,8 +34,9 @@ class Combined:
         def __str__(self) -> str:
             symbols = "".join(
                 [
-                    SYMBOLS.get(edit.ty if edit is not None else None, " ")
-                    for edit in self.edits
+                    SYMBOLS[edit.ty]
+                    if edit is not None else " "
+                    for edit in self.edits 
                 ]
             )
 
@@ -46,11 +47,13 @@ class Combined:
             if del_edit is not None:
                 line = del_edit.a_line
             else:
-                line = self.edits[0].b_line
+                line = cast(Edit, self.edits[0]).b_line
+            
+            assert line is not None
 
             return "".join(symbols) + line.text
 
-    def __init__(self, diffs: List[List[Edit]]):
+    def __init__(self, diffs: List[List[Optional[Edit]]]):
         self._diffs = diffs
         self._offsets: List[int] = []
 
@@ -72,13 +75,13 @@ class Combined:
     def _is_complete(self) -> bool:
         return all(offset == len(diff) for offset, diff in self._offset_diffs())
 
-    def _offset_diffs(self) -> Iterable[tuple[int, List[Edit]]]:
+    def _offset_diffs(self) -> Iterable[tuple[int, List[Optional[Edit]]]]:
         return zip(self._offsets, self._diffs)
 
     def _consume_deletions(
-        self, diff: List[Edit], i: int
+        self, diff: List[Optional[Edit]], i: int
     ) -> Generator[Combined.Row, None, None]:
-        while self._offsets[i] < len(diff) and diff[self._offsets[i]].ty == "del":
+        while self._offsets[i] < len(diff) and cast(Edit, diff[self._offsets[i]]).ty == "del":
             edits: List[Optional[Edit]] = [None] * len(self._diffs)
             edits[i] = diff[self._offsets[i]]
             self._offsets[i] += 1
