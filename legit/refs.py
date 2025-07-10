@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import re
 from pathlib import Path
-from sys import path_hooks
 from typing import Any, Optional, Callable
 from legit.lockfile import Lockfile
 from collections import defaultdict
