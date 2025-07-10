@@ -1,7 +1,7 @@
 import re
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from legit.blob import Blob
 from legit.commit import Commit
@@ -163,7 +163,7 @@ class Sequencer:
 
         self.open_todo_file()
 
-    def get_option(self, name: str) -> str:
+    def get_option(self, name: str) -> Any:
         self.config.open()
         return self.config.get(["options", name])
 

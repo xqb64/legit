@@ -24,7 +24,7 @@ class Commit:
         return len(self.parents) > 1
 
     @property
-    def parent(self):
+    def parent(self) -> str | None:
         try:
             return self.parents[0]
         except IndexError:

@@ -1,8 +1,10 @@
 import textwrap
+from typing import TYPE_CHECKING, TextIO
 from legit.commit import Commit
 from legit.repository import Repository, Sequencer, PendingCommit
 from legit.resolve import Resolve
 from legit.editor import Editor
+from legit.inputs import Inputs
 
 
 CONFLICT_NOTES = textwrap.dedent(
@@ -15,6 +17,21 @@ CONFLICT_NOTES = textwrap.dedent(
 
 
 class SequencingMixin:
+    repo: Repository
+    stderr: TextIO
+    args: list[str]
+        
+    if TYPE_CHECKING:
+        def merge_type(self) -> str: ...
+        def pick(self, _commit: Commit) -> None: ...
+        def revert(self, _commit: Commit) -> None: ...
+        def define_write_commit_options(self) -> None: ...
+        def exit(self, _n: int) -> None: ...
+        def write_revert_commit(self) -> None: ...
+        def write_cherry_pick_commit(self) -> None: ...
+        def store_commit_sequence(self) -> None: ...
+        def print_commit(self, _commit: Commit) -> None: ...
+
     def define_options(self) -> None:
         self.define_write_commit_options()
 
@@ -66,7 +83,7 @@ class SequencingMixin:
         self.store_commit_sequence()
         self.resume_sequencer()
 
-    def select_parent(self, commit: Commit):
+    def select_parent(self, commit: Commit) -> str | None:
         mainline = self.sequencer.get_option("mainline")
 
         if commit.is_merge():
@@ -86,17 +103,19 @@ class SequencingMixin:
             )
             self.exit(1)
 
-    def resolve_merge(self, inputs) -> None:
+        return None
+
+    def resolve_merge(self, inputs: Inputs) -> None:
         self.repo.index.load_for_update()
         Resolve(self.repo, inputs).execute()
         self.repo.index.write_updates()
 
-    def fail_on_conflict(self, inputs, message: str) -> None:
+    def fail_on_conflict(self, inputs: Inputs, message: str) -> None:
         self.sequencer.dump()
 
         self.repo.pending_commit().start(inputs.right_oid, self.merge_type())
 
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(message)
             editor.println("")
             editor.note("Conflicts:")
@@ -110,7 +129,6 @@ class SequencingMixin:
         for line in CONFLICT_NOTES.splitlines():
             self.stderr.write(f"hint: {line}\n")
 
-        self.println(f"exiting with 1111111111111")
         self.exit(1)
 
     def finish_commit(self, commit: Commit) -> None:
