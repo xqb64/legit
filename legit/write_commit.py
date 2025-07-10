@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 from datetime import datetime
-from typing import Optional
+from typing import MutableMapping, Optional
 from legit.author import Author
 from legit.commit import Commit as CommitObject
 from legit.tree import Tree
@@ -43,6 +43,9 @@ CHERRY_PICK_NOTES = textwrap.dedent(
 
 
 class WriteCommitMixin:
+    repo: Repository
+    env: MutableMapping[str, str]
+
     def current_author(self) -> Author:
         config_name = self.repo.config.get(["user", "name"])
         config_email = self.repo.config.get(["user", "email"])

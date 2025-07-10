@@ -6,7 +6,7 @@ from typing import Optional, cast
 from legit.blob import Blob
 from legit.commit import Commit
 from legit.tree import Tree
-
+from legit.db_entry import DatabaseEntry
 
 class TreeDiff:
     def __init__(self, database: Database) -> None:
