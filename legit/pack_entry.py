@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 from typing import Any, Tuple, Optional
 from pathlib import Path

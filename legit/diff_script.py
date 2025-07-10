@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.diff import diff
 
 a = list("ABCABBA")

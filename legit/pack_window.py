@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from typing import Any, Iterator, Optional, List
 
+from legit.pack_entry import Entry
 
 class Window:
     class Unpacked:
-        def __init__(self, entry: Any, data: bytes):
+        def __init__(self, entry: Entry, data: bytes) -> None:
             self.entry = entry
             self.data = data
             self.delta_index: Optional[int] = None
@@ -30,7 +33,7 @@ class Window:
         self._objects: List[Optional[Window.Unpacked]] = [None] * size
         self._offset: int = 0
 
-    def add(self, entry: Any, data: bytes) -> "Window.Unpacked":
+    def add(self, entry: Entry, data: bytes) -> "Window.Unpacked":
         unpacked = self.Unpacked(entry, data)
         self._objects[self._offset] = unpacked
         self._offset = (self._offset + 1) % len(self._objects)

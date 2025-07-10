@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Dict, Generator
 
@@ -27,7 +29,7 @@ class Edit:
         return SYMBOLS[self.ty] + line.text
 
     @property
-    def a_lines(self):
+    def a_lines(self) -> list[Line | None]:
         return [self.a_line]
 
 

@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import textwrap
 from typing import Optional
-from legit.repository import Repository
 from legit.cmd_base import Base
 from legit.write_commit import WriteCommitMixin
 from legit.editor import Editor

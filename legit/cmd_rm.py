@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import stat
 import itertools
 from pathlib import Path
 
-from legit import inspector
 from legit.cmd_base import Base
-from legit.repository import Repository
 from legit.inspector import Inspector
 
 

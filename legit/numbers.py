@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.pack_stream import Stream
 
 

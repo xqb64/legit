@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import re
-from typing import reveal_type
 from legit.cmd_base import Base
 from legit.remote_agent import RemoteAgentMixin
 from legit.send_objects import SendObjectsMixin

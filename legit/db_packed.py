@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.pack import Record, RefDelta, OfsDelta
 from legit.pack_expander import Expander
 from legit.pack_reader import Reader

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.cmd_base import Base
 from legit.remotes import Remotes, Refspec
 from legit.rev_list import RevList

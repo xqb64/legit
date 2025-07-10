@@ -1,14 +1,10 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import reveal_type
 from legit.cmd_base import Base
-from legit.index import Entry, Index
-from legit.myers import Edit
+from legit.index import Entry
 from legit.status import Status
-from legit.repository import Repository
 from legit.blob import Blob
-from legit.hunk import Hunk
-from legit.diff import diff, diff_hunks
-from legit.cmd_color import SGR_CODES, Color
 from legit.print_diff import PrintDiffMixin, Target
 
 

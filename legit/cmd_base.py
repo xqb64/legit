@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 
 from functools import cache
@@ -83,7 +85,7 @@ class Base:
     def expanded_path(self, path: str) -> Path:
         return (self.dir / path).absolute()
 
-    def fmt(self, style: str, string: str) -> str:
+    def fmt(self, style: str | list[str], string: str) -> str:
         return Color.format(style, string) if self.isatty else string
 
     def run(self) -> None:

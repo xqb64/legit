@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Union, List
 from legit.myers import Edit, Line, Myers
 from legit.hunk import Hunk

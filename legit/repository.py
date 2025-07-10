@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import re
 import os
 from pathlib import Path
 from typing import Any, Optional
 
-from legit.blob import Blob
 from legit.commit import Commit
-from legit.tree import DatabaseEntry
+from legit.db_entry import DatabaseEntry
 from legit.database import Database
 from legit.index import Index
 from legit.refs import Refs

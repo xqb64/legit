@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import struct
 from legit.numbers import PackedInt56LE, VarIntLE
 from legit.pack_xdelta import XDelta

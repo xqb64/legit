@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.common_ancestors import CommonAncestors
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.protocol import Remotes
 from legit.repository import Repository
 from functools import cache

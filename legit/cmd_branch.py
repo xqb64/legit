@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import enum
 
 from legit.cmd_base import Base
 from legit.refs import Refs
 from legit.remotes import Remotes
-from legit.repository import Repository
 from legit.revision import Revision
 from legit.fast_forward import FastForwardMixin
 

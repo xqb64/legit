@@ -1,14 +1,9 @@
+from __future__ import annotations
+
 import re
-from typing import Any, Optional, Union, TYPE_CHECKING
+from typing import Any, Optional, Union 
 from legit.blob import Blob
 from legit.commit import Commit
-
-if TYPE_CHECKING:
-    from legit.repository import Repository
-else:
-    Repository = None
-
-
 from legit.tree import Tree
 
 

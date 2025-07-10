@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from legit.pack_entry import Entry
 from typing import Any, Optional, List
 from legit.pack_window import Window
 from legit.pack_delta import Delta
@@ -48,7 +51,7 @@ class Compressor:
         if self._progress:
             self._progress.stop()
 
-    def _build_delta(self, entry: Any) -> None:
+    def _build_delta(self, entry: Entry) -> None:
         obj = self._database.load_raw(entry.oid)
         target = self._window.add(entry, obj.data)
 

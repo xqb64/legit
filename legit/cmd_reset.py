@@ -1,8 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Optional
 from legit.cmd_base import Base
-from legit.index import Index
-from legit.repository import Repository
 from legit.revision import Revision
 
 

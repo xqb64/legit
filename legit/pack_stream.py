@@ -1,4 +1,5 @@
-import io
+from __future__ import annotations
+
 import os
 import hashlib
 from typing import Callable, Tuple, BinaryIO, Optional

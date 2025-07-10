@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.pack import MAX_COPY_SIZE, MAX_INSERT_SIZE
 from collections import defaultdict
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from legit.commit import Commit
 from legit.database import Database

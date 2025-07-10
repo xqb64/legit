@@ -1,19 +1,9 @@
-from collections import defaultdict
-import os
-import stat
+from __future__ import annotations
+
 from typing import TextIO, MutableMapping, cast
 from pathlib import Path
 
-from legit import index
-from legit.blob import Blob
 from legit.cmd_base import Base
-from legit.commit import Commit
-from legit.index import Entry
-from legit.repository import Repository
-from legit.tree import DatabaseEntry, Tree
-from legit.status import Status
-from legit.cmd_color import Color
-
 
 LABEL_WIDTH = 12
 

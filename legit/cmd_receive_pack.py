@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from legit.cmd_base import Base
 from legit.recv_objects import RecvObjectsMixin
 from legit.remote_agent import RemoteAgentMixin

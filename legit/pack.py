@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 MAX_COPY_SIZE: int = 0xFFFFFF
 MAX_INSERT_SIZE: int = 0x7F
 

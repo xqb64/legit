@@ -1,11 +1,20 @@
+from __future__ import annotations
+
+from collections import defaultdict
+import hashlib
 import os
+from pathlib import Path
 import stat
 import struct
-import hashlib
+from typing import (
+    BinaryIO,
+    Protocol,
+    runtime_checkable,
+)
+
 from legit.lockfile import Lockfile
-from pathlib import Path
-from collections import defaultdict
-from typing import BinaryIO, Protocol, TYPE_CHECKING, runtime_checkable
+from legit.db_entry import DatabaseEntry
+
 
 @runtime_checkable
 class Hash(Protocol):
@@ -41,7 +50,7 @@ class Index:
                 paths.add(entry)
         return paths
 
-    def add_from_db(self, path: Path, item) -> None:
+    def add_from_db(self, path: Path, item: DatabaseEntry) -> None:
         self.store_entry(Entry.create_from_db(path, item, 0))
         self.changed = True
 
@@ -54,7 +63,7 @@ class Index:
     def is_conflict(self) -> bool:
         return any(stage > 0 for _, stage in self.entries)
 
-    def add_conflict_set(self, path: Path, items) -> None:
+    def add_conflict_set(self, path: Path, items: list[DatabaseEntry | None]) -> None:
         self.remove_entry_with_stage(path, 0)
 
         for idx, item in enumerate(items):
@@ -270,7 +279,7 @@ class Entry:
         self.path = path
 
     @classmethod
-    def create_from_db(cls, path: Path, item, n: int) -> "Entry":
+    def create_from_db(cls, path: Path, item: DatabaseEntry, n: int) -> "Entry":
         p = str(path)
         flags = (n << 12) | min(len(p), Entry.MAX_PATH_SIZE)
         return cls(0, 0, 0, 0, 0, 0, item.mode, 0, 0, 0, item.oid, flags, path)

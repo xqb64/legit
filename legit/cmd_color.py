@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 SGR_CODES: dict[str, int] = {
     "normal": 0,
     "bold": 1,
@@ -19,7 +22,7 @@ SGR_CODES: dict[str, int] = {
 
 class Color:
     @staticmethod
-    def format(style, text: str) -> str:
+    def format(style: str | list[str], text: str) -> str:
         if isinstance(style, str):
             names = [style]
         else:

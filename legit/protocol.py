@@ -1,6 +1,6 @@
-import io
-import re
+from __future__ import annotations
 
+import re
 import logging
 
 log = logging.getLogger(__name__)

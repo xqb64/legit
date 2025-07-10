@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 from legit.cmd_base import Base
 from legit.commit import Commit
@@ -182,13 +184,14 @@ class Log(PrintDiffMixin, Base):
 
         return name
 
-    def ref_color(self, ref):
+    def ref_color(self, ref) -> list[str]:
         if ref.is_head():
             return ["bold", "cyan"]
         elif ref.is_branch():
             return ["bold", "green"]
         elif ref.is_remote():
             return ["bold", "red"]
+        assert False
 
     def _blank_line(self) -> None:
         if self.format == "oneline":

@@ -1,11 +1,10 @@
+from __future__ import annotations
+
 from typing import Optional
 import textwrap
 from legit.cmd_base import Base
-from legit.repository import Repository, PendingCommit
-from legit.revision import Revision
-from legit.common_ancestors import CommonAncestors
+from legit.repository import PendingCommit
 from legit.write_commit import WriteCommitMixin
-from legit.bases import Bases
 from legit.inputs import Inputs
 from legit.resolve import Resolve
 from legit.write_commit import CONFLICT_MESSAGE

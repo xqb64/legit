@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import struct
 
 IDX_MAX_OFFSET = 0x80000000

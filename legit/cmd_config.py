@@ -1,8 +1,8 @@
-import sys
+from __future__ import annotations
+
 from typing import List, Tuple, Any, Callable
 
 from legit.cmd_base import Base
-from legit.repository import Repository
 from legit.config import ConfigFile, ParseError, Conflict
 
 

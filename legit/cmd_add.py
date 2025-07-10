@@ -1,10 +1,9 @@
-import sys
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any
 
 from legit.blob import Blob
 from legit.lockfile import Lockfile
-from legit.repository import Repository
 from legit.workspace import Workspace
 from legit.cmd_base import Base
 

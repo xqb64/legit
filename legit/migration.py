@@ -3,17 +3,12 @@ from __future__ import annotations
 import os
 import stat as _stat
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING, reveal_type
+from typing import Dict, List, Optional, Set, Tuple
 
 from legit.blob import Blob
-from legit.index import Entry, Index
+from legit.index import Entry
 from legit.inspector import Inspector
-from legit.tree import DatabaseEntry
-from legit.tree_diff import TreeDiff
-
-
-if TYPE_CHECKING:
-    from legit.repository import Repository
+from legit.db_entry import DatabaseEntry
 
 
 class Migration:

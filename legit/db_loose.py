@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import zlib
 from legit.temp_file import TempFile
 

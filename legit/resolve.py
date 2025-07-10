@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, reveal_type
+from typing import Any 
 from legit.blob import Blob
 from legit.repository import Repository
 from legit.inputs import Inputs
-from legit.tree import DatabaseEntry
+from legit.db_entry import DatabaseEntry
 from legit.diff3 import Diff3
 
 

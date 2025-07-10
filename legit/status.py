@@ -1,20 +1,14 @@
+from __future__ import annotations
+
 from collections import defaultdict
 import os
-import stat
 from pathlib import Path
 from typing import (
     MutableMapping,
-    TYPE_CHECKING,
     Optional,
 )
 
-if TYPE_CHECKING:
-    from legit.repository import Repository
-else:
-    Repository = None
-
-from legit.tree import DatabaseEntry
-from legit.commit import Commit
+from legit.db_entry import DatabaseEntry
 from legit.tree import Tree
 from legit.blob import Blob
 from legit.index import Entry

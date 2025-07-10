@@ -1,12 +1,9 @@
-import textwrap
+from __future__ import annotations
+
 from legit.cmd_base import Base
 from legit.commit import Commit
 from legit.write_commit import WriteCommitMixin
-from legit.revision import Revision
-from legit.repository import Repository, PendingCommit, Sequencer
 from legit.inputs import CherryPick as CherryPickInput
-from legit.resolve import Resolve
-from legit.editor import Editor
 from legit.rev_list import RevList
 from legit.sequencing import SequencingMixin
 

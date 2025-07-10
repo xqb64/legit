@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import textwrap
 from legit.cmd_base import Base
 from legit.commit import Commit

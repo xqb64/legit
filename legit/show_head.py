@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 from legit.repository import Repository
 from legit.blob import Blob
 from legit.commit import Commit
-from legit.tree import DatabaseEntry, Tree
+from legit.tree import Tree
+from legit.db_entry import DatabaseEntry
 
 repo = Repository(Path.cwd() / ".git")
 

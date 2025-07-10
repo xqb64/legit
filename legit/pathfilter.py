@@ -1,7 +1,9 @@
-from legit.tree import DatabaseEntry
+from __future__ import annotations
+
+from legit.db_entry import DatabaseEntry
 from collections import defaultdict
 from pathlib import Path
-from typing import Generator, reveal_type
+from typing import Generator
 
 
 class Trie:

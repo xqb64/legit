@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 import hashlib
 from typing import MutableMapping, Optional, Type
-import zlib
-import os
 import random
 import string
-from functools import lru_cache
 from pathlib import Path
-from legit.tree import DatabaseEntry, Tree
+from legit.db_entry import DatabaseEntry
+from legit.tree import Tree
 from legit.commit import Commit
 from legit.blob import Blob
 from legit.tree_diff import TreeDiff
 from legit.pathfilter import PathFilter
-from legit.temp_file import TempFile
-from legit.db_loose import Loose, Raw
+from legit.db_loose import Raw
 from legit.db_backends import Backends
 
 

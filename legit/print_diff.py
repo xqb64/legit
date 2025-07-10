@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from legit.diff import diff_hunks, combined_hunks
 from legit.hunk import Hunk
@@ -27,7 +29,7 @@ class Target:
 
 
 class PrintDiffMixin:
-    def diff_fmt(self, name, text):
+    def diff_fmt(self, name: str, text: str) -> str:
         key = ["color", "diff", name]
         style_str = self.repo.config.get(key)
 

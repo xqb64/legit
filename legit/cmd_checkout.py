@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
 from typing import cast, Optional
+
 from legit.cmd_base import Base
 from legit.commit import Commit
 from legit.migration import Migration
-from legit.repository import Repository
 from legit.revision import Revision
-from legit.tree import DatabaseEntry
+from legit.db_entry import DatabaseEntry
 from legit.refs import Refs
 
 

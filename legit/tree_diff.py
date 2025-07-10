@@ -1,16 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional, cast, TYPE_CHECKING
+from typing import Optional, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
-
-if TYPE_CHECKING:
-    from legit.database import Database
-else:
-    Database = None
-
-from legit.index import Entry
-from legit.tree import DatabaseEntry, Tree
+from legit.tree import Tree
 
 
 class TreeDiff:

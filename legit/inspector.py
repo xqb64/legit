@@ -1,18 +1,12 @@
+from __future__ import annotations
+
 import os
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, reveal_type
+from typing import Optional
 
 from legit.index import Entry
-from legit.tree import DatabaseEntry
-
-
-if TYPE_CHECKING:
-    from legit.repository import Repository
-else:
-    Repository = None
-
-
+from legit.db_entry import DatabaseEntry
 from legit.blob import Blob
 
 

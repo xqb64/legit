@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 from pathlib import Path
 from legit.cmd_base import Base
 from typing import MutableMapping, TextIO
