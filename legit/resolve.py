@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, reveal_type
 from legit.blob import Blob
 from legit.repository import Repository
 from legit.inputs import Inputs
@@ -52,7 +53,12 @@ class Resolve:
             if new_item is not None:
                 self.file_dir_conflict(path, self.right_diff, self.inputs.right_name)
 
-    def file_dir_conflict(self, path, diff, name: str) -> None:
+    def file_dir_conflict(
+        self,
+        path: Path,
+        diff: dict[Path, list[DatabaseEntry | None]],
+        name: str
+    ) -> None:
         for parent in path.parents:
             old_item, new_item = diff.get(parent, (None, None))
             if not new_item:
@@ -75,7 +81,10 @@ class Resolve:
             self.log_conflict(parent, rename)
 
     def same_path_conflict(
-        self, path: Path, base: DatabaseEntry, right: DatabaseEntry
+        self,
+        path: Path,
+        base: DatabaseEntry | None,
+        right: DatabaseEntry | None,
     ) -> None:
         if path in self.conflicts:
             return
@@ -148,7 +157,7 @@ class Resolve:
         a, b = self.inputs.left_name, self.inputs.right_name
         return (b, a) if self.conflicts[path][1] else (a, b)
 
-    def merge_blobs(self, base_oid, left_oid, right_oid):
+    def merge_blobs(self, base_oid: str, left_oid: str, right_oid: str) -> list[Any]:
         result = self.merge3(base_oid, left_oid, right_oid)
         if result is not None:
             return result

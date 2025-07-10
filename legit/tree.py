@@ -3,7 +3,7 @@ from typing import Any, Callable, MutableMapping
 from pathlib import Path
 
 
-def git_sort_key(item):
+def git_sort_key(item: tuple[str, "DatabaseEntry | Entry | Tree"]) -> str:
     name, entry = item
     if isinstance(entry, Tree):
         return name + "/"

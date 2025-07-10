@@ -1,22 +1,22 @@
-MAX_COPY_SIZE = 0xFFFFFF
-MAX_INSERT_SIZE = 0x7F
+MAX_COPY_SIZE: int = 0xFFFFFF
+MAX_INSERT_SIZE: int = 0x7F
 
-HEADER_SIZE = 12
-HEADER_FORMAT = ">4sII"
-SIGNATURE = b"PACK"
-VERSION = 2
+HEADER_SIZE: int = 12
+HEADER_FORMAT: str = ">4sII"
+SIGNATURE: bytes = b"PACK"
+VERSION: int = 2
 
-IDX_SIGNATURE = 0xFF744F63
-IDX_MAX_OFFSET = 0x80000000
+IDX_SIGNATURE: int = 0xFF744F63
+IDX_MAX_OFFSET: int = 0x80000000
 
-COMMIT = 1
-TREE = 2
-BLOB = 3
+COMMIT: int = 1
+TREE: int = 2
+BLOB: int = 3
 
-OFS_DELTA = 6
-REF_DELTA = 7
+OFS_DELTA: int = 6
+REF_DELTA: int = 7
 
-TYPE_CODES = {
+TYPE_CODES: dict[str, int] = {
     "commit": COMMIT,
     "tree": TREE,
     "blob": BLOB,
@@ -28,28 +28,28 @@ class InvalidPack(Exception):
 
 
 class Record:
-    def __init__(self, ty, data):
-        self.ty = ty
-        self.data = data
-        self.oid = None
+    def __init__(self, ty: str, data: bytes) -> None:
+        self.ty: str = ty
+        self.data: bytes = data
+        self.oid: str | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.data.decode("utf-8", errors="replace")
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         return self.data
 
-    def type(self):
+    def type(self) -> str:
         return self.ty
 
 
 class RefDelta:
-    def __init__(self, base_oid, delta_data):
-        self.base_oid = base_oid
-        self.delta_data = delta_data
+    def __init__(self, base_oid: str, delta_data: bytes) -> None:
+        self.base_oid: str = base_oid
+        self.delta_data: bytes = delta_data
 
 
 class OfsDelta:
-    def __init__(self, base_ofs, delta_data):
-        self.base_ofs = base_ofs
-        self.delta_data = delta_data
+    def __init__(self, base_ofs: str, delta_data: bytes) -> None:
+        self.base_ofs: str = base_ofs
+        self.delta_data: bytes = delta_data

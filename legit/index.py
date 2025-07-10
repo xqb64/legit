@@ -5,10 +5,7 @@ import hashlib
 from legit.lockfile import Lockfile
 from pathlib import Path
 from collections import defaultdict
-from typing import BinaryIO
-
-from typing import BinaryIO, Protocol, runtime_checkable
-
+from typing import BinaryIO, Protocol, TYPE_CHECKING, runtime_checkable
 
 @runtime_checkable
 class Hash(Protocol):
@@ -37,7 +34,7 @@ class Index:
         self.changed: bool = False
         self.parents: dict[Path, set[Path]] = defaultdict(set)
 
-    def conflict_paths(self):
+    def conflict_paths(self) -> set['Entry']:
         paths = set()
         for entry in self.entries.values():
             if entry.stage != 0:
