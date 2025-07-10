@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import os
-from typing import Optional
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 
-from legit.command import Command
 from legit.cmd_base import Base
-
+from legit.command import Command
 
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
@@ -184,7 +185,7 @@ def log(
     decoration: str,
     patch: bool,
     revisions_and_paths: tuple[str, ...],
-):
+) -> None:
     if oneline:
         format_ = "oneline"
         if abbrev is None:
@@ -293,8 +294,15 @@ def rm(recursive: bool, cached: bool, force: bool, paths: tuple[str, ...]) -> No
 @click.option("--remove-section", is_flag=True, help="Remove the entire section.")
 @click.argument("args", nargs=-1, type=click.UNPROCESSED)
 def config(
-    file_scope, add, replace_all, get_all, unset, unset_all, remove_section, args
-):
+    file_scope: str,
+    add: bool,
+    replace_all: bool,
+    get_all: bool,
+    unset: bool,
+    unset_all: bool,
+    remove_section: bool,
+    args: list[str],
+) -> None:
     cmd_args = []
 
     if file_scope:
@@ -393,7 +401,7 @@ def push(force: bool, receive_pack: str | None, refs: tuple[str, ...]) -> None:
     run_cmd("push", *cmd_args)
 
 
-def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: tuple[str, ...]):
+def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: list[str]) -> None:
     run_cmd(cmd_name, str(repo), *extra)
 
 

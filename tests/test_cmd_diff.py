@@ -1,14 +1,23 @@
+from pathlib import Path
+
 import pytest
 
 from tests.cmd_helpers import assert_stdout
+from tests.conftest import (
+    Commit,
+    Delete,
+    LegitCmd,
+    MakeExecutable,
+    WriteFile,
+)
 
 
-def assert_diff(legit_cmd, output):
+def assert_diff(legit_cmd: LegitCmd, output: str) -> None:
     *_, stdout, _ = legit_cmd("diff")
     assert_stdout(stdout, output)
 
 
-def assert_diff_cached(legit_cmd, output):
+def assert_diff_cached(legit_cmd: LegitCmd, output: str) -> None:
     *_, stdout, _ = legit_cmd("diff", "--cached")
     assert_stdout(stdout, output)
 
@@ -16,11 +25,13 @@ def assert_diff_cached(legit_cmd, output):
 @pytest.mark.usefixtures("setup_and_teardown")
 class TestWithFileInIndex:
     @pytest.fixture(autouse=True)
-    def setup(self, write_file, legit_cmd):
+    def setup(self, write_file: WriteFile, legit_cmd: LegitCmd) -> None:
         write_file("file.txt", "contents\n")
         _ = legit_cmd("add", ".")
 
-    def test_it_diffs_a_file_with_modified_contents(self, legit_cmd, write_file):
+    def test_it_diffs_a_file_with_modified_contents(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("file.txt", "changed\n")
 
         expected_diff = (
@@ -34,7 +45,9 @@ class TestWithFileInIndex:
         )
         assert_diff(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode(self, legit_cmd, make_executable):
+    def test_it_diffs_a_file_with_changed_mode(
+        self, legit_cmd: LegitCmd, make_executable: MakeExecutable
+    ) -> None:
         make_executable("file.txt")
 
         expected_diff = (
@@ -43,8 +56,11 @@ class TestWithFileInIndex:
         assert_diff(legit_cmd, expected_diff)
 
     def test_it_diffs_a_file_with_changed_mode_and_contents(
-        self, legit_cmd, make_executable, write_file
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        make_executable: MakeExecutable,
+        write_file: WriteFile,
+    ) -> None:
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
 
@@ -61,7 +77,7 @@ class TestWithFileInIndex:
         )
         assert_diff(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_deleted_file(self, legit_cmd, delete):
+    def test_it_diffs_a_deleted_file(self, legit_cmd: LegitCmd, delete: Delete) -> None:
         delete("file.txt")
 
         expected_diff = (
@@ -79,12 +95,14 @@ class TestWithFileInIndex:
 @pytest.mark.usefixtures("setup_and_teardown")
 class TestWithHeadCommit:
     @pytest.fixture(autouse=True)
-    def setup(self, write_file, legit_cmd, commit):
+    def setup(self, write_file: WriteFile, legit_cmd: LegitCmd, commit: Commit) -> None:
         write_file("file.txt", "contents\n")
         legit_cmd("add", ".")
         commit("first commit")
 
-    def test_it_diffs_a_file_with_modified_contents(self, legit_cmd, write_file):
+    def test_it_diffs_a_file_with_modified_contents(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("file.txt", "changed\n")
         legit_cmd("add", ".")
 
@@ -99,7 +117,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode(self, legit_cmd, make_executable):
+    def test_it_diffs_a_file_with_changed_mode(
+        self, legit_cmd: LegitCmd, make_executable: MakeExecutable
+    ) -> None:
         make_executable("file.txt")
         legit_cmd("add", ".")
 
@@ -109,8 +129,11 @@ class TestWithHeadCommit:
         assert_diff_cached(legit_cmd, expected_diff)
 
     def test_it_diffs_a_file_with_changed_mode_and_contents(
-        self, legit_cmd, make_executable, write_file
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        make_executable: MakeExecutable,
+        write_file: WriteFile,
+    ) -> None:
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
         legit_cmd("add", ".")
@@ -128,7 +151,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_deleted_file(self, legit_cmd, delete, repo_path):
+    def test_it_diffs_a_deleted_file(
+        self, legit_cmd: LegitCmd, delete: Delete, repo_path: Path
+    ) -> None:
         delete("file.txt")
         delete(".git/index")
         legit_cmd("add", ".")
@@ -144,7 +169,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_an_added_file(self, legit_cmd, write_file):
+    def test_it_diffs_an_added_file(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("another.txt", "hello\n")
         legit_cmd("add", ".")
 

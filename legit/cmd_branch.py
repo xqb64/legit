@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import enum
+from typing import Union, cast
 
 from legit.cmd_base import Base
+from legit.commit import Commit
+from legit.fast_forward import FastForwardMixin
 from legit.refs import Refs
 from legit.remotes import Remotes
-from legit.repository import Repository
 from legit.revision import Revision
-from legit.fast_forward import FastForwardMixin
 
 
 class Upstream(enum.Enum):
@@ -13,8 +16,8 @@ class Upstream(enum.Enum):
 
 
 class Branch(FastForwardMixin, Base):
-    def define_options(self):
-        self.options = {
+    def define_options(self) -> None:
+        self.options: dict[str, int | bool | Union[str, Upstream]] = {
             "verbose": 0,
             "delete": False,
             "force": False,
@@ -27,8 +30,10 @@ class Branch(FastForwardMixin, Base):
         positional = []
         for arg in args_iter:
             if arg in ("-v", "--verbose"):
+                assert isinstance(self.options["verbose"], int)
                 self.options["verbose"] += 1
             elif arg == "-vv":
+                assert isinstance(self.options["verbose"], int)
                 self.options["verbose"] += 2
             elif arg == "-D":
                 self.options["delete"] = True
@@ -96,7 +101,7 @@ class Branch(FastForwardMixin, Base):
         if self.options["upstream"] == Upstream.UNSET:
             self.repo.remotes.unset_upstream(branch_name)
         else:
-            self.set_upstream(branch_name, self.options["upstream"])
+            self.set_upstream(branch_name, cast(str, self.options["upstream"]))
 
     def list_branches(self) -> None:
         current = self.repo.refs.current_ref()
@@ -110,7 +115,7 @@ class Branch(FastForwardMixin, Base):
             info += self.extended_branch_info(ref, max_width)
             self.println(info)
 
-    def branch_refs(self):
+    def branch_refs(self) -> list[Refs.SymRef]:
         branches = self.repo.refs.list_branches()
         remotes = self.repo.refs.list_remotes()
 
@@ -122,34 +127,37 @@ class Branch(FastForwardMixin, Base):
 
         return branches
 
-    def format_ref(self, ref, current) -> str:
+    def format_ref(self, ref: Refs.SymRef, current: Refs.SymRef) -> str:
         if ref == current:
             return f"* {self.fmt('green', ref.short_name())}"
         elif ref.is_remote():
             return f"  {self.fmt('red', ref.short_name())}"
         return f"  {ref.short_name()}"
 
-    def extended_branch_info(self, ref, max_width) -> str:
-        if not self.options["verbose"] > 0:
+    def extended_branch_info(self, ref: Refs.SymRef, max_width: int) -> str:
+        if not cast(int, self.options["verbose"]) > 0:
             return ""
 
-        commit = self.repo.database.load(ref.read_oid())
+        oid = ref.read_oid()
+        assert oid is not None
+
+        commit = cast(Commit, self.repo.database.load(oid))
         short = self.repo.database.short_oid(commit.oid)
         space = " " * (max_width - len(ref.short_name()))
         upstream = self.upstream_info(ref) or ""
         return f"{space} {short}{upstream} {commit.title_line()}"
 
-    def upstream_info(self, ref):
+    def upstream_info(self, ref: Refs.SymRef) -> str | None:
         divergence = self.repo.divergence(ref)
         if divergence.upstream is None:
-            return
+            return None
 
         ahead = divergence.ahead
         behind = divergence.behind
 
         info = []
 
-        if self.options["verbose"] > 1:
+        if cast(int, self.options["verbose"]) > 1:
             info.append(
                 self.fmt("blue", self.repo.refs.short_name(divergence.upstream))
             )
@@ -180,6 +188,7 @@ class Branch(FastForwardMixin, Base):
             try:
                 start_oid = revision.resolve(Revision.COMMIT)
             except Revision.InvalidObject as e:
+                start_oid = None
                 for err in revision.errors:
                     self.stderr.write(f"error: {err.msg}\n")
                     for line in err.hint:
@@ -189,10 +198,13 @@ class Branch(FastForwardMixin, Base):
         else:
             start_oid = self.repo.refs.read_head()
 
+        assert branch_name is not None
+        assert start_oid is not None
+
         try:
             self.repo.refs.create_branch(branch_name, start_oid)
             if self.options["track"]:
-                self.set_upstream(branch_name, start_point)
+                self.set_upstream(branch_name, cast(str, start_point))
         except Refs.InvalidBranch as e:
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)

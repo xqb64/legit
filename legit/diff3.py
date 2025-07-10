@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Union
+from typing import Any, List, Optional, Union, cast
+
 from legit.diff import diff
+from legit.myers import Line
 
 
 @dataclass
 class Clean:
     lines: List[str]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "".join(self.lines)
 
-    def to_string(self, *args):
+    def to_string(self, *args: Optional[str]) -> str:
         return "".join(self.lines)
 
 
@@ -20,7 +24,9 @@ class Conflict:
     a_lines: List[str]
     b_lines: List[str]
 
-    def _separator(self, text: List[str], char: str, name: Optional[str] = None):
+    def _separator(
+        self, text: List[str], char: str, name: Optional[str] = None
+    ) -> None:
         text.append(char * 7)
         if name:
             text.append(f" {name}")
@@ -29,7 +35,7 @@ class Conflict:
     def to_string(
         self, a_name: Optional[str] = None, b_name: Optional[str] = None
     ) -> str:
-        text = []
+        text: list[str] = []
         self._separator(text, "<", a_name)
         text.extend(self.a_lines)
         self._separator(text, "=")
@@ -52,16 +58,16 @@ class Result:
 
 
 class Diff3:
-    def __init__(self, o: List[str], a: List[str], b: List[str]):
-        self.o = o
-        self.a = a
-        self.b = b
+    def __init__(self, o: List[str], a: List[str], b: List[str]) -> None:
+        self.o: list[str] = o
+        self.a: list[str] = a
+        self.b: list[str] = b
         self.chunks: List[Union[Clean, Conflict]] = []
-        self.line_o = 0
-        self.line_a = 0
-        self.line_b = 0
-        self.match_a = {}
-        self.match_b = {}
+        self.line_o: int = 0
+        self.line_a: int = 0
+        self.line_b: int = 0
+        self.match_a: dict[int, int] = {}
+        self.match_b: dict[int, int] = {}
 
     @staticmethod
     def merge(
@@ -78,21 +84,21 @@ class Diff3:
         self._generate_chunks()
         return Result(self.chunks)
 
-    def _setup(self):
+    def _setup(self) -> None:
         self.chunks = []
         self.line_o = self.line_a = self.line_b = 0
 
         self.match_a = self._match_set(self.a)
         self.match_b = self._match_set(self.b)
 
-    def _match_set(self, file_lines: List[str]) -> dict:
+    def _match_set(self, file_lines: List[str]) -> dict[int, int]:
         matches = {}
         for edit in diff(self.o, file_lines):
             if edit.ty == "eql":
-                matches[edit.a_line.number] = edit.b_line.number
+                matches[cast(Line, edit.a_line).number] = cast(Line, edit.b_line).number
         return matches
 
-    def _generate_chunks(self):
+    def _generate_chunks(self) -> None:
         while True:
             i = self._find_next_mismatch()
 
@@ -127,16 +133,16 @@ class Diff3:
             or self.line_b + i <= len(self.b)
         )
 
-    def _is_match(self, matches: dict, offset: int, i: int) -> bool:
+    def _is_match(self, matches: dict[int, int], offset: int, i: int) -> bool:
         return matches.get(self.line_o + i) == offset + i
 
-    def _find_next_match(self) -> tuple:
+    def _find_next_match(self) -> tuple[int, Optional[int], Optional[int]]:
         o = self.line_o + 1
         while o <= len(self.o) and not (o in self.match_a and o in self.match_b):
             o += 1
         return o, self.match_a.get(o), self.match_b.get(o)
 
-    def _emit_chunk(self, o: int, a: int, b: int):
+    def _emit_chunk(self, o: int, a: int, b: int) -> None:
         self._write_chunk(
             self.o[self.line_o : o - 1],
             self.a[self.line_a : a - 1],
@@ -144,12 +150,14 @@ class Diff3:
         )
         self.line_o, self.line_a, self.line_b = o - 1, a - 1, b - 1
 
-    def _emit_final_chunk(self):
+    def _emit_final_chunk(self) -> None:
         self._write_chunk(
             self.o[self.line_o :], self.a[self.line_a :], self.b[self.line_b :]
         )
 
-    def _write_chunk(self, o_lines: List[str], a_lines: List[str], b_lines: List[str]):
+    def _write_chunk(
+        self, o_lines: List[str], a_lines: List[str], b_lines: List[str]
+    ) -> None:
         if a_lines == o_lines or a_lines == b_lines:
             self.chunks.append(Clean(b_lines))
         elif b_lines == o_lines:

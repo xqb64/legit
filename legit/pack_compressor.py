@@ -1,26 +1,37 @@
-from typing import Any, Optional, List
-from legit.pack_window import Window
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional, cast
+
+from legit.db_loose import Raw
 from legit.pack_delta import Delta
+from legit.pack_entry import Entry
+from legit.pack_window import Window
+
+if TYPE_CHECKING:
+    from legit.database import Database
+    from legit.progress import Progress
 
 
 class Compressor:
-    OBJECT_SIZE_MIN = 50
-    OBJECT_SIZE_MAX = 0x20000000
-    MAX_DEPTH = 50
-    WINDOW_SIZE = 8
+    OBJECT_SIZE_MIN: int = 50
+    OBJECT_SIZE_MAX: int = 0x20000000
+    MAX_DEPTH: int = 50
+    WINDOW_SIZE: int = 8
 
-    def __init__(self, database: Any, progress: Optional[Any]):
+    def __init__(self, database: Database, progress: Optional[Progress]):
         self._database = database
         self._window = Window(self.WINDOW_SIZE)
         self._progress = progress
-        self._objects: List[Any] = []
+        self._objects: List[Entry] = []
 
-    def max_size_heuristic(self, source, target):
+    def max_size_heuristic(
+        self, source: Window.Unpacked, target: Window.Unpacked
+    ) -> float:
         if target.delta:
             max_size = target.delta.size
             ref_depth = target.depth
         else:
-            max_size = target.size / 2 - 20
+            max_size = target.size // 2 - 20
             ref_depth = 1
 
         return (
@@ -29,7 +40,7 @@ class Compressor:
             / (Compressor.MAX_DEPTH + 1 - ref_depth)
         )
 
-    def add(self, entry: Any) -> None:
+    def add(self, entry: Entry) -> None:
         if not (self.OBJECT_SIZE_MIN <= entry.size <= self.OBJECT_SIZE_MAX):
             return
         self._objects.append(entry)
@@ -48,14 +59,14 @@ class Compressor:
         if self._progress:
             self._progress.stop()
 
-    def _build_delta(self, entry: Any) -> None:
+    def _build_delta(self, entry: Entry) -> None:
         obj = self._database.load_raw(entry.oid)
-        target = self._window.add(entry, obj.data)
+        target = self._window.add(entry, cast(bytes, cast(Raw, obj).data))
 
         for source in self._window:
             self._try_delta(source, target)
 
-    def _try_delta(self, source: Any, target: Any) -> None:
+    def _try_delta(self, source: Window.Unpacked, target: Window.Unpacked) -> None:
         if source.type != target.type:
             return
         if source.depth >= self.MAX_DEPTH:
@@ -75,7 +86,9 @@ class Compressor:
 
         target.entry.assign_delta(delta)
 
-    def compatible_sizes(self, source, target, max_size):
+    def compatible_sizes(
+        self, source: Window.Unpacked, target: Window.Unpacked, max_size: float
+    ) -> bool:
         size_diff = max([target.size - source.size, 0])
         if max_size == 0:
             return False

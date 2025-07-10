@@ -1,14 +1,25 @@
+from __future__ import annotations
+
 import re
 import subprocess
+from typing import TYPE_CHECKING, Optional, Pattern, TextIO, cast, reveal_type
+from urllib.parse import ParseResult
+
 from legit.protocol import Remotes
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class RemoteClientMixin:
-    REF_LINE = re.compile(r"^([0-9a-f]+) (.*)$".encode())
-    ZERO_OID = b"0" * 40
+    repo: Repository
+    stderr: TextIO
 
-    def recv_references(self):
-        self.remote_refs = {}
+    REF_LINE: Pattern[bytes] = re.compile(r"^([0-9a-f]+) (.*)$".encode())
+    ZERO_OID: bytes = b"0" * 40
+
+    def recv_references(self) -> None:
+        self.remote_refs: dict[str, str] = {}
 
         for line in self.conn.recv_until(None):
             m = self.REF_LINE.match(line)
@@ -26,9 +37,18 @@ class RemoteClientMixin:
             if oid != RemoteClientMixin.ZERO_OID.decode():
                 self.remote_refs[ref] = oid.lower()
 
-    def start_agent(self, name, program, url, capabilities=None):
+    def start_agent(
+        self,
+        name: str,
+        program: str | list[str],
+        url: str,
+        capabilities: list[str] | None = None,
+    ) -> None:
         capabilities = capabilities or []
-        argv = self.build_agent_command(program, url)
+
+        argv = cast(list[str], self.build_agent_command(program, url))
+        assert argv is not None
+
         proc = subprocess.Popen(
             argv,
             stdin=subprocess.PIPE,
@@ -40,9 +60,14 @@ class RemoteClientMixin:
         child_stdin = proc.stdin
         child_stdout = proc.stdout
 
+        assert child_stdin is not None
+        assert child_stdout is not None
+
         self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
-    def build_agent_command(self, program, url):
+    def build_agent_command(
+        self, program: list[str] | str, url: str
+    ) -> Optional[list[str]]:
         import shlex
         from urllib.parse import urlparse
 
@@ -54,23 +79,33 @@ class RemoteClientMixin:
             argv = shlex.split(program)
 
         uri = urlparse(url)
+
         argv += [uri.path]
         if uri.scheme == "file":
             return argv
         elif uri.scheme == "ssh":
             return self.ssh_command(uri, argv)
 
-    def ssh_command(self, uri, argv):
-        ssh = ["ssh", uri.hostname]
-        if uri.username:
+        return None
+
+    def ssh_command(self, uri: ParseResult, argv: list[str]) -> list[str]:
+        ssh = ["ssh"]
+        if uri.hostname is not None:
+            ssh += [uri.hostname]
+        if uri.username is not None:
             ssh += ["-l", uri.username]
-        if uri.port:
+        if uri.port is not None:
             ssh += ["-p", str(uri.port)]
         return ssh + argv
 
     def report_ref_update(
-        self, ref_names, error, old_oid=None, new_oid=None, is_ff=False
-    ):
+        self,
+        ref_names: tuple[Optional[str], Optional[str]],
+        error: str,
+        old_oid: str | None = None,
+        new_oid: str | None = None,
+        is_ff: bool = False,
+    ) -> None:
         if error:
             return self.show_ref_update("!", "[rejected]", ref_names, error)
 
@@ -84,9 +119,15 @@ class RemoteClientMixin:
         else:
             self.report_range_update(ref_names, old_oid, new_oid, is_ff)
 
-    def report_range_update(self, ref_names, old_oid, new_oid, is_ff):
-        old_oid = self.repo.database.short_oid(old_oid)
-        new_oid = self.repo.database.short_oid(new_oid)
+    def report_range_update(
+        self,
+        ref_names: tuple[Optional[str], Optional[str]],
+        old_oid: str | None,
+        new_oid: str | None,
+        is_ff: bool,
+    ) -> None:
+        old_oid = self.repo.database.short_oid(cast(str, old_oid))
+        new_oid = self.repo.database.short_oid(cast(str, new_oid))
 
         if is_ff:
             revisions = f"{old_oid}..{new_oid}"
@@ -95,7 +136,13 @@ class RemoteClientMixin:
             revisions = f"{old_oid}...{new_oid}"
             self.show_ref_update("+", revisions, ref_names, "forced update")
 
-    def show_ref_update(self, flag, summary, ref_names, reason=None):
+    def show_ref_update(
+        self,
+        flag: str,
+        summary: str,
+        ref_names: tuple[Optional[str], Optional[str]],
+        reason: str | None = None,
+    ) -> None:
         names = [
             self.repo.refs.short_name(
                 name.decode() if isinstance(name, bytes) else name

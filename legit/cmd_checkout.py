@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
-from typing import cast, Optional
+from typing import Optional, cast
+
 from legit.cmd_base import Base
 from legit.commit import Commit
+from legit.db_entry import DatabaseEntry
 from legit.migration import Migration
-from legit.repository import Repository
-from legit.revision import Revision
-from legit.tree import DatabaseEntry
 from legit.refs import Refs
-
+from legit.revision import Revision
 
 DETACHED_HEAD_MESSAGE = textwrap.dedent("""\
     You are in 'detached HEAD' state. You can look around, make experimental
@@ -40,10 +41,10 @@ class Checkout(Base):
 
         self.repo.index.load_for_update()
 
-        tree_diff = self.repo.database.tree_diff(self.current_oid, self.target_oid)
-        migration = self.repo.migration(
-            cast(dict[Path, list[DatabaseEntry]], tree_diff)
+        tree_diff = self.repo.database.tree_diff(
+            cast(str, self.current_oid), cast(str, self.target_oid)
         )
+        migration = self.repo.migration(tree_diff)
 
         try:
             migration.apply_changes()
@@ -51,7 +52,7 @@ class Checkout(Base):
             self.handle_migration_conflict(migration)
 
         self.repo.index.write_updates()
-        self.repo.refs.set_head(self.target, self.target_oid)
+        self.repo.refs.set_head(self.target, cast(str, self.target_oid))
 
         self.new_ref = self.repo.refs.current_ref()
 
@@ -82,7 +83,9 @@ class Checkout(Base):
 
     def print_previous_head(self) -> None:
         if self.current_ref.is_head() and self.current_oid != self.target_oid:
-            self.print_head_position("Previous HEAD position was", self.current_oid)
+            self.print_head_position(
+                "Previous HEAD position was", cast(str, self.current_oid)
+            )
 
     def print_head_position(self, msg: str, oid: str) -> None:
         commit = self.repo.database.load(oid)

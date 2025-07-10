@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import textwrap
-from typing import Optional
-from legit.repository import Repository
+from typing import Optional, cast
+
 from legit.cmd_base import Base
-from legit.write_commit import WriteCommitMixin
+from legit.commit import Commit as CommitObject
 from legit.editor import Editor
 from legit.revision import Revision
-from legit.commit import Commit as CommitObject
-
+from legit.write_commit import WriteCommitMixin
 
 COMMIT_NOTES = textwrap.dedent(
     """\
@@ -57,23 +58,28 @@ class Commit(WriteCommitMixin, Base):
             self.resume_merge(merge_type)
 
         parent = self.repo.refs.read_head()
-        message: str = self.compose_message(
+        message: str | None = self.compose_message(
             self.read_message() or self.reused_message()
         )
-        commit = self.write_commit([parent] if parent else [], message)
+        commit = self.write_commit([parent] if parent else [], cast(str, message))
 
         self.print_commit(commit)
 
         self.exit(0)
 
     def handle_amend(self) -> None:
-        oid = self.repo.database.load(self.repo.refs.read_head())
+        head = self.repo.refs.read_head()
+        assert head is not None
+
+        commit = cast(CommitObject, self.repo.database.load(head))
         tree = self.write_tree()
 
-        message = self.compose_message(oid.message)
+        message = self.compose_message(commit.message)
+        assert message is not None
+
         committer = self.current_author()
 
-        new = CommitObject(oid.parents, tree.oid, oid.author, committer, message)
+        new = CommitObject(commit.parents, tree.oid, commit.author, committer, message)
 
         self.repo.database.store(new)
         self.repo.refs.update_head(new.oid)
@@ -87,12 +93,12 @@ class Commit(WriteCommitMixin, Base):
             return None
 
         revision = Revision(self.repo, self.reuse)
-        commit = self.repo.database.load(revision.resolve())
+        commit = cast(CommitObject, self.repo.database.load(revision.resolve()))
 
         return commit.message
 
     def compose_message(self, message: Optional[str]) -> Optional[str]:
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(message or "")
             editor.println("")
             editor.note(COMMIT_NOTES)

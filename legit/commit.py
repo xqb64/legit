@@ -1,22 +1,25 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional, cast
+from typing import cast
+
 from legit.author import Author
 
 
 class Commit:
     def __init__(
         self,
-        parents: list[Optional[str]],
+        parents: list[str],
         tree: str,
-        author: Author,
-        committer: Author,
+        author: Author | None,
+        committer: Author | None,
         message: str,
     ) -> None:
-        self.parents: list[Optional[str]] = parents
+        self.parents: list[str] = parents
         self.tree: str = tree
-        self.author: Author = author
-        self.committer = committer
+        self.author: Author | None = author
+        self.committer: Author | None = committer
         self.message: str = message
         self._oid: str | None = None
 
@@ -24,14 +27,14 @@ class Commit:
         return len(self.parents) > 1
 
     @property
-    def parent(self):
+    def parent(self) -> str | None:
         try:
             return self.parents[0]
         except IndexError:
             return None
 
     @parent.setter
-    def parent(self, value):
+    def parent(self, value: str) -> None:
         if not self.parents:
             self.parents.append(value)
         else:
@@ -65,6 +68,8 @@ class Commit:
             raise ValueError("commit object missing 'author' header")
 
         committer_values = headers.get("committer", author_values)
+        if not committer_values:
+            raise ValueError("commit object missing 'committer' header")
 
         return cls(
             parents=headers.get("parent", []),
@@ -90,7 +95,7 @@ class Commit:
         return "commit"
 
     def date(self) -> datetime:
-        return self.committer.time
+        return cast(Author, self.committer).time
 
     def to_bytes(self) -> bytes:
         lines = [

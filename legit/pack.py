@@ -1,22 +1,26 @@
-MAX_COPY_SIZE = 0xFFFFFF
-MAX_INSERT_SIZE = 0x7F
+from __future__ import annotations
 
-HEADER_SIZE = 12
-HEADER_FORMAT = ">4sII"
-SIGNATURE = b"PACK"
-VERSION = 2
+from typing import reveal_type
 
-IDX_SIGNATURE = 0xFF744F63
-IDX_MAX_OFFSET = 0x80000000
+MAX_COPY_SIZE: int = 0xFFFFFF
+MAX_INSERT_SIZE: int = 0x7F
 
-COMMIT = 1
-TREE = 2
-BLOB = 3
+HEADER_SIZE: int = 12
+HEADER_FORMAT: str = ">4sII"
+SIGNATURE: bytes = b"PACK"
+VERSION: int = 2
 
-OFS_DELTA = 6
-REF_DELTA = 7
+IDX_SIGNATURE: int = 0xFF744F63
+IDX_MAX_OFFSET: int = 0x80000000
 
-TYPE_CODES = {
+COMMIT: int = 1
+TREE: int = 2
+BLOB: int = 3
+
+OFS_DELTA: int = 6
+REF_DELTA: int = 7
+
+TYPE_CODES: dict[str, int] = {
     "commit": COMMIT,
     "tree": TREE,
     "blob": BLOB,
@@ -28,28 +32,30 @@ class InvalidPack(Exception):
 
 
 class Record:
-    def __init__(self, ty, data):
-        self.ty = ty
-        self.data = data
-        self.oid = None
+    def __init__(self, ty: str, data: bytes | int) -> None:
+        self.ty: str = ty
+        self.data: bytes | int = data
+        self.oid: str | None = None
 
-    def __str__(self):
-        return self.data.decode("utf-8", errors="replace")
+    def __str__(self) -> str:
+        if isinstance(self.data, bytes):
+            return self.data.decode("utf-8", errors="replace")
+        return str(self.data)
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes | int:
         return self.data
 
-    def type(self):
+    def type(self) -> str:
         return self.ty
 
 
 class RefDelta:
-    def __init__(self, base_oid, delta_data):
-        self.base_oid = base_oid
-        self.delta_data = delta_data
+    def __init__(self, base_oid: str, delta_data: bytes | int) -> None:
+        self.base_oid: str = base_oid
+        self.delta_data: bytes | int = delta_data
 
 
 class OfsDelta:
-    def __init__(self, base_ofs, delta_data):
-        self.base_ofs = base_ofs
-        self.delta_data = delta_data
+    def __init__(self, base_ofs: int, delta_data: bytes | int) -> None:
+        self.base_ofs: int = base_ofs
+        self.delta_data: bytes | int = delta_data

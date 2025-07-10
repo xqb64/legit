@@ -1,9 +1,11 @@
-from pathlib import Path
-from legit.cmd_base import Base
-from typing import MutableMapping, TextIO
-from legit.refs import Refs
-from legit.config import ConfigFile
+from __future__ import annotations
 
+from pathlib import Path
+from typing import MutableMapping, TextIO
+
+from legit.cmd_base import Base
+from legit.config import ConfigFile
+from legit.refs import Refs
 
 DEFAULT_BRANCH = "master"
 

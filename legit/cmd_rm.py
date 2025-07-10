@@ -1,12 +1,13 @@
-import stat
+from __future__ import annotations
+
 import itertools
+import stat
 from pathlib import Path
+from typing import cast
 
-from legit import inspector
 from legit.cmd_base import Base
-from legit.repository import Repository
+from legit.db_entry import DatabaseEntry
 from legit.inspector import Inspector
-
 
 BOTH_CHANGED = "staged content different from both the file and the HEAD"
 INDEX_CHANGED = "changes staged in the index"
@@ -20,22 +21,24 @@ class Rm(Base):
 
         self.head_oid = self.repo.refs.read_head()
         self.inspector = Inspector(self.repo)
-        self.uncommitted = []
-        self.unstaged = []
-        self.both_changed = []
+        self.uncommitted: list[Path] = []
+        self.unstaged: list[Path] = []
+        self.both_changed: list[Path] = []
 
         try:
-            expanded = itertools.chain.from_iterable(
-                self.expand_path(Path(p)) for p in self.args
+            expanded = list(
+                itertools.chain.from_iterable(
+                    self.expand_path(Path(p)) for p in self.args
+                )
             )
-            self.args = [p for p in expanded]
         except ValueError as e:
+            expanded = []
             self.repo.index.release_lock()
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
 
         try:
-            for path in self.args:
+            for path in expanded:
                 self.plan_removal(path)
         except ValueError as e:
             self.repo.index.release_lock()
@@ -44,7 +47,7 @@ class Rm(Base):
 
         self.exit_on_errors()
 
-        for path in self.args:
+        for path in expanded:
             self.remove_file(path)
 
         self.repo.index.write_updates()
@@ -60,7 +63,7 @@ class Rm(Base):
             arg for arg in self.args if arg not in ("--cached", "-f", "--force", "-r")
         ]
 
-    def expand_path(self, path):
+    def expand_path(self, path: Path) -> list[Path]:
         if self.repo.index.is_tracked_directory(path):
             if self.recursive:
                 return self.repo.index.child_paths(path)
@@ -72,24 +75,26 @@ class Rm(Base):
 
         raise ValueError(f"pathspec '{path}' did not match any files")
 
-    def remove_file(self, path: str) -> None:
-        self.repo.index.remove(Path(path))
+    def remove_file(self, path: Path) -> None:
+        self.repo.index.remove(path)
         if not self.cached:
-            self.repo.workspace.remove(Path(path))
+            self.repo.workspace.remove(path)
         self.println(f"rm '{path}'")
 
-    def plan_removal(self, path: str) -> None:
+    def plan_removal(self, path: Path) -> None:
         if self.force:
             return
 
-        stat_result = self.repo.workspace.stat_file(Path(path))
+        stat_result = self.repo.workspace.stat_file(path)
         if stat_result is not None and stat.S_ISDIR(stat_result.st_mode):
             raise ValueError(f"legit rm: '{path}': Operation not permitted")
 
-        item = self.repo.database.load_tree_entry(self.head_oid, Path(path))
-        entry = self.repo.index.entry_for_path(Path(path))
+        item = self.repo.database.load_tree_entry(cast(str, self.head_oid), path)
+        entry = self.repo.index.entry_for_path(path)
 
-        staged_change = self.inspector.compare_tree_to_index(item, entry)
+        staged_change = self.inspector.compare_tree_to_index(
+            cast(DatabaseEntry, item), entry
+        )
         if stat_result is not None:
             unstaged_change = self.inspector.compare_index_to_workspace(
                 entry, stat_result
@@ -98,13 +103,13 @@ class Rm(Base):
             unstaged_change = None
 
         if staged_change is not None and unstaged_change is not None:
-            self.both_changed.append(Path(path))
+            self.both_changed.append(path)
         elif staged_change is not None:
             if not self.cached:
-                self.uncommitted.append(Path(path))
+                self.uncommitted.append(path)
         elif unstaged_change is not None:
             if not self.cached:
-                self.unstaged.append(Path(path))
+                self.unstaged.append(path)
 
     def exit_on_errors(self) -> None:
         if all(not x for x in (self.unstaged, self.uncommitted, self.both_changed)):
@@ -118,7 +123,7 @@ class Rm(Base):
 
         self.exit(1)
 
-    def print_errors(self, paths, message: str) -> None:
+    def print_errors(self, paths: list[Path], message: str) -> None:
         if not paths:
             return
 

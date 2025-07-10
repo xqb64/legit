@@ -1,15 +1,17 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict, cast
 
 import pytest
 
-from legit.database import Database, DatabaseEntry
 from legit.blob import Blob
+from legit.database import Database
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 from legit.tree import Tree
 
 
 class FakeEntry:
-    def __init__(self, path: str, oid: str, mode: int):
+    def __init__(self, path: str, oid: str, mode: int) -> None:
         self.path = path
         self.oid = oid
         self.mode_bits = mode
@@ -36,23 +38,25 @@ def store_tree(database: Database, contents: Dict[str, Any]) -> str:
     for path, data in contents.items():
         blob = Blob(data.encode())
         database.store(blob)
-        entry = FakeEntry(path, blob.oid, 0o100644)
-        entries[Path(path)] = entry
+        entry = cast(Entry, FakeEntry(path, blob.oid, 0o100644))
+        entries[(Path(path), 0)] = entry
 
     tree = Tree.from_entries(entries)
 
-    def store_all(t: Tree):
+    def store_all(t: Tree) -> None:
         database.store(t)
 
     tree.traverse(store_all)
     return tree.oid
 
 
-def tree_diff(database: Database, a: str, b: str):
+def tree_diff(
+    database: Database, a: str, b: str
+) -> dict[Path, list[DatabaseEntry | None]]:
     return database.tree_diff(a, b)
 
 
-def test_it_reports_a_changed_file(db_path: Path):
+def test_it_reports_a_changed_file(db_path: Path) -> None:
     db = Database(db_path)
     tree_a = store_tree(db, {"alice.txt": "alice", "bob.txt": "bob"})
     tree_b = store_tree(db, {"alice.txt": "changed", "bob.txt": "bob"})
@@ -71,7 +75,7 @@ def test_it_reports_a_changed_file(db_path: Path):
     assert diff == expected
 
 
-def test_it_reports_an_added_file(db_path: Path):
+def test_it_reports_an_added_file(db_path: Path) -> None:
     db = Database(db_path)
     tree_a = store_tree(db, {"alice.txt": "alice"})
     tree_b = store_tree(db, {"alice.txt": "alice", "bob.txt": "bob"})
@@ -84,7 +88,7 @@ def test_it_reports_an_added_file(db_path: Path):
     assert diff == expected
 
 
-def test_it_reports_a_deleted_file(db_path: Path):
+def test_it_reports_a_deleted_file(db_path: Path) -> None:
     db = Database(db_path)
     tree_a = store_tree(db, {"alice.txt": "alice", "bob.txt": "bob"})
     tree_b = store_tree(db, {"alice.txt": "alice"})
@@ -97,7 +101,7 @@ def test_it_reports_a_deleted_file(db_path: Path):
     assert diff == expected
 
 
-def test_it_reports_an_added_file_inside_a_directory(db_path: Path):
+def test_it_reports_an_added_file_inside_a_directory(db_path: Path) -> None:
     db = Database(db_path)
     tree_a = store_tree(db, {"1.txt": "1", "outer/2.txt": "2"})
     tree_b = store_tree(db, {"1.txt": "1", "outer/2.txt": "2", "outer/new/4.txt": "4"})
@@ -110,7 +114,7 @@ def test_it_reports_an_added_file_inside_a_directory(db_path: Path):
     assert diff == expected
 
 
-def test_it_reports_a_deleted_file_inside_a_directory(db_path: Path):
+def test_it_reports_a_deleted_file_inside_a_directory(db_path: Path) -> None:
     db = Database(db_path)
     tree_a = store_tree(
         db, {"1.txt": "1", "outer/2.txt": "2", "outer/inner/3.txt": "3"}

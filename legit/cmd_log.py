@@ -1,7 +1,15 @@
-from typing import Optional
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Optional, cast
+
+from legit.author import Author
+from legit.blob import Blob
 from legit.cmd_base import Base
 from legit.commit import Commit
+from legit.db_entry import DatabaseEntry
 from legit.print_diff import PrintDiffMixin, Target
+from legit.refs import Refs
 from legit.rev_list import RevList
 
 
@@ -63,7 +71,7 @@ class Log(PrintDiffMixin, Base):
         self.rev_list: RevList = RevList(self.repo, self.args, self.rev_list_options)
 
         for commit, _path in self.rev_list.each():
-            self.show_commit(commit)
+            self.show_commit(cast(Commit, commit))
 
         self.exit(0)
 
@@ -76,13 +84,14 @@ class Log(PrintDiffMixin, Base):
 
         self.show_patch(commit)
 
-    def show_patch(self, commit: Commit) -> None:
+    def show_patch(self, commit: Commit) -> str | None:
         if not self.patch:
-            return
+            return None
+
         if commit.is_merge():
             return self.show_merge_patch(commit)
 
-        diff = self.rev_list.tree_diff(commit.parent, commit.oid)
+        diff = self.rev_list.tree_diff(cast(str, commit.parent), commit.oid)
         paths = sorted(diff.keys())
 
         self._blank_line()
@@ -93,13 +102,15 @@ class Log(PrintDiffMixin, Base):
                 self.from_diff_item(path, old_item), self.from_diff_item(path, new_item)
             )
 
+        return None
+
     def show_merge_patch(self, commit: Commit) -> Optional[str]:
         if not self.combined:
-            return
+            return None
 
         diffs = [self.rev_list.tree_diff(oid, commit.oid) for oid in commit.parents]
         if not diffs:
-            return
+            return None
 
         paths = [
             path for path in diffs[0].keys() if all(path in diff for diff in diffs[1:])
@@ -113,15 +124,17 @@ class Log(PrintDiffMixin, Base):
 
             self.print_combined_diff(parents, child)
 
-    def from_diff_item(self, path, item) -> Target:
+        return None
+
+    def from_diff_item(self, path: Path, item: Optional[DatabaseEntry]) -> Target:
         if item is not None:
-            blob = self.repo.database.load(item.oid)
+            blob = cast(Blob, self.repo.database.load(item.oid))
             return Target(path, item.oid, oct(item.mode)[2:], blob.data.decode("utf-8"))
         else:
             return Target(path, "0" * 40, None, "")
 
     def show_commit_medium(self, commit: Commit) -> None:
-        author = commit.author
+        author = cast(Author, commit.author)
 
         self._blank_line()
         self.println(
@@ -144,7 +157,7 @@ class Log(PrintDiffMixin, Base):
         _id = self.fmt("yellow", self._abbrev(commit)) + self._decorate(commit)
         self.println(f"{_id} {commit.title_line()}")
 
-    def is_target(self, ref):
+    def is_target(self, ref: Refs.SymRef) -> bool:
         return ref.is_head() and not self.current_ref.is_head()
 
     def _decorate(self, commit: Commit) -> str:
@@ -154,7 +167,7 @@ class Log(PrintDiffMixin, Base):
         elif self.decorate == "no":
             return ""
 
-        refs = self.reverse_refs[commit.oid]
+        refs = cast(list[Refs.SymRef], self.reverse_refs[commit.oid])
         if not refs:
             return ""
 
@@ -169,11 +182,13 @@ class Log(PrintDiffMixin, Base):
             + self.fmt("yellow", ")")
         )
 
-    def decoration_name(self, head, ref):
+    def decoration_name(self, head: Optional[Refs.SymRef], ref: Refs.SymRef) -> str:
         if self.decorate == "short" or self.decorate == "auto":
             name = ref.short_name()
         elif self.decorate == "full":
             name = ref.path
+        else:
+            name = ""
 
         name = self.fmt(self.ref_color(ref), name)
 
@@ -182,13 +197,14 @@ class Log(PrintDiffMixin, Base):
 
         return name
 
-    def ref_color(self, ref):
+    def ref_color(self, ref: Refs.SymRef) -> list[str]:
         if ref.is_head():
             return ["bold", "cyan"]
         elif ref.is_branch():
             return ["bold", "green"]
         elif ref.is_remote():
             return ["bold", "red"]
+        assert False
 
     def _blank_line(self) -> None:
         if self.format == "oneline":

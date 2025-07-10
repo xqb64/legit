@@ -1,14 +1,17 @@
-import io
-import os
+from __future__ import annotations
+
 import hashlib
-from typing import Callable, Tuple, BinaryIO, Optional
+import os
+from typing import IO, BinaryIO, Callable, Optional, Tuple, TypeVar
 
 from legit.pack import InvalidPack
 
+T = TypeVar("T")
+
 
 class Stream:
-    def __init__(self, inp: BinaryIO, buffer: bytes = b"") -> None:
-        self.input: BinaryIO = inp
+    def __init__(self, inp: IO[bytes], buffer: bytes = b"") -> None:
+        self.input: IO[bytes] = inp
         self.digest = hashlib.sha1()
         self.offset = 0
         self.buffer = bytearray(buffer)
@@ -20,7 +23,7 @@ class Stream:
         self.buffer = bytearray(data) + self.buffer
         self.offset -= len(data)
 
-    def capture(self, block: Callable[[], "T"]) -> Tuple["T", bytes]:
+    def capture(self, block: Callable[[], T]) -> Tuple[T, bytes]:
         self._capture = bytearray()
         try:
             result = block()
@@ -33,7 +36,6 @@ class Stream:
         checksum_from_stream = self._read_buffered(20, block=True)
         if checksum_from_stream != self.digest.digest():
             raise InvalidPack("Checksum does not match value read from pack")
-
 
     def read(self, size: int) -> bytes:
         data = self._read_buffered(size, block=True)
@@ -101,4 +103,3 @@ class Stream:
             return True
         self.buffer.extend(b)
         return False
-

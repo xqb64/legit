@@ -1,36 +1,54 @@
+from __future__ import annotations
+
 import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Sequence, Any, Callable, Union
+from typing import (
+    Callable,
+    List,
+    Optional,
+    Pattern,
+    Sequence,
+    TextIO,
+    Tuple,
+    TypeAlias,
+    cast,
+)
+
 from legit.lockfile import Lockfile
 
+ConfigValue: TypeAlias = bool | int | str
 
-SECTION_LINE = re.compile(r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I)
-VARIABLE_LINE = re.compile(
+SECTION_LINE: Pattern[str] = re.compile(
+    r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I
+)
+VARIABLE_LINE: Pattern[str] = re.compile(
     r"^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*(?:$|#|;)", re.I | re.M
 )
-BLANK_LINE = re.compile(r"^\s*(?:$|#|;)")
-INTEGER = re.compile(r"^-?[1-9][0-9]*$")
+BLANK_LINE: Pattern[str] = re.compile(r"^\s*(?:$|#|;)")
+INTEGER: Pattern[str] = re.compile(r"^-?[1-9][0-9]*$")
 
-VALID_SECTION = re.compile(r"^[a-z0-9-]+$", re.I)
-VALID_VARIABLE = re.compile(r"^[a-z][a-z0-9-]*$", re.I)
+VALID_SECTION: Pattern[str] = re.compile(r"^[a-z0-9-]+$", re.I)
+VALID_VARIABLE: Pattern[str] = re.compile(r"^[a-z][a-z0-9-]*$", re.I)
 
 
 class Conflict(Exception):
     pass
 
+
 class ParseError(Exception):
     pass
 
+
 @dataclass
 class Section:
-    name: List[str]
+    name: Sequence[str]
 
     @staticmethod
-    def normalize(name: Sequence[str]) -> tuple[str, str]:
+    def normalize(name: Sequence[str]) -> tuple[str, str] | None:
         if not name:
-            return tuple()
+            return None
         head = name[0].lower()
         tail = ".".join(name[1:])
         return (head, tail)
@@ -50,14 +68,14 @@ class Section:
 @dataclass
 class Variable:
     name: str
-    value: Any
+    value: ConfigValue
 
     @staticmethod
     def normalize(name: Optional[str]) -> Optional[str]:
         return name.lower() if name else None
 
     @staticmethod
-    def serialize(name: str, value: Any) -> str:
+    def serialize(name: str, value: ConfigValue) -> str:
         return f"\t{name} = {value}\n"
 
 
@@ -73,13 +91,13 @@ class Line:
 
 
 class ConfigFile:
-    def __init__(self, path: str | Path):
-        self.path = Path(path)
-        self.lockfile = Lockfile(self.path)
+    def __init__(self, path: Path) -> None:
+        self.path: Path = path
+        self.lockfile: Lockfile = Lockfile(self.path)
         self.lines: dict[tuple[str, str], List[Line]] = defaultdict(list)
 
     @staticmethod
-    def valid_key(key):
+    def valid_key(key: Sequence[str]) -> bool:
         return bool(VALID_SECTION.match(key[0])) and bool(VALID_VARIABLE.match(key[1]))
 
     def open(self) -> None:
@@ -96,24 +114,24 @@ class ConfigFile:
                 self.lockfile.write(line.text.encode("utf-8"))
         self.lockfile.commit()
 
-    def get(self, key: Sequence[str]) -> Any:
+    def get(self, key: Sequence[str]) -> ConfigValue | None:
         try:
             retval = self.get_all(key)[-1]
         except IndexError:
             retval = None
         return retval
 
-    def get_all(self, key: Sequence[str]) -> List[Any]:
+    def get_all(self, key: Sequence[str]) -> List[ConfigValue]:
         key, var = self.split_key(key)
         _, lines = self.find_lines(key, var)
-        return [ln.variable.value for ln in lines]
+        return [cast(Variable, ln.variable).value for ln in lines]
 
-    def add(self, key: Sequence[str], value: Any) -> None:
+    def add(self, key: Sequence[str], value: ConfigValue) -> None:
         key, var = self.split_key(key)
         section, _ = self.find_lines(key, var)
         self.add_variable(section, key, var, value)
 
-    def set(self, key: Sequence[str], value: Any) -> None:
+    def set(self, key: Sequence[str], value: ConfigValue) -> None:
         key, var = self.split_key(key)
         section, lines = self.find_lines(key, var)
 
@@ -125,25 +143,28 @@ class ConfigFile:
             msg = "cannot overwrite multiple values with a single value"
             raise Conflict(msg)
 
-    def replace_all(self, key: Sequence[str], value: Any) -> None:
+    def replace_all(self, key: Sequence[str], value: ConfigValue) -> None:
         key, var = self.split_key(key)
         section, lines = self.find_lines(key, var)
 
+        assert section is not None
         self.remove_all(section, lines)
         self.add_variable(section, key, var, value)
 
     def unset(
         self,
         key: Sequence[str],
-        predicate: Optional[Callable[[List["Line"]], None]] = None, 
+        block: Optional[Callable[[List["Line"]], None]] = None,
     ) -> None:
-        if predicate is None:
+        if block is None:
 
-            def predicate(lines: List["Line"]) -> None:
+            def _default_block(lines: List["Line"]) -> None:
                 if len(lines) > 1:
                     raise Conflict(f"{key} has multiple values")
 
-        self.unset_all(key, predicate)
+            block = _default_block
+
+        self.unset_all(key, block)
 
     def unset_all(
         self,
@@ -166,10 +187,15 @@ class ConfigFile:
 
     def remove_section(self, key: Sequence[str]) -> bool:
         norm = Section.normalize(key)
+        if norm is None:
+            return True
         return self.lines.pop(norm, None) is not None
 
     def subsections(self, name: str) -> List[str]:
-        name, _ = Section.normalize([name])
+        norm = Section.normalize([name])
+        if norm is None:
+            return []
+        name, _ = norm
         sections = []
         for main, sub in self.lines.keys():
             if main == name and sub != "":
@@ -183,7 +209,10 @@ class ConfigFile:
         return sum(len(ls) for ls in self.lines.values())
 
     def lines_for(self, section: Section) -> List[Line]:
-        return self.lines[Section.normalize(section.name)]
+        norm = Section.normalize(section.name)
+        if norm is None:
+            return []
+        return self.lines[norm]
 
     @staticmethod
     def split_key(key: Sequence[str]) -> Tuple[List[str], str]:
@@ -201,7 +230,7 @@ class ConfigFile:
         lines = self.lines[name]
         section = lines[0].section
         normal = Variable.normalize(var)
-        lines = [ln for ln in lines if ln.normal_variable == normal]
+        lines = [ln for ln in lines if ln.normal_variable == normal and ln is not None]
         return (section, lines)
 
     def add_section(self, key: Sequence[str]) -> Section:
@@ -211,7 +240,11 @@ class ConfigFile:
         return section
 
     def add_variable(
-        self, section: Optional[Section], key: Sequence[str], var: str, value: Any
+        self,
+        section: Optional[Section],
+        key: Sequence[str],
+        var: str,
+        value: ConfigValue,
     ) -> None:
         section = section or self.add_section(key)
         text = Variable.serialize(var, value)
@@ -219,8 +252,8 @@ class ConfigFile:
         self.lines_for(section).append(Line(text, section, variable))
 
     @staticmethod
-    def update_variable(line: Line, var: str, value: Any) -> None:
-        line.variable.value = value
+    def update_variable(line: Line, var: str, value: ConfigValue) -> None:
+        cast(Variable, line.variable).value = value
         line.text = Variable.serialize(var, value)
 
     def remove_all(self, section: Section, lines: List[Line]) -> None:
@@ -246,7 +279,7 @@ class ConfigFile:
             pass
 
     @staticmethod
-    def read_line(fh) -> str:
+    def read_line(fh: TextIO) -> str:
         buffer = ""
         while True:
             chunk = fh.readline()
@@ -268,7 +301,7 @@ class ConfigFile:
         raise ParseError(f"bad config line {self.line_count() + 1} in file {self.path}")
 
     @staticmethod
-    def parse_value(value: str) -> Any:
+    def parse_value(value: str) -> ConfigValue:
         lower = value.lower()
         if lower in {"yes", "on", "true"}:
             return True

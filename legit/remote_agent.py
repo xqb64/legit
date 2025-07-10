@@ -1,28 +1,44 @@
+from __future__ import annotations
+
+from functools import cache
+from itertools import chain
+from pathlib import Path
+from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, cast, reveal_type
+
 from legit.protocol import Remotes
 from legit.repository import Repository
-from functools import cache
-from typing import Optional
-from pathlib import Path
-from itertools import chain
 
 
 class RemoteAgentMixin:
-    ZERO_OID = b"0" * 40
+    args: list[str]
+    stdin: TextIO
+    stdout: TextIO
 
-    def accept_client(self, name, capabilities=None):
+    if TYPE_CHECKING:
+
+        def expanded_path(self, path: str) -> Path: ...
+
+    ZERO_OID: bytes = b"0" * 40
+
+    def accept_client(self, name: str, capabilities: list[str] | None = None) -> None:
         capabilities = capabilities or []
 
-        def as_bin(stream):
+        def as_bin(stream: TextIO) -> BinaryIO | TextIO:
             return stream.buffer if hasattr(stream, "buffer") else stream
 
         self.conn = Remotes.Protocol(
-            name, as_bin(self.stdin), as_bin(self.stdout), capabilities
+            name,
+            cast(BinaryIO, as_bin(self.stdin)),
+            cast(BinaryIO, as_bin(self.stdout)),
+            capabilities,
         )
 
     @property
     @cache
-    def repo(self):
-        return Repository(self.detect_git_dir())
+    def repo(self) -> Repository:
+        path = self.detect_git_dir()
+        assert path is not None
+        return Repository(path)
 
     def detect_git_dir(self) -> Optional[Path]:
         start: Path = self.expanded_path(self.args[0])
@@ -34,14 +50,14 @@ class RemoteAgentMixin:
 
         return None
 
-    def is_git_repository(self, dirname) -> None:
+    def is_git_repository(self, dirname: Path) -> bool:
         return (
             (dirname / "HEAD").exists()
             and (dirname / "objects").exists()
             and (dirname / "refs").exists()
         )
 
-    def send_references(self):
+    def send_references(self) -> None:
         refs = self.repo.refs.list_all_refs()
         sent = False
 

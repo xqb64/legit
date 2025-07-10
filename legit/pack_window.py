@@ -1,12 +1,20 @@
-from typing import Any, Iterator, Optional, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterator, List, Optional
+
+from legit.pack_entry import Entry
+from legit.pack_xdelta import XDelta
+
+if TYPE_CHECKING:
+    from legit.pack_delta import Delta
 
 
 class Window:
     class Unpacked:
-        def __init__(self, entry: Any, data: bytes):
+        def __init__(self, entry: Entry, data: bytes) -> None:
             self.entry = entry
             self.data = data
-            self.delta_index: Optional[int] = None
+            self.delta_index: Optional[XDelta] = None
 
         @property
         def type(self) -> str:
@@ -17,20 +25,20 @@ class Window:
             return self.entry.size
 
         @property
-        def delta(self) -> Optional[Any]:
+        def delta(self) -> Optional[Delta]:
             return self.entry.delta
 
         @property
         def depth(self) -> int:
             return self.entry.depth
 
-    def __init__(self, size: int):
+    def __init__(self, size: int) -> None:
         if size <= 0:
             raise ValueError("Window size must be positive.")
         self._objects: List[Optional[Window.Unpacked]] = [None] * size
         self._offset: int = 0
 
-    def add(self, entry: Any, data: bytes) -> "Window.Unpacked":
+    def add(self, entry: Entry, data: bytes) -> "Window.Unpacked":
         unpacked = self.Unpacked(entry, data)
         self._objects[self._offset] = unpacked
         self._offset = (self._offset + 1) % len(self._objects)

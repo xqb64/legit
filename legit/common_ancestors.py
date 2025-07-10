@@ -1,24 +1,27 @@
+from __future__ import annotations
+
 from collections import defaultdict
+from typing import cast
+
 from legit.commit import Commit
 from legit.database import Database
 
 
 class CommonAncestors:
-    def __init__(self, database: Database, one: str, twos: str) -> None:
+    def __init__(self, database: Database, one: str, twos: list[str]) -> None:
         self.database: Database = database
         self.flags = defaultdict(set)
-        self.queue = []
+        self.queue: list[Commit] = []
+        self.results: list[Commit] = []
 
-        self.results = []
-
-        self.insert_by_date(self.queue, self.database.load(one))
+        self.insert_by_date(self.queue, cast(Commit, self.database.load(one)))
         self.flags[one].add("parent1")
 
         for two in twos:
-            self.insert_by_date(self.queue, self.database.load(two))
+            self.insert_by_date(self.queue, cast(Commit, self.database.load(two)))
             self.flags[two].add("parent2")
 
-    def counts(self):
+    def counts(self) -> tuple[int, int]:
         ones, twos = 0, 0
 
         for oid, flags in self.flags.items():
@@ -33,7 +36,7 @@ class CommonAncestors:
 
         return ones, twos
 
-    def insert_by_date(self, structure, commit) -> None:
+    def insert_by_date(self, structure: list[Commit], commit: Commit) -> None:
         index = next(
             (i for i, c in enumerate(structure) if c.date() < commit.date()),
             None,
@@ -77,5 +80,5 @@ class CommonAncestors:
 
             self.flags[parent_oid].update(flags)
 
-            parent_commit = self.database.load(parent_oid)
+            parent_commit = cast(Commit, self.database.load(parent_oid))
             self.insert_by_date(self.queue, parent_commit)

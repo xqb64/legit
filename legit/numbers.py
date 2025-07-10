@@ -1,6 +1,13 @@
+from __future__ import annotations
+
+from typing import reveal_type
+
+from legit.pack_stream import Stream
+
+
 class VarIntLE:
     @staticmethod
-    def write(value: int, shift) -> bytes:
+    def write(value: int, shift: int) -> bytes:
         parts = []
         mask = 2**shift - 1
 
@@ -14,7 +21,7 @@ class VarIntLE:
         return bytes(parts)
 
     @staticmethod
-    def read(stream, shift) -> tuple[int, int]:
+    def read(stream: Stream, shift: int) -> tuple[int, int]:
         first = stream.readbyte()
 
         value = first & (2**shift - 1)
@@ -30,7 +37,7 @@ class VarIntLE:
 
 class VarIntBE:
     @staticmethod
-    def write(value: int):
+    def write(value: int) -> bytes:
         _bytes = [value & 0x7F]
         value >>= 7
         while value != 0:
@@ -41,12 +48,12 @@ class VarIntBE:
         return bytes(reversed(_bytes))
 
     @staticmethod
-    def read(_input):
-        byte = _input.readbyte()
+    def read(stream: Stream) -> int:
+        byte = stream.readbyte()
         value = byte & 0x7F
 
         while byte >= 0x80:
-            byte = _input.readbyte()
+            byte = stream.readbyte()
             value = ((value + 1) << 7) | (byte & 0x7F)
 
         return value
@@ -54,7 +61,7 @@ class VarIntBE:
 
 class PackedInt56LE:
     @staticmethod
-    def write(value: int):
+    def write(value: int) -> list[int]:
         parts = [0]
 
         for i in range(7):
@@ -68,13 +75,13 @@ class PackedInt56LE:
         return parts
 
     @staticmethod
-    def read(_input, header):
+    def read(stream: Stream, header: int) -> int:
         value = 0
 
         for i in range(7):
             if (header & (1 << i)) == 0:
                 continue
 
-            value |= _input.readbyte() << (8 * i)
+            value |= stream.readbyte() << (8 * i)
 
         return value

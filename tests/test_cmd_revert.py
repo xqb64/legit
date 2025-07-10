@@ -1,31 +1,41 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+from re import PatternError
+from typing import cast
 
 import pytest
 
-from legit.editor import Editor
+from legit.commit import Commit as CommitObj
+from legit.repository import Repository
 from legit.rev_list import RevList
-
 from tests.cmd_helpers import (
     assert_index,
-    assert_workspace,
-    assert_stdout,
-    assert_stderr,
     assert_status,
+    assert_stderr,
+    assert_stdout,
+    assert_workspace,
+)
+from tests.conftest import (
+    Commit,
+    LegitCmd,
+    LoadCommit,
+    ResolveRevision,
+    StubEditorFactory,
+    WriteFile,
 )
 
 
-def get_rev_list_messages(repo, *rev_specs):
-    revs = [r for r, _ in list(RevList(repo, list(rev_specs)).each())]
-    return [c.title_line().strip() for c in revs]
+def get_rev_list_messages(repo: Repository, rev: str) -> list[str]:
+    revs = [r for r, _ in list(RevList(repo, [rev]).each())]
+    return [cast(CommitObj, c).title_line().strip() for c in revs]
 
 
 class TestRevert:
     @pytest.fixture(autouse=True)
-    def setup(self, write_file, legit_cmd, commit):
+    def setup(self, write_file: WriteFile, legit_cmd: LegitCmd, commit: Commit) -> None:
         self.time = datetime.now().astimezone()
 
-        def commit_tree(message, files):
+        def commit_tree(message: str, files: dict[str, str]) -> None:
             self.time += timedelta(seconds=10)
             for path, contents in files.items():
                 write_file(path, contents)
@@ -41,8 +51,11 @@ class TestRevert:
         commit_tree("eight", {"g.txt": "eight"})
 
     def test_it_reverts_a_commit_on_top_of_current_head(
-        self, legit_cmd, repo, repo_path
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        repo: Repository,
+        repo_path: Path,
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@~2")
         assert_status(cmd, 0)
 
@@ -54,8 +67,12 @@ class TestRevert:
         assert_workspace(repo_path, expected_state)
 
     def test_it_fails_to_revert_a_content_conflict(
-        self, legit_cmd, repo, repo_path, resolve_revision
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        repo: Repository,
+        repo_path: Path,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@~4")
         assert_status(cmd, 1)
 
@@ -69,7 +86,9 @@ class TestRevert:
         cmd, _, stdout, _ = legit_cmd("status", "--porcelain")
         assert_stdout(stdout, "UU f.txt\n")
 
-    def test_it_fails_to_revert_a_modify_delete_conflict(self, legit_cmd, repo_path):
+    def test_it_fails_to_revert_a_modify_delete_conflict(
+        self, legit_cmd: LegitCmd, repo_path: Path
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@~3")
         assert_status(cmd, 1)
 
@@ -78,14 +97,18 @@ class TestRevert:
         cmd, _, stdout, _ = legit_cmd("status", "--porcelain")
         assert_stdout(stdout, "UD g.txt\n")
 
-    def test_it_continues_a_conflicted_revert(self, legit_cmd, repo, repo_path):
+    def test_it_continues_a_conflicted_revert(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         legit_cmd("revert", "@~3")
         legit_cmd("add", "g.txt")
 
         cmd, *_ = legit_cmd("revert", "--continue")
         assert_status(cmd, 0)
 
-        commits = list(commit for commit, _ in RevList(repo, ["@~3.."]).each())
+        commits = list(
+            cast(CommitObj, commit) for commit, _ in RevList(repo, ["@~3.."]).each()
+        )
 
         assert commits[0].parents == [commits[1].oid]
 
@@ -96,22 +119,29 @@ class TestRevert:
         assert_index(repo, expected_state)
         assert_workspace(repo_path, expected_state)
 
-    def test_it_commits_after_a_conflicted_revert(self, legit_cmd, repo):
+    def test_it_commits_after_a_conflicted_revert(
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         legit_cmd("revert", "@~3")
         legit_cmd("add", "g.txt")
 
         cmd, *_ = legit_cmd("commit")
         assert_status(cmd, 0)
 
-        commits = list(commit for commit, _ in RevList(repo, ["@~3.."]).each())
+        commits = list(
+            cast(CommitObj, commit) for commit, _ in RevList(repo, ["@~3.."]).each()
+        )
         assert [commits[1].oid] == commits[0].parents
 
         messages = [commit.title_line().strip() for commit in commits]
         assert messages == ['Revert "five"', "eight", "seven"]
 
     def test_it_applies_multiple_non_conflicting_commits(
-        self, legit_cmd, repo, repo_path
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        repo: Repository,
+        repo_path: Path,
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@", "@^", "@^^")
         assert_status(cmd, 0)
 
@@ -122,7 +152,9 @@ class TestRevert:
         assert_index(repo, expected_state)
         assert_workspace(repo_path, expected_state)
 
-    def test_it_stops_when_list_of_commits_includes_a_conflict(self, legit_cmd):
+    def test_it_stops_when_list_of_commits_includes_a_conflict(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@^", "@")
         assert_status(cmd, 1)
 
@@ -130,7 +162,9 @@ class TestRevert:
 
         assert_stdout(stdout, "UU g.txt\n")
 
-    def test_it_stops_when_range_of_commits_includes_a_conflict(self, legit_cmd):
+    def test_it_stops_when_range_of_commits_includes_a_conflict(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "@~5..@~2")
         assert_status(cmd, 1)
 
@@ -138,7 +172,9 @@ class TestRevert:
 
         assert_stdout(stdout, "UD g.txt\n")
 
-    def test_it_refuses_to_commit_in_a_conflicted_state(self, legit_cmd):
+    def test_it_refuses_to_commit_in_a_conflicted_state(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         _ = legit_cmd("revert", "@~5..@~2")
 
         cmd, _, _, stderr = legit_cmd("commit")
@@ -152,7 +188,9 @@ class TestRevert:
         )
         assert_stderr(stderr, expected_error)
 
-    def test_it_refuses_to_continue_in_a_conflicted_state(self, legit_cmd):
+    def test_it_refuses_to_continue_in_a_conflicted_state(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         _ = legit_cmd("revert", "@~5..@~2")
 
         cmd, _, _, stderr = legit_cmd("revert", "--continue")
@@ -167,8 +205,12 @@ class TestRevert:
         assert_stderr(stderr, expected_error)
 
     def test_it_can_continue_after_resolving_conflicts(
-        self, legit_cmd, write_file, repo, repo_path
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        write_file: WriteFile,
+        repo: Repository,
+        repo_path: Path,
+    ) -> None:
         _ = legit_cmd("revert", "@~4..@^")
 
         write_file("g.txt", "five")
@@ -184,8 +226,12 @@ class TestRevert:
         assert_workspace(repo_path, {"f.txt": "four"})
 
     def test_it_can_continue_after_committing_the_resolved_tree(
-        self, legit_cmd, write_file, repo, repo_path
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        write_file: WriteFile,
+        repo: Repository,
+        repo_path: Path,
+    ) -> None:
         _ = legit_cmd("revert", "@~4..@^")
 
         write_file("g.txt", "five")
@@ -203,28 +249,32 @@ class TestRevert:
 
     class TestAbortingInConflictedState:
         @pytest.fixture(autouse=True)
-        def setup_aborted_revert(self, legit_cmd):
+        def setup_aborted_revert(self, legit_cmd: LegitCmd) -> None:
             legit_cmd("revert", "@~5..@^")
             self.cmd, _, self.stderr, _ = legit_cmd("revert", "--abort")
 
         def test_it_exits_successfully(
             self,
-        ):
+        ) -> None:
             assert_status(self.cmd, 0)
             assert_stderr(self.stderr, "")
 
-        def test_it_resets_to_the_old_head(self, legit_cmd, load_commit):
-            assert load_commit("HEAD").message.strip() == "eight"
+        def test_it_resets_to_the_old_head(
+            self, legit_cmd: LegitCmd, load_commit: LoadCommit
+        ) -> None:
+            assert cast(CommitObj, load_commit("HEAD")).message.strip() == "eight"
 
             *_, stdout, _ = legit_cmd("status", "--porcelain")
             assert_stdout(stdout, "")
 
-        def test_it_removes_the_merge_state(self, repo):
+        def test_it_removes_the_merge_state(self, repo: Repository) -> None:
             assert not repo.pending_commit().is_in_progress()
 
     class TestAbortingInCommittedState:
         @pytest.fixture(autouse=True)
-        def setup_committed_abort(self, legit_cmd, stub_editor):
+        def setup_committed_abort(
+            self, legit_cmd: LegitCmd, stub_editor: StubEditorFactory
+        ) -> None:
             legit_cmd("revert", "@~5..@^")
             legit_cmd("add", ".")
             stub_editor("reverted\n")
@@ -233,20 +283,22 @@ class TestRevert:
             cmd, _, _, self.stderr = legit_cmd("revert", "--abort")
             self.cmd = cmd
 
-        def test_it_exits_with_a_warning(self):
+        def test_it_exits_with_a_warning(self) -> None:
             assert_status(self.cmd, 0)
             assert_stderr(
                 self.stderr,
                 "warning: You seem to have moved HEAD. Not rewinding, check your HEAD!\n",
             )
 
-        def test_it_does_not_reset_head(self, legit_cmd, load_commit):
-            assert load_commit("HEAD").message.strip() == "reverted"
+        def test_it_does_not_reset_head(
+            self, legit_cmd: LegitCmd, load_commit: LoadCommit
+        ) -> None:
+            assert cast(CommitObj, load_commit("HEAD")).message.strip() == "reverted"
 
             *_, stdout, _ = legit_cmd("status", "--porcelain")
             assert_stdout(stdout, "")
 
-        def test_it_removes_the_merge_state(self, repo):
+        def test_it_removes_the_merge_state(self, repo: Repository) -> None:
             assert not repo.pending_commit().is_in_progress()
 
 
@@ -256,11 +308,17 @@ class TestRevertWithMerges:
     #         g---g---h [topic]
 
     @pytest.fixture(autouse=True)
-    def setup_merge_history(self, write_file, legit_cmd, commit, repo_path):
+    def setup_merge_history(
+        self,
+        write_file: WriteFile,
+        legit_cmd: LegitCmd,
+        commit: Commit,
+        repo_path: Path,
+    ) -> None:
         self.time = datetime.now().astimezone()
         self.repo_path = repo_path
 
-        def commit_tree(message, files):
+        def commit_tree(message: str, files: dict[str, str]) -> None:
             self.time += timedelta(seconds=10)
             for path, contents in files.items():
                 write_file(path, contents)
@@ -285,8 +343,10 @@ class TestRevertWithMerges:
         commit_tree("seven", {"h.txt": "seven"})
 
     def test_it_refuses_to_revert_a_merge_without_specifying_a_parent(
-        self, legit_cmd, resolve_revision
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         cmd, *_, stderr = legit_cmd("revert", "@^")
         assert_status(cmd, 1)
 
@@ -295,8 +355,10 @@ class TestRevertWithMerges:
         assert_stderr(stderr, expected_error)
 
     def test_it_refuses_to_revert_non_merge_commit_with_mainline(
-        self, legit_cmd, resolve_revision
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         cmd, *_, stderr = legit_cmd("revert", "-m", "1", "@")
         assert_status(cmd, 1)
 
@@ -306,7 +368,9 @@ class TestRevertWithMerges:
         )
         assert_stderr(stderr, expected_error)
 
-    def test_it_reverts_merge_based_on_first_parent(self, legit_cmd, repo):
+    def test_it_reverts_merge_based_on_first_parent(
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "-m", "1", "@~2")
         assert_status(cmd, 0)
 
@@ -314,7 +378,9 @@ class TestRevertWithMerges:
         assert_index(repo, expected_state)
         assert_workspace(self.repo_path, expected_state)
 
-    def test_it_reverts_merge_based_on_second_parent(self, legit_cmd, repo):
+    def test_it_reverts_merge_based_on_second_parent(
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "-m", "2", "@~2")
         assert_status(cmd, 0)
 
@@ -326,7 +392,9 @@ class TestRevertWithMerges:
         assert_index(repo, expected_state)
         assert_workspace(self.repo_path, expected_state)
 
-    def test_it_resumes_reverting_merges_after_conflict(self, legit_cmd, repo):
+    def test_it_resumes_reverting_merges_after_conflict(
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         cmd, *_ = legit_cmd("revert", "-m", "1", "@^", "@^^")
         assert_status(cmd, 1)
 

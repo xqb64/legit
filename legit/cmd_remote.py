@@ -1,10 +1,14 @@
+from __future__ import annotations
+
+from typing import cast
+
 from legit.cmd_base import Base
 from legit.remotes import Remotes
 
 
 class Remote(Base):
     def define_options(self) -> None:
-        self.options = {"verbose": False, "tracked": []}
+        self.options: dict[str, bool | list[str]] = {"verbose": False, "tracked": []}
         positional_args = []
 
         args_iter = iter(self.args)
@@ -13,7 +17,7 @@ class Remote(Base):
                 self.options["verbose"] = True
             elif arg == "-t":
                 try:
-                    self.options["tracked"].append(next(args_iter))
+                    cast(list[str], self.options["tracked"]).append(next(args_iter))
                 except StopIteration:
                     pass
             else:
@@ -38,7 +42,7 @@ class Remote(Base):
     def add_remote(self) -> None:
         name, url = self.args[0], self.args[1]
         try:
-            self.repo.remotes.add(name, url, self.options["tracked"])
+            self.repo.remotes.add(name, url, cast(list[str], self.options["tracked"]))
             self.exit(0)
         except Remotes.InvalidRemote as e:
             self.stderr.write(f"fatal: {e}\n")
@@ -63,6 +67,7 @@ class Remote(Base):
             return
 
         remote = self.repo.remotes.get(name)
+        assert remote is not None
 
         self.println(f"{name}\t{remote.fetch_url} (fetch)")
         self.println(f"{name}\t{remote.push_url} (push)")

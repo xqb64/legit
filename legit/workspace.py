@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import os
-import stat
 import shutil
-from typing import MutableMapping, TYPE_CHECKING, Optional
+import stat
 from collections.abc import Iterator
 from pathlib import Path
-
+from typing import TYPE_CHECKING, MutableMapping, Optional
 
 if TYPE_CHECKING:
     from legit.migration import Migration
@@ -58,7 +59,7 @@ class Workspace:
         self.apply_change_list(migration, "update")
         self.apply_change_list(migration, "create")
 
-    def remove(self, path: str):
+    def remove(self, path: Path) -> None:
         try:
             self._rm_rf(self.path / path)
             for parent in Path(path).parents:

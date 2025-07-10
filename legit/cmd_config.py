@@ -1,15 +1,15 @@
-import sys
-from typing import List, Tuple, Any, Callable
+from __future__ import annotations
+
+from typing import Callable, Optional, Tuple, cast
 
 from legit.cmd_base import Base
-from legit.repository import Repository
-from legit.config import ConfigFile, ParseError, Conflict
+from legit.config import ConfigFile, ConfigValue, Conflict, ParseError
+from legit.config_stack import ConfigStack
 
 
 class Config(Base):
-    def __init__(self, *args: List[str]):
-        super().__init__(*args)
-        self.options = {
+    def define_options(self) -> None:
+        self.options: dict[str, Optional[str]] = {
             "file": None,
             "add": None,
             "replace": None,
@@ -18,9 +18,6 @@ class Config(Base):
             "unset_all": None,
             "remove_section": None,
         }
-        self.define_options()
-
-    def define_options(self) -> None:
         args_iter = iter(self.args)
         positional_args = []
         for arg in args_iter:
@@ -56,6 +53,7 @@ class Config(Base):
         self.args = positional_args
 
     def run(self) -> None:
+        self.define_options()
         try:
             if self.options["add"]:
                 self._add_variable()
@@ -103,17 +101,22 @@ class Config(Base):
         self._edit_config(lambda config: config.unset_all(key))
 
     def _remove_section(self) -> None:
-        key = self.options["remove_section"].split(".", 1)
+        key = cast(str, self.options["remove_section"]).split(".", 1)
         self._edit_config(lambda config: config.remove_section(key))
 
     def _get_all_values(self) -> None:
         key = self._parse_key(self.options["get_all"])
         self._read_config(lambda config: config.get_all(key))
 
-    def _read_config(self, operation: Callable[[ConfigFile], List[Any]]) -> None:
-        config = self.repo.config
+    def _read_config(
+        self,
+        operation: Callable[
+            [ConfigFile | ConfigStack], ConfigValue | None | list[ConfigValue]
+        ],
+    ) -> None:
+        config: ConfigFile | ConfigStack = self.repo.config
         if self.options["file"]:
-            config = config.file(self.options["file"])
+            config = cast(ConfigStack, config).file(self.options["file"])
 
         config.open()
 
@@ -121,6 +124,8 @@ class Config(Base):
 
         if result is None:
             self.exit(1)
+
+        assert result is not None
 
         values = result if isinstance(result, list) else [result]
 
@@ -131,7 +136,7 @@ class Config(Base):
             self.println(str(value))
         self.exit(0)
 
-    def _edit_config(self, operation: Callable[[ConfigFile], None]) -> None:
+    def _edit_config(self, operation: Callable[[ConfigFile], bool | None]) -> None:
         file_scope = self.options.get("file") or "local"
         config = self.repo.config.file(file_scope)
 
@@ -144,8 +149,8 @@ class Config(Base):
             self.stderr.write(f"error: {e}\n")
             self.exit(5)
 
-    def _parse_key(self, name: str) -> Tuple[str, ...]:
-        parts = name.split(".")
+    def _parse_key(self, name: Optional[str]) -> Tuple[str, ...]:
+        parts = cast(str, name).split(".")
 
         if len(parts) < 2:
             self.stderr.write(f"error: key does not contain a section: {name}\n")

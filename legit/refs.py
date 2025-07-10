@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import re
-from pathlib import Path
-from sys import path_hooks
-from typing import Any, Optional, Callable
-from legit.lockfile import Lockfile
 from collections import defaultdict
+from pathlib import Path
+from typing import Any, Callable, Optional, Pattern
+
+from legit.lockfile import Lockfile
 
 INVALID_NAME = re.compile(
     r"""
@@ -69,12 +71,12 @@ class Refs:
         def __hash__(self) -> int:
             return hash((id(self.refs), self.path))
 
-    HEAD = "HEAD"
-    SYMREF = re.compile(r"^ref: (.+)$")
+    HEAD: str = "HEAD"
+    SYMREF: Pattern[str] = re.compile(r"^ref: (.+)$")
 
-    REFS_DIR = Path("refs")
-    HEADS_DIR = REFS_DIR / "heads"
-    REMOTES_DIR = REFS_DIR / "remotes"
+    REFS_DIR: Path = Path("refs")
+    HEADS_DIR: Path = REFS_DIR / "heads"
+    REMOTES_DIR: Path = REFS_DIR / "remotes"
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path
@@ -100,10 +102,10 @@ class Refs:
             f"the requested upstream branch '{ref}' does not exist"
         )
 
-    def list_remotes(self):
+    def list_remotes(self) -> list["Refs.SymRef"]:
         return self.list_refs(self.remotes_path)
 
-    def list_all_refs(self):
+    def list_all_refs(self) -> list["Refs.SymRef"]:
         return [Refs.SymRef(self, Refs.HEAD)] + self.list_refs(self.refs_path)
 
     def short_name(self, path: str) -> str:
@@ -174,6 +176,8 @@ class Refs:
             case c if isinstance(c, Refs.SymRef):
                 assert isinstance(ref, Refs.SymRef)
                 return self.read_symref(self.path / ref.path)
+            case _:
+                return None
 
     def read_head(self) -> Optional[str]:
         head = self.read_symref(self.path / Refs.HEAD)
@@ -204,7 +208,7 @@ class Refs:
         lockfile.write(oid.encode("utf-8") + b"\n")
         lockfile.commit()
 
-    def create_branch(self, branch_name: str, start_oid: str) -> str:
+    def create_branch(self, branch_name: str, start_oid: str) -> None:
         if INVALID_NAME.search(branch_name):
             raise Refs.InvalidBranch(f"'{branch_name}' is not a valid branch name.")
 
@@ -212,7 +216,7 @@ class Refs:
         if path.is_file():
             raise Refs.InvalidBranch(f"A branch named '{branch_name}' already exists.")
 
-        return self._update_ref_file(path, start_oid)
+        self._update_ref_file(path, start_oid)
 
     class StaleValue(Exception):
         pass

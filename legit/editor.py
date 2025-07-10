@@ -1,62 +1,70 @@
-import os
+from __future__ import annotations
+
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Optional, Callable
+from types import TracebackType
+from typing import Callable, Optional, TextIO, Type
 
 
 class Editor:
     DEFAULT_EDITOR = "vi"
 
-    def __init__(self, path: os.PathLike, command: Optional[str] = None):
-        self.path = Path(path)
-        self.command = command or self.DEFAULT_EDITOR
-        self._closed = False
-        self._file = None
+    def __init__(self, path: Path, command: Optional[str] = None):
+        self.path: Path = path
+        self.command: str = command or self.DEFAULT_EDITOR
+        self._closed: bool = False
+        self._file: TextIO | None = None
         self.cleaned_content: Optional[str] = None
 
-    def __enter__(self):
+    def __enter__(self) -> Editor:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> Optional[bool]:
         self._edit_file()
+        return None
 
     @classmethod
     def edit(
         cls,
-        path: os.PathLike,
+        path: Path,
         command: Optional[str] = None,
         *,
-        block: Callable[["Editor"], None],
+        block: Optional[Callable[["Editor"], None]] = None,
     ) -> Optional[str]:
         editor = cls(path, command)
 
-        if block:
+        if block is not None:
             block(editor)
 
         editor._edit_file()
 
         return editor.cleaned_content
 
-    def _get_file(self):
+    def _get_file(self) -> TextIO:
         if self._file is None:
             self._file = self.path.open("w", encoding="utf-8")
         return self._file
 
-    def println(self, text: str):
+    def println(self, text: str) -> None:
         if not self._closed:
             self._get_file().write(f"{text}\n")
 
-    def note(self, text: str):
+    def note(self, text: str) -> None:
         if not self._closed:
             file = self._get_file()
             for line in text.splitlines():
                 file.write(f"# {line}\n")
 
-    def close(self):
+    def close(self) -> None:
         self._closed = True
 
-    def _edit_file(self):
+    def _edit_file(self) -> None:
         if self._file and not self._file.closed:
             self._file.close()
         if not self._closed:

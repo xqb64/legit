@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-from typing import List, Dict, Generator
+from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Dict, Generator, List
 
 SYMBOLS: dict[str, str] = {
     "eql": " ",
@@ -27,7 +28,7 @@ class Edit:
         return SYMBOLS[self.ty] + line.text
 
     @property
-    def a_lines(self):
+    def a_lines(self) -> list[Line | None]:
         return [self.a_line]
 
 
@@ -108,6 +109,6 @@ class Myers:
                 v[k] = x
 
                 if x >= n and y >= m:
-                    return trace 
+                    return trace
 
-        return trace 
+        return trace

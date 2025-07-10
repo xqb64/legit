@@ -1,27 +1,33 @@
-import io
-import re
+from __future__ import annotations
 
 import logging
+import re
+from io import BytesIO
+from typing import IO, Generator, Optional, cast
 
 log = logging.getLogger(__name__)
 
 
 class Remotes:
     class Protocol:
-        def __init__(self, command, input_stream, output_stream, capabilities=[]):
-            self.command = command
-            self.input = input_stream
-            self.output = output_stream
-            self.caps_local = capabilities
-            self.caps_remote = None
-            self.caps_sent = False
+        def __init__(
+            self,
+            command: str,
+            input_stream: IO[bytes],
+            output_stream: IO[bytes],
+            capabilities: Optional[list[str]] = None,
+        ) -> None:
+            self.command: str = command
+            self.input: IO[bytes] = input_stream
+            self.output: IO[bytes] = output_stream
+            self.caps_local: list[str] = capabilities or []
+            self.caps_remote: Optional[list[str]] = None
+            self.caps_sent: bool = False
 
-        def capable(self, ability):
-            if isinstance(ability, str):
-                ability = ability.encode()
+        def capable(self, ability: str) -> bool:
             return self.caps_remote is not None and ability in self.caps_remote
 
-        def send_packet(self, line):
+        def send_packet(self, line: Optional[str | bytes]) -> None:
             log.debug(f"send_packet got {line!r} to transmit")
             if line is None:
                 self.output.write(b"0000")
@@ -42,9 +48,7 @@ class Remotes:
 
             self.output.flush()
 
-        def recv_packet(self):
-            import re
-
+        def recv_packet(self) -> bytes | None:
             head = self.input.read(4)
             log.debug(f"recv_packet read: {head!r}")
 
@@ -65,21 +69,21 @@ class Remotes:
 
             return self.detect_caps(body)
 
-        def recv_until(self, terminator):
+        def recv_until(self, terminator: bytes | None) -> Generator[bytes]:
             while True:
                 line = self.recv_packet()
-                if line is None or line == terminator:
+                if line == terminator:
                     break
-                yield line
+                yield cast(bytes, line)
 
-        def append_caps(self, line):
+        def append_caps(self, line: bytes) -> bytes:
             if self.caps_sent:
                 return line
             self.caps_sent = True
 
-            sep = b"\0" if self.command != "fetch" else b" "
+            sep = "\0" if self.command != "fetch" else " "
 
-            caps_to_send = set(x.encode() for x in self.caps_local)
+            caps_to_send = set(x for x in self.caps_local)
             if self.caps_remote is not None:
                 caps_to_send &= set(self.caps_remote)
 
@@ -88,8 +92,8 @@ class Remotes:
 
             return (
                 line
-                + sep
-                + " ".join(sorted(list(x.decode() for x in caps_to_send))).encode()
+                + sep.encode()
+                + " ".join(sorted(list(x for x in caps_to_send))).encode()
             )
 
         def detect_caps(self, line: bytes) -> bytes:
@@ -108,6 +112,10 @@ class Remotes:
             else:
                 caps_str = b""
 
-            self.caps_remote = re.split(rb" +", caps_str.strip()) if caps_str else []
+            self.caps_remote = (
+                [cap.decode() for cap in re.split(rb" +", caps_str.strip())]
+                if caps_str
+                else []
+            )
 
             return sep.join(parts)

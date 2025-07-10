@@ -1,20 +1,21 @@
 import textwrap
+
 from legit.diff3 import Diff3
 
 
-def test_it_cleanly_merges_two_lists():
+def test_it_cleanly_merges_two_lists() -> None:
     merge = Diff3.merge(["a", "b", "c"], ["d", "b", "c"], ["a", "b", "e"])
     assert merge.is_clean()
     assert merge.to_string() == "dbe"
 
 
-def test_it_cleanly_merges_two_lists_with_same_edit():
+def test_it_cleanly_merges_two_lists_with_same_edit() -> None:
     merge = Diff3.merge(["a", "b", "c"], ["d", "b", "c"], ["d", "b", "e"])
     assert merge.is_clean()
     assert merge.to_string() == "dbe"
 
 
-def test_it_uncleanly_merges_two_lists():
+def test_it_uncleanly_merges_two_lists() -> None:
     merge = Diff3.merge(["a", "b", "c"], ["d", "b", "c"], ["e", "b", "c"])
     assert not merge.is_clean()
 
@@ -28,7 +29,7 @@ def test_it_uncleanly_merges_two_lists():
     assert merge.to_string() == expected
 
 
-def test_it_uncleanly_merges_two_lists_against_an_empty_list():
+def test_it_uncleanly_merges_two_lists_against_an_empty_list() -> None:
     merge = Diff3.merge([], ["d", "b", "c"], ["e", "b", "c"])
     assert not merge.is_clean()
 
@@ -42,7 +43,7 @@ def test_it_uncleanly_merges_two_lists_against_an_empty_list():
     assert merge.to_string() == expected
 
 
-def test_it_uncleanly_merges_two_lists_with_head_names():
+def test_it_uncleanly_merges_two_lists_with_head_names() -> None:
     merge = Diff3.merge(["a", "b", "c"], ["d", "b", "c"], ["e", "b", "c"])
     assert not merge.is_clean()
 

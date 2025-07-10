@@ -1,15 +1,15 @@
+from __future__ import annotations
+
+from collections import defaultdict
 from pathlib import Path
-from typing import reveal_type
-from legit.cmd_base import Base
-from legit.index import Entry, Index
-from legit.myers import Edit
-from legit.status import Status
-from legit.repository import Repository
+from typing import Optional, cast
+
 from legit.blob import Blob
-from legit.hunk import Hunk
-from legit.diff import diff, diff_hunks
-from legit.cmd_color import SGR_CODES, Color
+from legit.cmd_base import Base
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 from legit.print_diff import PrintDiffMixin, Target
+from legit.status import Status
 
 
 class Diff(PrintDiffMixin, Base):
@@ -24,14 +24,13 @@ class Diff(PrintDiffMixin, Base):
         else:
             self.cached = False
 
+        self.stage: Optional[int] = None
         if any(x in self.args for x in ("-1", "--base")):
             self.stage = 1
         elif any(x in self.args for x in ("-2", "--ours")):
             self.stage = 2
         elif any(x in self.args for x in ("-3", "--theirs")):
             self.stage = 3
-        else:
-            self.stage = None
 
         self.repo.index.load()
         self.status_state: Status = self.repo.status()
@@ -65,8 +64,10 @@ class Diff(PrintDiffMixin, Base):
         if not self.patch:
             return
 
-        paths = self.status_state.conflicts.copy()
-        paths.update(self.status_state.workspace_changes)
+        paths: dict[str, str | list[int]] = {
+            **self.status_state.conflicts,
+            **self.status_state.workspace_changes,
+        }
 
         for path, state in paths.items():
             if path in self.status_state.conflicts:
@@ -94,15 +95,14 @@ class Diff(PrintDiffMixin, Base):
             self.print_diff(self.from_index(Path(path)), self.from_nothing(Path(path)))
 
     def from_head(self, path: Path) -> "Target":
-        entry = self.status_state.head_tree[path]
-        blob = self.repo.database.load(entry.oid)
-        assert isinstance(blob, Blob)
+        entry = cast(DatabaseEntry, self.status_state.head_tree[path])
+        blob = cast(Blob, self.repo.database.load(entry.oid))
         return Target(path, entry.oid, oct(entry.mode)[2:], blob.data.decode("utf-8"))
 
-    def from_index(self, path: Path, stage: int = 0) -> "Target":
+    def from_index(self, path: Path, stage: int = 0) -> "Target | None":
         entry = self.repo.index.entry_for_path(path, stage)
         if entry is None:
-            return
+            return None
 
         blob = self.repo.database.load(entry.oid)
         assert isinstance(blob, Blob)

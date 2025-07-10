@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import textwrap
+from typing import cast
+
 from legit.cmd_base import Base
 from legit.commit import Commit
+from legit.editor import Editor
+from legit.inputs import CherryPick as CherryPickInput
+from legit.rev_list import RevList
 from legit.sequencing import SequencingMixin
 from legit.write_commit import WriteCommitMixin
-from legit.rev_list import RevList
-from legit.inputs import CherryPick as CherryPickInput
-from legit.editor import Editor
-
 
 COMMIT_NOTES = textwrap.dedent(
     """\
@@ -22,8 +25,8 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
 
     def store_commit_sequence(self) -> None:
         commits = RevList(self.repo, self.args, {"walk": False})
-        for commit in commits.each():
-            self.sequencer.revert(commit)
+        for commit, _ in commits.each():
+            self.sequencer.revert(cast(Commit, commit))
 
     def revert(self, commit: Commit) -> None:
         inputs = self.revert_merge_inputs(commit)
@@ -35,7 +38,8 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
             self.fail_on_conflict(inputs, message)
 
         author = self.current_author()
-        message = self.edit_revert_message(message)
+
+        message = cast(str, self.edit_revert_message(message))
 
         picked = Commit(
             [inputs.left_oid], self.write_tree().oid, author, author, message
@@ -47,10 +51,14 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
         short = self.repo.database.short_oid(commit.oid)
 
         left_name = "HEAD"
+
         left_oid = self.repo.refs.read_head()
+        assert left_oid is not None
 
         right_name = f"parent of {short}... {commit.title_line().strip()}"
+
         right_oid = self.select_parent(commit)
+        assert right_oid is not None
 
         return CherryPickInput(left_name, right_name, left_oid, right_oid, [commit.oid])
 
@@ -63,7 +71,7 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
             """
         )
 
-    def edit_revert_message(self, message: str):
+    def edit_revert_message(self, message: str) -> str | None:
         def _setup(editor: Editor) -> None:
             editor.println(message)
             editor.println("")

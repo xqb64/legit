@@ -1,7 +1,10 @@
-from typing import Union, List
-from legit.myers import Edit, Line, Myers
-from legit.hunk import Hunk
+from __future__ import annotations
+
+from typing import List, Sequence, Union
+
 from legit.combined import Combined
+from legit.hunk import EditLike, Hunk
+from legit.myers import Edit, Line, Myers
 
 
 def lines(document: Union[str, List[str]]) -> List[Line]:
@@ -20,11 +23,15 @@ def diff_hunks(a: Union[str, List[str]], b: Union[str, List[str]]) -> List[Hunk]
     return Hunk.filter(diff(a, b))
 
 
-def diff_combined(a_versions, b_version) -> List[Combined.Row]:
-    diffs: List[List[Edit]] = [diff(a, b_version) for a in a_versions]
+def diff_combined(
+    a_versions: Sequence[Union[str, List[str]]], b_version: Union[str, List[str]]
+) -> Sequence[EditLike]:
+    diffs = [diff(a, b_version) for a in a_versions]
     combined_rows = list(Combined(diffs))
     return combined_rows
 
 
-def combined_hunks(a_versions, b_version) -> List[Hunk]:
+def combined_hunks(
+    a_versions: Sequence[Union[str, List[str]]], b_version: Union[str, List[str]]
+) -> List[Hunk]:
     return Hunk.filter(diff_combined(a_versions, b_version))

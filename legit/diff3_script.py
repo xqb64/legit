@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import textwrap
+
 from legit.diff3 import Diff3
 
 a = textwrap.dedent("""\

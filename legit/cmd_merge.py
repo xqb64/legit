@@ -1,16 +1,14 @@
-from typing import Optional
-import textwrap
-from legit.cmd_base import Base
-from legit.repository import Repository, PendingCommit
-from legit.revision import Revision
-from legit.common_ancestors import CommonAncestors
-from legit.write_commit import WriteCommitMixin
-from legit.bases import Bases
-from legit.inputs import Inputs
-from legit.resolve import Resolve
-from legit.write_commit import CONFLICT_MESSAGE
-from legit.editor import Editor
+from __future__ import annotations
 
+import textwrap
+from typing import Optional, cast
+
+from legit.cmd_base import Base
+from legit.editor import Editor
+from legit.inputs import Inputs
+from legit.repository import PendingCommit
+from legit.resolve import Resolve
+from legit.write_commit import CONFLICT_MESSAGE, WriteCommitMixin
 
 COMMIT_NOTES = textwrap.dedent(
     """\
@@ -61,7 +59,7 @@ class Merge(WriteCommitMixin, Base):
         self.exit(0)
 
     def compose_message(self) -> Optional[str]:
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(self.read_message() or self.default_commit_message())
             editor.println("")
             editor.note(COMMIT_NOTES)
@@ -79,7 +77,11 @@ class Merge(WriteCommitMixin, Base):
             self.exit(128)
 
         self.repo.index.load_for_update()
-        self.repo.hard_reset(self.repo.refs.read_head())
+
+        head = self.repo.refs.read_head()
+        assert head is not None
+
+        self.repo.hard_reset(head)
         self.repo.index.write_updates()
 
         self.exit(0)
@@ -110,7 +112,7 @@ class Merge(WriteCommitMixin, Base):
             self.fail_on_conflict()
 
     def fail_on_conflict(self) -> None:
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(self.read_message() or self.default_commit_message())
             editor.println("")
             editor.note("Conflicts:")
@@ -130,8 +132,11 @@ class Merge(WriteCommitMixin, Base):
 
     def commit_merge(self) -> None:
         parents = [self.inputs.left_oid, self.inputs.right_oid]
+
         message = self.compose_message()
-        self.write_commit(parents, message)
+        assert message is not None
+
+        self.write_commit(cast(list[str | None], parents), message)
         self.pending_commit.clear()
 
     def handle_merged_ancestor(self) -> None:

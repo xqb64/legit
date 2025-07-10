@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 from legit.common_ancestors import CommonAncestors
+from legit.database import Database
 
 
 class Bases:
-    def __init__(self, database, one, two) -> None:
+    def __init__(self, database: Database, one: str, two: str) -> None:
         self.database = database
         self.common = CommonAncestors(self.database, one, [two])
 
-    def find(self):
+    def find(self) -> list[str]:
         self.commits = self.common.find()
         if len(self.commits) <= 1:
             return self.commits
 
-        self.redundant = set()
+        self.redundant: set[str] = set()
 
         for commit in self.commits:
             self.filter_commit(commit)

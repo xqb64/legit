@@ -3,14 +3,12 @@ from __future__ import annotations
 import os
 import stat as _stat
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING, reveal_type
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 from legit.blob import Blob
-from legit.index import Entry, Index
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 from legit.inspector import Inspector
-from legit.tree import DatabaseEntry
-from legit.tree_diff import TreeDiff
-
 
 if TYPE_CHECKING:
     from legit.repository import Repository
@@ -41,11 +39,11 @@ class Migration:
 
     def __init__(
         self,
-        repo: "Repository",
-        tree_diff: dict[Path, list[DatabaseEntry]],
+        repo: Repository,
+        tree_diff: dict[Path, list[DatabaseEntry | None]],
     ) -> None:
-        self.repo: "Repository" = repo
-        self.tree_diff: dict[Path, list[DatabaseEntry]] = tree_diff
+        self.repo: Repository = repo
+        self.tree_diff: dict[Path, list[DatabaseEntry | None]] = tree_diff
 
         self.changes: Dict[str, List[Tuple[Path, Optional[DatabaseEntry]]]] = {
             k: [] for k in ("create", "update", "delete")
@@ -77,7 +75,7 @@ class Migration:
             self.check_for_conflict(path, old_item, new_item)
             self.record_change(path, old_item, new_item)
 
-        self.collect_errors() 
+        self.collect_errors()
 
     @staticmethod
     def _ancestor_dirs(p: Path) -> List[Path]:

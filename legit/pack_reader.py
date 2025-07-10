@@ -1,34 +1,37 @@
-import zlib
-import struct
+from __future__ import annotations
 
+import struct
+import zlib
+from typing import cast, reveal_type
+
+from legit.numbers import VarIntBE, VarIntLE
 from legit.pack import (
+    BLOB,
+    COMMIT,
+    HEADER_FORMAT,
+    HEADER_SIZE,
     OFS_DELTA,
     REF_DELTA,
-    InvalidPack,
-    HEADER_SIZE,
-    HEADER_FORMAT,
     SIGNATURE,
-    VERSION,
-    COMMIT,
-    BLOB,
     TREE,
+    VERSION,
+    InvalidPack,
+    OfsDelta,
     Record,
     RefDelta,
-    OfsDelta,
 )
-from legit.numbers import VarIntBE, VarIntLE
 from legit.pack_expander import Expander
+from legit.pack_stream import Stream
 
-
-TYPE_CODES_REVERSED = {COMMIT: "commit", BLOB: "blob", TREE: "tree"}
+TYPE_CODES_REVERSED: dict[int, str] = {COMMIT: "commit", BLOB: "blob", TREE: "tree"}
 
 
 class Reader:
-    def __init__(self, f):
-        self.input = f
-        self.count = 0
+    def __init__(self, f: Stream) -> None:
+        self.input: Stream = f
+        self.count: int = 0
 
-    def read_header(self):
+    def read_header(self) -> None:
         data = self.input.read(HEADER_SIZE)
         signature, version, self.count = struct.unpack(HEADER_FORMAT, data)
 
@@ -38,29 +41,32 @@ class Reader:
         if version != VERSION:
             raise InvalidPack(f"unsupported pack version: {version}")
 
-    def load_info(self):
+    def load_info(self) -> Record | OfsDelta | RefDelta | None:
         ty, size = self.read_record_header()
 
         if ty in [COMMIT, BLOB, TREE]:
             return Record(TYPE_CODES_REVERSED[ty], size)
 
         elif ty == OFS_DELTA:
-            delta = self.read_ofs_delta()
-            size = Expander(delta.delta_data).target_size
+            ofs_delta = self.read_ofs_delta()
+            size = Expander(cast(bytes, ofs_delta.delta_data)).target_size
 
-            return OfsDelta(delta.base_ofs, size)
+            return OfsDelta(ofs_delta.base_ofs, size)
 
         elif ty == REF_DELTA:
-            delta = self.read_ref_delta()
-            size = Expander(delta.delta_data).target_size
+            ref_delta = self.read_ref_delta()
+            size = Expander(cast(bytes, ref_delta.delta_data)).target_size
 
-            return RefDelta(delta.base_oid, size)
+            return RefDelta(ref_delta.base_oid, size)
 
-    def read_record(self) -> "Record | None":
+        else:
+            return None
+
+    def read_record(self) -> Record | OfsDelta | RefDelta:
         ty, _ = self.read_record_header()
         if ty in [COMMIT, BLOB, TREE]:
             decompressed_data = self.read_zlib_stream()
-            return Record(TYPE_CODES_REVERSED.get(ty), decompressed_data)
+            return Record(TYPE_CODES_REVERSED[ty], decompressed_data)
 
         elif ty == OFS_DELTA:
             return self.read_ofs_delta()
@@ -71,16 +77,16 @@ class Reader:
         else:
             raise InvalidPack(f"Unknown pack object type: {ty}")
 
-    def read_ofs_delta(self):
+    def read_ofs_delta(self) -> OfsDelta:
         offset = VarIntBE.read(self.input)
         return OfsDelta(offset, self.read_zlib_stream())
 
-    def read_ref_delta(self):
+    def read_ref_delta(self) -> RefDelta:
         base_oid = self.input.read(20).hex()
         delta_data = self.read_zlib_stream()
         return RefDelta(base_oid, delta_data)
 
-    def read_record_header(self):
+    def read_record_header(self) -> tuple[int, int]:
         first, size = VarIntLE.read(self.input, 4)
         ty = (first >> 4) & 0x7
         return ty, size

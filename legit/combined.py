@@ -1,10 +1,12 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import List, Optional, Generator, Iterable
 
+from dataclasses import dataclass
+from typing import Generator, Iterable, List, Optional, cast
+
+from legit.hunk import EditLike
 from legit.myers import Edit, Line
 
-SYMBOLS = {
+SYMBOLS: dict[str, str] = {
     "del": "-",
     "ins": "+",
     "eql": " ",
@@ -32,10 +34,7 @@ class Combined:
 
         def __str__(self) -> str:
             symbols = "".join(
-                [
-                    SYMBOLS.get(edit.ty if edit is not None else None, " ")
-                    for edit in self.edits
-                ]
+                [SYMBOLS[edit.ty] if edit is not None else " " for edit in self.edits]
             )
 
             del_edit = next(
@@ -45,7 +44,9 @@ class Combined:
             if del_edit is not None:
                 line = del_edit.a_line
             else:
-                line = self.edits[0].b_line
+                line = cast(Edit, self.edits[0]).b_line
+
+            assert line is not None
 
             return "".join(symbols) + line.text
 
@@ -53,7 +54,7 @@ class Combined:
         self._diffs = diffs
         self._offsets: List[int] = []
 
-    def __iter__(self) -> Generator[Combined.Row, None, None]:
+    def __iter__(self) -> Generator[EditLike, None, None]:
         self._offsets = [0] * len(self._diffs)
 
         while True:
@@ -63,7 +64,10 @@ class Combined:
             if self._is_complete():
                 return
 
-            edits = [diff[offset] for offset, diff in self._offset_diffs()]
+            edits = cast(
+                List[Optional[Edit]],
+                [diff[offset] for offset, diff in self._offset_diffs()],
+            )
             self._offsets = [offset + 1 for offset in self._offsets]
 
             yield self.Row(edits)

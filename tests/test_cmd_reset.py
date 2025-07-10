@@ -1,22 +1,33 @@
+from pathlib import Path
+from typing import cast
+
 import pytest
 
+from legit.commit import Commit as CommitObj
+from legit.repository import Repository
 from tests.cmd_helpers import (
+    assert_index,
     assert_stdout,
     assert_workspace,
-    assert_index,
+)
+from tests.conftest import (
+    Commit,
+    Delete,
+    LegitCmd,
+    WriteFile,
 )
 
 
 class TestWithNoHeadCommit:
     @pytest.fixture(autouse=True)
-    def setup(self, write_file, legit_cmd):
+    def setup(self, write_file: WriteFile, legit_cmd: LegitCmd) -> None:
         write_file("a.txt", "1")
         write_file("outer/b.txt", "2")
         write_file("outer/inner/c.txt", "3")
 
         _ = legit_cmd("add", ".")
 
-    def assert_unchanged_workspace(self, repo_path):
+    def assert_unchanged_workspace(self, repo_path: Path) -> None:
         assert_workspace(
             repo_path,
             {
@@ -26,12 +37,16 @@ class TestWithNoHeadCommit:
             },
         )
 
-    def test_it_removes_everything_from_the_index(self, legit_cmd, repo, repo_path):
+    def test_it_removes_everything_from_the_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         legit_cmd("reset")
         assert_index(repo, {})
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_removes_a_single_file_from_the_index(self, legit_cmd, repo, repo_path):
+    def test_it_removes_a_single_file_from_the_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         legit_cmd("reset", "a.txt")
         assert_index(
             repo,
@@ -42,7 +57,9 @@ class TestWithNoHeadCommit:
         )
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_removes_a_directory_from_the_index(self, legit_cmd, repo, repo_path):
+    def test_it_removes_a_directory_from_the_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         legit_cmd("reset", "outer")
         assert_index(repo, {"a.txt": "1"})
         self.assert_unchanged_workspace(repo_path)
@@ -50,7 +67,13 @@ class TestWithNoHeadCommit:
 
 class TestWithAHeadCommit:
     @pytest.fixture(autouse=True)
-    def setup(self, write_file, legit_cmd, commit, repo):
+    def setup(
+        self,
+        write_file: WriteFile,
+        legit_cmd: LegitCmd,
+        commit: Commit,
+        repo: Repository,
+    ) -> None:
         write_file("a.txt", "1")
         write_file("outer/b.txt", "2")
         write_file("outer/inner/c.txt", "3")
@@ -69,10 +92,10 @@ class TestWithAHeadCommit:
 
         self.head_oid = repo.refs.read_head()
 
-    def assert_unchanged_head(self, repo):
+    def assert_unchanged_head(self, repo: Repository) -> None:
         assert repo.refs.read_head() == self.head_oid
 
-    def assert_unchanged_workspace(self, repo_path):
+    def assert_unchanged_workspace(self, repo_path: Path) -> None:
         assert_workspace(
             repo_path,
             {
@@ -84,8 +107,8 @@ class TestWithAHeadCommit:
         )
 
     def test_it_restores_a_file_removed_from_the_index(
-        self, legit_cmd, repo, repo_path
-    ):
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "a.txt")
         assert_index(
             repo,
@@ -99,7 +122,9 @@ class TestWithAHeadCommit:
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_resets_a_file_modified_in_index(self, legit_cmd, repo, repo_path):
+    def test_it_resets_a_file_modified_in_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "outer/inner")
         assert_index(
             repo,
@@ -112,7 +137,9 @@ class TestWithAHeadCommit:
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_removes_a_file_added_to_the_index(self, legit_cmd, repo, repo_path):
+    def test_it_removes_a_file_added_to_the_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "outer/d.txt")
         assert_index(
             repo,
@@ -124,7 +151,9 @@ class TestWithAHeadCommit:
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_resets_a_file_to_specific_commit(self, legit_cmd, repo, repo_path):
+    def test_it_resets_a_file_to_specific_commit(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "@^", "outer/b.txt")
         assert_index(
             repo,
@@ -137,7 +166,9 @@ class TestWithAHeadCommit:
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_resets_the_whole_index(self, legit_cmd, repo, repo_path):
+    def test_it_resets_the_whole_index(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset")
         assert_index(
             repo,
@@ -150,7 +181,9 @@ class TestWithAHeadCommit:
         self.assert_unchanged_head(repo)
         self.assert_unchanged_workspace(repo_path)
 
-    def test_it_resets_the_index_and_moves_head(self, legit_cmd, repo, repo_path):
+    def test_it_resets_the_index_and_moves_head(
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "@^")
         assert_index(
             repo,
@@ -160,12 +193,15 @@ class TestWithAHeadCommit:
                 "outer/inner/c.txt": "3",
             },
         )
-        assert repo.refs.read_head() == repo.database.load(self.head_oid).parent
+        assert (
+            repo.refs.read_head()
+            == cast(CommitObj, repo.database.load(cast(str, self.head_oid))).parent
+        )
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_moves_head_and_leaves_the_index_unchanged(
-        self, legit_cmd, repo, repo_path
-    ):
+        self, legit_cmd: LegitCmd, repo: Repository, repo_path: Path
+    ) -> None:
         _ = legit_cmd("reset", "--soft", "@^")
         assert_index(
             repo,
@@ -175,12 +211,19 @@ class TestWithAHeadCommit:
                 "outer/inner/c.txt": "6",
             },
         )
-        assert repo.refs.read_head() == repo.database.load(self.head_oid).parent
+        assert (
+            repo.refs.read_head()
+            == cast(CommitObj, repo.database.load(cast(str, self.head_oid))).parent
+        )
         self.assert_unchanged_workspace(repo_path)
 
     def test_it_resets_the_index_and_the_workspace(
-        self, write_file, delete, legit_cmd, repo
-    ):
+        self,
+        write_file: WriteFile,
+        delete: Delete,
+        legit_cmd: LegitCmd,
+        repo: Repository,
+    ) -> None:
         write_file("a.txt/nested", "remove me")
         write_file("outer/b.txt", "10")
         delete("outer/inner")
@@ -202,8 +245,8 @@ class TestWithAHeadCommit:
         assert_stdout(stdout, "?? outer/e.txt\n")
 
     def test_it_lets_you_return_to_the_previous_state_using_orig_head(
-        self, legit_cmd, repo
-    ):
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         _ = legit_cmd("reset", "--hard", "@^")
         assert_index(
             repo,

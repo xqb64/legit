@@ -1,10 +1,14 @@
-from legit.cmd_base import Base
-from legit.recv_objects import RecvObjectsMixin
-from legit.remote_agent import RemoteAgentMixin
-from legit.fast_forward import FastForwardMixin
+from __future__ import annotations
 
 import logging
+from typing import cast
 
+from typing_extensions import Optional
+
+from legit.cmd_base import Base
+from legit.fast_forward import FastForwardMixin
+from legit.recv_objects import RecvObjectsMixin
+from legit.remote_agent import RemoteAgentMixin
 
 log = logging.getLogger(__name__)
 
@@ -38,18 +42,18 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         self.requests = {}
 
         for line in self.conn.recv_until(None):
-            old_oid, new_oid, ref = line.split()
-            ref = ref.decode()
+            old_oid, new_oid, bytes_ref = line.split()
+            ref = bytes_ref.decode()
             self.requests[ref] = [self.zero_to_none(oid) for oid in (old_oid, new_oid)]
 
-    def zero_to_none(self, oid: bytes) -> None:
+    def zero_to_none(self, oid: bytes) -> str | None:
         if oid == self.ZERO_OID:
             return None
         return oid.decode()
 
     def recv_objects(self) -> None:
         self.unpack_error = None
-        unpack_limit = self.repo.config.get(["receive", "unpackLimit"])
+        unpack_limit = cast(int, self.repo.config.get(["receive", "unpackLimit"]))
         try:
             if any(vals and vals[-1] for vals in self.requests.values()):
                 self.recv_packed_objects(unpack_limit)
@@ -59,7 +63,7 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
             self.unpack_error = e
             self.report_status(f"unpack {e}")
 
-    def report_status(self, line) -> None:
+    def report_status(self, line: Optional[str]) -> None:
         if self.conn.capable("report-status"):
             if line is None:
                 self.conn.send_packet(None)
@@ -69,10 +73,10 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
     def update_refs(self) -> None:
         log.debug(f"update refs called, {self.requests=}")
         for ref, (old, new) in self.requests.items():
-            self.update_ref(ref, old, new)
+            self.update_ref(ref, cast(str, old), cast(str, new))
         self.report_status(None)
 
-    def update_ref(self, ref, old, new):
+    def update_ref(self, ref: str, old: str, new: str) -> None:
         log.debug(f"{ref}, {type(ref)}")
         if self.unpack_error:
             return self.report_status(f"ng {ref} unpacker error")
@@ -84,7 +88,7 @@ class ReceivePack(FastForwardMixin, RecvObjectsMixin, RemoteAgentMixin, Base):
         except Exception as e:
             self.report_status(f"ng {ref} {e}")
 
-    def validate_update(self, ref, old_oid, new_oid):
+    def validate_update(self, ref: str, old_oid: str, new_oid: str) -> None:
         if self.repo.config.get(["receive", "denyDeletes"]):
             if not new_oid:
                 raise Exception("deletion prohibited")

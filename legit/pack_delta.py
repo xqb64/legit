@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 import struct
+
 from legit.numbers import PackedInt56LE, VarIntLE
+from legit.pack_entry import Entry
+from legit.pack_stream import Stream
+from legit.pack_window import Window
 from legit.pack_xdelta import XDelta
 
 
@@ -10,7 +16,7 @@ class Delta:
             self.size = size
 
         @classmethod
-        def parse(cls, stream, byte: int) -> "Delta.Copy":
+        def parse(cls, stream: Stream, byte: int) -> "Delta.Copy":
             value = PackedInt56LE.read(stream, byte)
             offset = value & 0xFFFFFFFF
             size = value >> 32
@@ -35,7 +41,7 @@ class Delta:
             self.data = data
 
         @classmethod
-        def parse(cls, stream, byte: int) -> "Delta.Insert":
+        def parse(cls, stream: Stream, byte: int) -> "Delta.Insert":
             return cls(stream.read(byte))
 
         def to_bytes(self) -> bytes:
@@ -51,8 +57,10 @@ class Delta:
         def __repr__(self) -> str:
             return f"Insert(data={self.data!r})"
 
-    def __init__(self, source, target):
-        self.base = source.entry if hasattr(source, "entry") else source
+    def __init__(self, source: "Window.Unpacked", target: "Window.Unpacked") -> None:
+        self.base: Entry | Window.Unpacked = (
+            source.entry if hasattr(source, "entry") else source
+        )
 
         data_parts = [self._sizeof(source), self._sizeof(target)]
 
@@ -70,6 +78,6 @@ class Delta:
     def size(self) -> int:
         return len(self.data)
 
-    def _sizeof(self, entry) -> bytes:
+    def _sizeof(self, entry: "Window.Unpacked") -> bytes:
         byte_array = VarIntLE.write(entry.size, 7)
         return bytes(byte_array)

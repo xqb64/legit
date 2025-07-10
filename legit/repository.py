@@ -1,29 +1,30 @@
-import re
+from __future__ import annotations
+
 import os
+import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
-from legit.tree import DatabaseEntry
-from legit.database import Database
-from legit.index import Index
-from legit.refs import Refs
-from legit.workspace import Workspace
-from legit.status import Status
-from legit.migration import Migration
-from legit.lockfile import Lockfile
-from legit.config_stack import ConfigStack
-from legit.config import ConfigFile
-from legit.remotes import Remotes
 from legit.common_ancestors import CommonAncestors
+from legit.config import ConfigFile, ConfigValue
+from legit.config_stack import ConfigStack
+from legit.database import Database
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry, Index
+from legit.lockfile import Lockfile
+from legit.migration import Migration
+from legit.refs import Refs
+from legit.remotes import Remotes
+from legit.status import Status
+from legit.workspace import Workspace
 
-
-UNSAFE_MESSAGE = "You seem to have moved HEAD. Not rewinding, check your HEAD!"
+UNSAFE_MESSAGE: str = "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 
 
 class Repository:
-    def __init__(self, git_path: Path):
+    def __init__(self, git_path: Path) -> None:
         self.git_path: Path = git_path
         self.database: Database = Database(git_path / "objects")
         self.index: Index = Index(git_path / "index")
@@ -32,20 +33,21 @@ class Repository:
         self.config: ConfigStack = ConfigStack(self.git_path)
         self.remotes: Remotes = Remotes(self.config.file("local"))
 
-    def close(self):
-        if hasattr(self, "database"):
-            self.database.close()
+    def close(self) -> None:
+        self.database.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def divergence(self, ref):
+    def divergence(self, ref: Refs.SymRef) -> Divergence:
         return Divergence(self, ref)
 
     def status(self, commit_oid: Optional[str] = None) -> Status:
         return Status(self, commit_oid)
 
-    def migration(self, tree_diff: dict[Path, list[DatabaseEntry]]) -> "Migration":
+    def migration(
+        self, tree_diff: dict[Path, list[DatabaseEntry | None]]
+    ) -> "Migration":
         return Migration(self, tree_diff)
 
     def pending_commit(self) -> "PendingCommit":
@@ -75,10 +77,14 @@ class HardReset:
         if entry is None:
             return
 
-        blob = self.repo.database.load(entry.oid)
-        self.repo.workspace.write_file(path, blob.data, entry.mode, True)
+        blob = cast(Blob, self.repo.database.load(entry.oid))
+        self.repo.workspace.write_file(
+            path, blob.data, cast(DatabaseEntry, entry).mode, True
+        )
 
         stat = self.repo.workspace.stat_file(path)
+        assert stat is not None
+
         self.repo.index.add(path, entry.oid, stat)
 
 
@@ -86,7 +92,7 @@ class PendingCommit:
     class Error(Exception):
         pass
 
-    HEAD_FILES = {
+    HEAD_FILES: dict[str, str] = {
         "merge": "MERGE_HEAD",
         "cherry_pick": "CHERRY_PICK_HEAD",
         "revert": "REVERT_HEAD",
@@ -96,7 +102,7 @@ class PendingCommit:
         self.path = path
         self.message_path = path / "MERGE_MSG"
 
-    def merge_oid(self, ty: str = "merge"):
+    def merge_oid(self, ty: str = "merge") -> str:
         head_path = self.path / PendingCommit.HEAD_FILES[ty]
         try:
             return head_path.read_text().strip()
@@ -107,7 +113,7 @@ class PendingCommit:
             )
 
     @property
-    def merge_message(self):
+    def merge_message(self) -> str:
         return self.message_path.read_text()
 
     def start(self, oid: str, ty: str = "merge") -> None:
@@ -142,13 +148,13 @@ class Sequencer:
         self.repo: Repository = repo
         self.path = self.repo.git_path / "sequencer"
         self.todo_path = self.path / "todo"
-        self.todo_file = None
+        self.todo_file: Lockfile | None = None
         self.abort_path = self.path / "aborty-safety"
         self.head_path = self.path / "head"
-        self.commands = []
+        self.commands: list[tuple[str, Commit]] = []
         self.config: ConfigFile = ConfigFile(self.path / "opts")
 
-    def start(self, options) -> None:
+    def start(self, options: dict[str, Optional[str | int]]) -> None:
         self.path.mkdir(parents=True, exist_ok=False)
 
         self.config.open_for_update()
@@ -158,12 +164,14 @@ class Sequencer:
         self.config.save()
 
         head_oid = self.repo.refs.read_head()
+        assert head_oid is not None
+
         self.write_file(self.head_path, head_oid)
         self.write_file(self.abort_path, head_oid)
 
         self.open_todo_file()
 
-    def get_option(self, name: str) -> str:
+    def get_option(self, name: str) -> ConfigValue | None:
         self.config.open()
         return self.config.get(["options", name])
 
@@ -179,7 +187,7 @@ class Sequencer:
     def revert(self, commit: Commit) -> None:
         self.commands.append(("revert", commit))
 
-    def next_command(self):
+    def next_command(self) -> Optional[tuple[str, Commit]]:
         try:
             return self.commands[0]
         except IndexError:
@@ -187,7 +195,8 @@ class Sequencer:
 
     def drop_command(self) -> None:
         self.commands.pop(0)
-        self.write_file(self.abort_path, self.repo.refs.read_head())
+        head = cast(str, self.repo.refs.read_head())
+        self.write_file(self.abort_path, head)
 
     def open_todo_file(self) -> None:
         if not self.path.is_dir():
@@ -200,7 +209,7 @@ class Sequencer:
         if self.todo_file is None:
             return
 
-        for action, (commit, path) in self.commands:
+        for action, commit in self.commands:
             short = self.repo.database.short_oid(commit.oid)
             self.todo_file.write(
                 f"{action} {short} {commit.title_line()}\n".encode("utf-8")
@@ -214,10 +223,12 @@ class Sequencer:
             return
 
         for line in self.todo_path.read_text().splitlines():
-            action, oid, _rest = re.compile(r"^(\S+) (\S+) (.*)$").match(line).groups()
+            action, oid, _rest = cast(
+                re.Match[str], re.compile(r"^(\S+) (\S+) (.*)$").match(line)
+            ).groups()
             oids = self.repo.database.prefix_match(oid)
-            commit = self.repo.database.load(oids[0])
-            self.commands.append((action, (commit, None)))
+            commit = cast(Commit, self.repo.database.load(oids[0]))
+            self.commands.append((action, commit))
 
     def quit(self) -> None:
         import shutil
@@ -235,20 +246,26 @@ class Sequencer:
             raise ValueError(UNSAFE_MESSAGE)
 
         self.repo.hard_reset(head_oid)
+
         orig_head = self.repo.refs.update_head(head_oid)
+        assert orig_head is not None
+
         self.repo.refs.update_ref("ORIG_HEAD", orig_head)
 
 
 class Divergence:
-    def __init__(self, repo, ref) -> None:
+    def __init__(self, repo: Repository, ref: Refs.SymRef) -> None:
         self.upstream = repo.remotes.get_upstream(ref.short_name())
         if self.upstream is None:
             return
 
         left = ref.read_oid()
-        right = repo.refs.read_ref(self.upstream)
-        common: CommonAncestors = CommonAncestors(repo.database, left, [right])
+        assert left is not None
 
+        right = repo.refs.read_ref(self.upstream)
+        assert right is not None
+
+        common: CommonAncestors = CommonAncestors(repo.database, left, [right])
         common.find()
 
         self.ahead, self.behind = common.counts()

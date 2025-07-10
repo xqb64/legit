@@ -1,33 +1,17 @@
-from legit.index import Entry
-from typing import Any, Callable, MutableMapping
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Any, Callable, MutableMapping
+
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 
 
-def git_sort_key(item):
+def git_sort_key(item: tuple[str, "DatabaseEntry | Entry | Tree"]) -> str:
     name, entry = item
     if isinstance(entry, Tree):
         return name + "/"
     return name
-
-
-class DatabaseEntry:
-    TREE_MODE = 0o40000
-
-    def __init__(self, oid: str, mode: int) -> None:
-        self.oid: str = oid
-        self.mode: int = mode
-
-    def is_tree(self) -> bool:
-        return self.mode == DatabaseEntry.TREE_MODE
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, DatabaseEntry):
-            return NotImplemented
-        return (
-            self.oid == other.oid
-            and self.mode == other.mode
-            and self.is_tree() == other.is_tree()
-        )
 
 
 class Tree:
@@ -63,7 +47,7 @@ class Tree:
         return cls(entries)
 
     @classmethod
-    def from_entries(cls, entries: dict[Path, Entry]) -> "Tree":
+    def from_entries(cls, entries: dict[tuple[Path, int], Entry]) -> "Tree":
         entries = dict(sorted(entries.items(), key=lambda x: x[1].path))
 
         root = Tree()

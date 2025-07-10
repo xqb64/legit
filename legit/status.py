@@ -1,24 +1,23 @@
-from collections import defaultdict
+from __future__ import annotations
+
 import os
-import stat
+from collections import defaultdict
 from pathlib import Path
 from typing import (
-    MutableMapping,
     TYPE_CHECKING,
+    MutableMapping,
     Optional,
+    cast,
 )
+
+from legit.blob import Blob
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
+from legit.inspector import Inspector
+from legit.tree import Tree
 
 if TYPE_CHECKING:
     from legit.repository import Repository
-else:
-    Repository = None
-
-from legit.tree import DatabaseEntry
-from legit.commit import Commit
-from legit.tree import Tree
-from legit.blob import Blob
-from legit.index import Entry
-from legit.inspector import Inspector
 
 
 class Status:
@@ -26,11 +25,11 @@ class Status:
         self.inspector: Inspector = Inspector(repo)
         self.repo = repo
         self.stats: MutableMapping[Path, os.stat_result] = {}
-        self.index_changes: MutableMapping[str, str] = {}
-        self.workspace_changes: MutableMapping[str, str] = {}
+        self.index_changes: dict[str, str] = {}
+        self.workspace_changes: dict[str, str] = {}
         self.changed: set[str] = set()
         self.untracked: set[str] = set()
-        self.conflicts = defaultdict(list)
+        self.conflicts: defaultdict[str, list[int]] = defaultdict(list[int])
 
         if commit_oid is None:
             commit_oid = self.repo.refs.read_head()
@@ -79,7 +78,7 @@ class Status:
             self.repo.index.update_entry_stat(entry, stat_result)
 
     def check_index_against_head_tree(self, entry: Entry) -> None:
-        item = self.head_tree.get(entry.path, None)
+        item = cast(DatabaseEntry | None, self.head_tree.get(entry.path, None))
         status = self.inspector.compare_tree_to_index(item, entry)
 
         if status is not None:

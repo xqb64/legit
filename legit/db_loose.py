@@ -1,41 +1,46 @@
+from __future__ import annotations
+
 import zlib
+from pathlib import Path
+from typing import Any
+
 from legit.temp_file import TempFile
 
 
 class Raw:
-    def __init__(self, ty, size, data):
+    def __init__(self, ty: str, size: int, data: bytes | None) -> None:
         self.ty = ty
         self.size = size
         self.data = data
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Raw):
             return NotImplemented
         return (self.ty, self.size, self.data) == (other.ty, other.size, other.data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Raw(type={self.ty!r}, size={self.size!r}, dtaa={self.data!r})"
 
 
 class Loose:
-    def __init__(self, path):
+    def __init__(self, path: Path) -> None:
         self.path = path
 
-    def close(self):
+    def close(self) -> None:
         pass
 
     def has(self, oid: str) -> bool:
         object_path = self.path / str(oid[:2]) / str(oid[2:])
         return object_path.exists()
 
-    def load_info(self, oid: str) -> Raw:
+    def load_info(self, oid: str) -> Raw | None:
         try:
             ty, size, _ = self.read_object_header(oid, 128)
             return Raw(ty, size, None)
         except FileNotFoundError:
             return None
 
-    def load_raw(self, oid):
+    def load_raw(self, oid: str) -> Raw | None:
         try:
             ty, size, (data, pos) = self.read_object_header(oid)
             return Raw(ty, size, data[pos:])
@@ -59,15 +64,17 @@ class Loose:
         return [oid for oid in oids if oid.startswith(name)]
 
     def write_object(self, oid: str, content: bytes) -> None:
-        object_path = self.path / str(oid[:2]) / str(oid[2:])
+        object_path: Path = self.path / str(oid[:2]) / str(oid[2:])
         if object_path.exists():
             return
 
         file = TempFile(object_path.parent, "tmp_obj")
         file.write(zlib.compress(content, zlib.Z_BEST_SPEED))
-        file.move(object_path.name)
+        file.move(Path(object_path.name))
 
-    def read_object_header(self, oid, read_bytes=None):
+    def read_object_header(
+        self, oid: str, read_bytes: int | None = None
+    ) -> tuple[str, int, tuple[bytes, int]]:
         path = self.path / str(oid[:2]) / str(oid[2:])
 
         with open(path, "rb") as f:

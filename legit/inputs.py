@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
-from legit.repository import Repository
 from legit.bases import Bases
+from legit.repository import Repository
 from legit.revision import Revision
 
 

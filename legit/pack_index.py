@@ -1,33 +1,36 @@
-import struct
+from __future__ import annotations
 
-IDX_MAX_OFFSET = 0x80000000
+import struct
+from typing import BinaryIO
+
+IDX_MAX_OFFSET: int = 0x80000000
 
 
 class Index:
-    HEADER_SIZE = 8
-    FANOUT_SIZE = 1024
+    HEADER_SIZE: int = 8
+    FANOUT_SIZE: int = 1024
 
-    OID_LAYER = 2
-    CRC_LAYER = 3
-    OFS_LAYER = 4
-    EXT_LAYER = 5
+    OID_LAYER: int = 2
+    CRC_LAYER: int = 3
+    OFS_LAYER: int = 4
+    EXT_LAYER: int = 5
 
-    SIZES = {
+    SIZES: dict[int, int] = {
         OID_LAYER: 20,
         CRC_LAYER: 4,
         OFS_LAYER: 4,
         EXT_LAYER: 8,
     }
 
-    def __init__(self, _input):
-        self.input = _input
+    def __init__(self, _input: BinaryIO) -> None:
+        self.input: BinaryIO = _input
         self.load_fanout_table()
 
     def load_fanout_table(self) -> None:
         self.input.seek(self.HEADER_SIZE)
         self.fanout = struct.unpack(">256I", self.input.read(self.FANOUT_SIZE))
 
-    def oid_offset(self, oid: str):
+    def oid_offset(self, oid: str) -> int | None:
         pos = self.oid_position(oid)
         if pos < 0:
             return None
@@ -40,9 +43,10 @@ class Index:
         pos = offset & (IDX_MAX_OFFSET - 1)
 
         self.input.seek(self.offset_for(self.EXT_LAYER, pos))
-        return struct.unpack("Q>", self.input.read(8))[0]
+        data = self.input.read(8)
+        return int.from_bytes(data, "big")
 
-    def offset_for(self, layer, pos):
+    def offset_for(self, layer: int, pos: int) -> int:
         offset = self.HEADER_SIZE + self.FANOUT_SIZE
 
         count = self.fanout[-1]
@@ -53,11 +57,12 @@ class Index:
 
         return offset + pos * self.SIZES[layer]
 
-    def read_int32(self, layer, pos):
+    def read_int32(self, layer: int, pos: int) -> int:
         self.input.seek(self.offset_for(layer, pos))
-        return struct.unpack(">I", self.input.read(4))[0]
+        data = self.input.read(4)
+        return int.from_bytes(data, "big")
 
-    def oid_position(self, oid):
+    def oid_position(self, oid: str) -> int:
         prefix = int(oid[:2], 16)
         packed = bytes.fromhex(oid)
 
@@ -66,7 +71,7 @@ class Index:
 
         return self.binary_search(packed, low, high)
 
-    def binary_search(self, target, low, high):
+    def binary_search(self, target: bytes, low: int, high: int) -> int:
         while low <= high:
             mid = (low + high) // 2
 
@@ -82,14 +87,14 @@ class Index:
 
         return -1 - low
 
-    def prefix_match(self, name):
+    def prefix_match(self, name: str) -> list[str]:
         pos = self.oid_position(name)
         if pos >= 0:
             return [name]
 
         self.input.seek(self.offset_for(self.OID_LAYER, -1 - pos))
 
-        oids = []
+        oids: list[str] = []
 
         while True:
             oid = self.input.read(20).hex()

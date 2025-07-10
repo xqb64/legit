@@ -1,30 +1,32 @@
+from __future__ import annotations
+
+from pathlib import Path
 from typing import (
     MutableMapping,
     TextIO,
     Type,
 )
-from pathlib import Path
 
-from legit.cmd_base import Base
-from legit.cmd_init import Init
 from legit.cmd_add import Add
-from legit.cmd_commit import Commit
-from legit.cmd_status import StatusCmd
-from legit.cmd_diff import Diff
+from legit.cmd_base import Base
 from legit.cmd_branch import Branch
 from legit.cmd_checkout import Checkout
+from legit.cmd_cherry_pick import CherryPick
+from legit.cmd_commit import Commit
+from legit.cmd_config import Config
+from legit.cmd_diff import Diff
+from legit.cmd_fetch import Fetch
+from legit.cmd_init import Init
 from legit.cmd_log import Log
 from legit.cmd_merge import Merge
-from legit.cmd_rm import Rm
-from legit.cmd_reset import Reset
-from legit.cmd_cherry_pick import CherryPick
-from legit.cmd_revert import Revert
-from legit.cmd_config import Config
-from legit.cmd_remote import Remote
-from legit.cmd_fetch import Fetch
 from legit.cmd_push import Push
-from legit.cmd_upload_pack import UploadPack
 from legit.cmd_receive_pack import ReceivePack
+from legit.cmd_remote import Remote
+from legit.cmd_reset import Reset
+from legit.cmd_revert import Revert
+from legit.cmd_rm import Rm
+from legit.cmd_status import StatusCmd
+from legit.cmd_upload_pack import UploadPack
 
 
 class Command:

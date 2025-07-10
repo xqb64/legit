@@ -1,36 +1,29 @@
+from __future__ import annotations
+
 from collections import defaultdict
-import os
-import stat
-from typing import TextIO, MutableMapping, cast
 from pathlib import Path
+from typing import MutableMapping, TextIO, Union, cast
 
-from legit import index
-from legit.blob import Blob
 from legit.cmd_base import Base
-from legit.commit import Commit
-from legit.index import Entry
-from legit.repository import Repository
-from legit.tree import DatabaseEntry, Tree
-from legit.status import Status
-from legit.cmd_color import Color
-
 
 LABEL_WIDTH = 12
 
-SHORT_STATUS: MutableMapping[str, str] = {
+StatusKey = Union[str, tuple[int, ...]]
+
+SHORT_STATUS: dict[str, str] = {
     "added": "A",
     "modified": "M",
     "deleted": "D",
 }
 
-LONG_STATUS: MutableMapping[str, str] = {
+LONG_STATUS: dict[StatusKey, str] = {
     "added": "new file:",
     "deleted": "deleted:",
     "modified": "modified:",
 }
 
 CONFLICT_LABEL_WIDTH: int = 17
-CONFLICT_LONG_STATUS = {
+CONFLICT_LONG_STATUS: dict[StatusKey, str] = {
     (1, 2, 3): "both modified:",
     (1, 2): "deleted by them:",
     (1, 3): "deleted by us:",
@@ -39,12 +32,12 @@ CONFLICT_LONG_STATUS = {
     (3,): "added by them:",
 }
 
-UI_LABELS = {
+UI_LABELS: dict[str, dict[StatusKey, str]] = {
     "normal": LONG_STATUS,
     "conflict": CONFLICT_LONG_STATUS,
 }
 
-UI_WIDTHS = {
+UI_WIDTHS: dict[str, int] = {
     "normal": LABEL_WIDTH,
     "conflict": CONFLICT_LABEL_WIDTH,
 }
@@ -61,18 +54,6 @@ CONFLICT_SHORT_STATUS = {
 
 
 class StatusCmd(Base):
-    def __init__(
-        self,
-        _dir: Path,
-        env: MutableMapping[str, str],
-        args: list[str],
-        stdin: TextIO,
-        stdout: TextIO,
-        stderr: TextIO,
-    ) -> None:
-        super().__init__(_dir, env, args, stdin, stdout, stderr)
-        self.status_state: Status | None = None
-
     def run(self) -> None:
         self.repo.index.load_for_update()
         self.status_state = self.repo.status()
@@ -195,7 +176,7 @@ class StatusCmd(Base):
     def print_changes(
         self,
         message: str,
-        changeset: MutableMapping[str, str],
+        changeset: MutableMapping[str, str] | defaultdict[str, list[int]],
         color: str,
         label_set: str = "normal",
     ) -> None:
@@ -209,7 +190,12 @@ class StatusCmd(Base):
         self.println("")
 
         for path, ty in changeset.items():
-            status = labels[ty].ljust(width, " ") if ty else ""
+            if label_set == "normal":
+                key: StatusKey = cast(str, ty)
+            else:
+                key = tuple(cast(list[int], ty))
+
+            status = labels[key].ljust(width, " ") if ty else ""
             self.println("\t" + self.fmt(color, f"{status}{path}"))
 
         self.println("")

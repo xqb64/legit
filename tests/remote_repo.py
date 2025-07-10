@@ -1,26 +1,30 @@
-from io import BytesIO
+from io import StringIO
 from pathlib import Path
+from typing import Any, TextIO, cast
+
+from legit.cmd_base import Base
 from legit.command import Command
 from legit.repository import Repository
 from tests.cmd_helpers import CapturedStderr
 
 
 class RemoteRepo:
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.repo_path: Path | None = None
 
     @property
-    def repo(self):
+    def repo(self) -> Repository:
+        assert self.repo_path is not None
         return Repository(self.repo_path / ".git")
 
-    def path(self, repo_path) -> Path:
+    def path(self, repo_path: Path | None) -> Path:
         if self.repo_path is None:
             self.repo_path = Path(f"{repo_path}-{self.name}")
         return self.repo_path
 
-    def write_file(self, *args):
-        if len(args) == 2:  # called from inside a fixture
+    def write_file(self, *args: Any) -> None:
+        if len(args) == 2:
             repo_path = None
             name, contents = args
         elif len(args) == 3:
@@ -35,11 +39,23 @@ class RemoteRepo:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(contents)
 
-    def legit_cmd(self, repo_path, *argv, env={}, stdin_data=""):
-        stdin = BytesIO(stdin_data.encode("utf-8"))
-        stdout = BytesIO()
+    def legit_cmd(
+        self,
+        repo_path: Path,
+        *argv: Any,
+        env: dict[str, str] | None = None,
+        stdin_data: str = "",
+    ) -> tuple[Base, StringIO, StringIO, CapturedStderr]:
+        env = env or {}
+        stdin = StringIO(stdin_data)
+        stdout = StringIO()
         stderr = CapturedStderr()
         cmd = Command.execute(
-            self.path(repo_path), env, ["legit"] + list(argv), stdin, stdout, stderr
+            self.path(repo_path),
+            env,
+            ["legit"] + list(argv),
+            stdin,
+            stdout,
+            cast(TextIO, stderr),
         )
         return cmd, stdin, stdout, stderr

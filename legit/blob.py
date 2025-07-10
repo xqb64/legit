@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Blob:
     def __init__(self, data: bytes) -> None:
         self.data: bytes = data

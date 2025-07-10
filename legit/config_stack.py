@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Sequence
 
-from legit.config import ConfigFile
-
+from legit.config import ConfigFile, ConfigValue
 
 GLOBAL_CONFIG = Path("~/.gitconfig").expanduser()
 SYSTEM_CONFIG = Path("/etc/gitconfig")
@@ -22,14 +24,14 @@ class ConfigStack:
         for cfg in self.configs.values():
             cfg.open()
 
-    def get(self, key: str):
+    def get(self, key: Sequence[str]) -> ConfigValue | None:
         try:
             return self.get_all(key)[-1]
         except IndexError:
             return None
 
-    def get_all(self, key: str):
-        values: list = []
+    def get_all(self, key: Sequence[str]) -> list[ConfigValue]:
+        values: list[ConfigValue] = []
         for name in ("system", "global", "local"):
             cfg = self.configs[name]
             cfg.open()

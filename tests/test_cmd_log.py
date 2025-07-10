@@ -1,15 +1,38 @@
+import textwrap
 from datetime import datetime, timedelta
 from enum import auto
-import textwrap
+from typing import Protocol, cast
 
 import pytest
 
+from legit.author import Author
+from legit.commit import Commit as CommitObj
+from legit.repository import Repository
 from tests.cmd_helpers import assert_stdout
+from tests.conftest import (
+    Commit,
+    LegitCmd,
+    LoadCommit,
+    ResolveRevision,
+    WriteFile,
+)
+
+
+class CommitFile(Protocol):
+    def __call__(self, msg: str, time: datetime | None = None) -> None: ...
+
+
+class CommitTree(Protocol):
+    def __call__(
+        self, msg: str, files: dict[str, str], time: datetime | None = None
+    ) -> None: ...
 
 
 @pytest.fixture
-def commit_file(write_file, legit_cmd, commit):
-    def _commit_file(msg, time=None):
+def commit_file(
+    write_file: WriteFile, legit_cmd: LegitCmd, commit: Commit
+) -> CommitFile:
+    def _commit_file(msg: str, time: datetime | None = None) -> None:
         write_file("file.txt", msg)
         _ = legit_cmd("add", ".")
         commit(msg, time)
@@ -18,8 +41,12 @@ def commit_file(write_file, legit_cmd, commit):
 
 
 @pytest.fixture
-def commit_tree(write_file, legit_cmd, commit):
-    def _commit_tree(msg, files, time=None):
+def commit_tree(
+    write_file: WriteFile, legit_cmd: LegitCmd, commit: Commit
+) -> CommitTree:
+    def _commit_tree(
+        msg: str, files: dict[str, str], time: datetime | None = None
+    ) -> None:
         for path, contents in files.items():
             write_file(path, contents)
         _ = legit_cmd("add", ".")
@@ -33,64 +60,68 @@ class TestWithAChainOfCommits:
     #   A   B   C
 
     @pytest.fixture(autouse=True)
-    def setup(self, commit_file, legit_cmd, load_commit):
+    def setup(
+        self, commit_file: CommitFile, legit_cmd: LegitCmd, load_commit: LoadCommit
+    ) -> None:
         msgs = ["A", "B", "C"]
         for msg in msgs:
             commit_file(msg)
 
         _ = legit_cmd("branch", "topic", "@^^")
 
-        self.commits = [load_commit(rev) for rev in ["@", "@^", "@^^"]]
+        self.commits = [cast(CommitObj, load_commit(rev)) for rev in ["@", "@^", "@^^"]]
 
-    def test_it_prints_a_log_in_medium_format(self, legit_cmd):
+    def test_it_prints_a_log_in_medium_format(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log")
         expected_log = textwrap.dedent(f"""\
             commit {self.commits[0].oid}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[0].author.readable_time()}
+            Date:   {cast(Author, self.commits[0].author).readable_time()}
     
                 C
     
             commit {self.commits[1].oid}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[1].author.readable_time()}
+            Date:   {cast(Author, self.commits[1].author).readable_time()}
     
                 B
     
             commit {self.commits[2].oid}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[2].author.readable_time()}
+            Date:   {cast(Author, self.commits[2].author).readable_time()}
     
                 A
             """)
         assert_stdout(stdout, expected_log)
 
     def test_it_prints_a_log_in_medium_format_with_abbreviated_commit_ids(
-        self, legit_cmd, repo
-    ):
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--abbrev-commit")
         expected = textwrap.dedent(f"""\
             commit {repo.database.short_oid(self.commits[0].oid)}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[0].author.readable_time()}
+            Date:   {cast(Author, self.commits[0].author).readable_time()}
     
                 C
     
             commit {repo.database.short_oid(self.commits[1].oid)}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[1].author.readable_time()}
+            Date:   {cast(Author, self.commits[1].author).readable_time()}
     
                 B
     
             commit {repo.database.short_oid(self.commits[2].oid)}
             Author: A. U. Thor <author@example.com>
-            Date:   {self.commits[2].author.readable_time()}
+            Date:   {cast(Author, self.commits[2].author).readable_time()}
     
                 A
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_prints_a_log_in_oneline_format(self, legit_cmd, repo):
+    def test_it_prints_a_log_in_oneline_format(
+        self, legit_cmd: LegitCmd, repo: Repository
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--oneline")
         expected = textwrap.dedent(f"""\
             {repo.database.short_oid(self.commits[0].oid)} C
@@ -100,8 +131,8 @@ class TestWithAChainOfCommits:
         assert_stdout(stdout, expected)
 
     def test_it_print_a_log_in_oneline_format_without_abbreviated_commit_ids(
-        self, legit_cmd
-    ):
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline")
         expected = textwrap.dedent(f"""\
             {self.commits[0].oid} C
@@ -110,7 +141,9 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_prints_a_log_starting_from_a_specified_commit(self, legit_cmd):
+    def test_it_prints_a_log_starting_from_a_specified_commit(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "@^")
         expected = textwrap.dedent(f"""\
             {self.commits[1].oid} B
@@ -118,7 +151,7 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_prints_a_log_with_short_decorations(self, legit_cmd):
+    def test_it_prints_a_log_with_short_decorations(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--decorate=short")
         expected = textwrap.dedent(f"""\
             {self.commits[0].oid} (HEAD -> master) C
@@ -127,7 +160,7 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_prints_a_log_with_detached_heads(self, legit_cmd):
+    def test_it_prints_a_log_with_detached_heads(self, legit_cmd: LegitCmd) -> None:
         _ = legit_cmd("checkout", "@")
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--decorate=short")
         expected = textwrap.dedent(f"""\
@@ -137,7 +170,7 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_print_a_log_with_full_decorations(self, legit_cmd):
+    def test_it_print_a_log_with_full_decorations(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--decorate=full")
         expected = textwrap.dedent(f"""\
             {self.commits[0].oid} (HEAD -> refs/heads/master) C
@@ -146,7 +179,7 @@ class TestWithAChainOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_print_a_log_with_patches(self, legit_cmd):
+    def test_it_print_a_log_with_patches(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--patch")
         expected = textwrap.dedent(f"""\
             {self.commits[0].oid} C
@@ -179,7 +212,7 @@ class TestWithAChainOfCommits:
 
 class TestWithCommitsChangingDifferentFiles:
     @pytest.fixture(autouse=True)
-    def setup(self, commit_tree, load_commit):
+    def setup(self, commit_tree: CommitTree, load_commit: LoadCommit) -> None:
         commit_tree(
             "first",
             {
@@ -202,7 +235,7 @@ class TestWithCommitsChangingDifferentFiles:
         )
         self.commits = [load_commit(rev) for rev in ["@^^", "@^", "@"]]
 
-    def test_it_logs_commits_that_change_a_file(self, legit_cmd):
+    def test_it_logs_commits_that_change_a_file(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "a/1.txt")
         expected = textwrap.dedent(f"""\
             {self.commits[1].oid} second
@@ -210,7 +243,7 @@ class TestWithCommitsChangingDifferentFiles:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_commits_that_change_a_directory(self, legit_cmd):
+    def test_it_logs_commits_that_change_a_directory(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "b")
         expected = textwrap.dedent(f"""\
             {self.commits[2].oid} third
@@ -220,8 +253,8 @@ class TestWithCommitsChangingDifferentFiles:
         assert_stdout(stdout, expected)
 
     def test_it_logs_commits_that_change_a_directory_and_one_of_its_files(
-        self, legit_cmd
-    ):
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "b", "b/3.txt")
         expected = textwrap.dedent(f"""\
             {self.commits[2].oid} third
@@ -230,7 +263,9 @@ class TestWithCommitsChangingDifferentFiles:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_commits_that_change_a_nested_directory(self, legit_cmd):
+    def test_it_logs_commits_that_change_a_nested_directory(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "b/c")
         expected = textwrap.dedent(f"""\
             {self.commits[2].oid} third
@@ -238,7 +273,7 @@ class TestWithCommitsChangingDifferentFiles:
             """)
         assert_stdout(stdout, expected)
 
-    def test_logs_with_patches_for_selected_files(self, legit_cmd):
+    def test_logs_with_patches_for_selected_files(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "--patch", "a/1.txt")
         expected = textwrap.dedent(f"""\
             {self.commits[1].oid} second
@@ -269,7 +304,12 @@ class TestWithATreeOfCommits:
     #        t1  t2  t3  t4
 
     @pytest.fixture(autouse=True)
-    def setup(self, commit_file, legit_cmd, resolve_revision):
+    def setup(
+        self,
+        commit_file: CommitFile,
+        legit_cmd: LegitCmd,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         for n in range(1, 4):
             commit_file(f"master-{n}")
 
@@ -283,7 +323,9 @@ class TestWithATreeOfCommits:
         self.master = [resolve_revision(f"master~{n}") for n in range(0, 3)]
         self.topic = [resolve_revision(f"topic~{n}") for n in range(0, 4)]
 
-    def test_it_logs_the_combined_history_of_multiple_branches(self, legit_cmd):
+    def test_it_logs_the_combined_history_of_multiple_branches(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd(
             "log", "--pretty=oneline", "--decorate=short", "master", "topic"
         )
@@ -298,7 +340,9 @@ class TestWithATreeOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_the_difference__from_one_branch_to_another(self, legit_cmd):
+    def test_it_logs_the_difference__from_one_branch_to_another(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "master..topic")
         expected = textwrap.dedent(f"""\
             {self.topic[0]} topic-4
@@ -315,8 +359,10 @@ class TestWithATreeOfCommits:
         assert_stdout(stdout, expected)
 
     def test_it_excludes_long_branch_when_commit_times_equal(
-        self, legit_cmd, commit_file
-    ):
+        self,
+        legit_cmd: LegitCmd,
+        commit_file: CommitFile,
+    ) -> None:
         _ = legit_cmd("branch", "side", "topic^^")
         _ = legit_cmd("checkout", "side")
         for n in range(1, 11):
@@ -330,7 +376,9 @@ class TestWithATreeOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_the_last_few_commits_on_a_branch(self, legit_cmd):
+    def test_it_logs_the_last_few_commits_on_a_branch(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "@~3..")
         expected = textwrap.dedent(f"""\
             {self.topic[0]} topic-4
@@ -348,7 +396,12 @@ class TestWithAGraphOfCommits:
     #         E   F   G   H
 
     @pytest.fixture(autouse=True)
-    def setup(self, commit_tree, legit_cmd, resolve_revision):
+    def setup(
+        self,
+        commit_tree: CommitTree,
+        legit_cmd: LegitCmd,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         time = datetime.now().astimezone()
 
         commit_tree("A", {"f.txt": "0", "g.txt": "0"}, time)
@@ -379,7 +432,9 @@ class TestWithAGraphOfCommits:
         self.master = [resolve_revision(f"master~{n}") for n in range(6)]
         self.topic = [resolve_revision(f"topic~{n}") for n in range(4)]
 
-    def test_it_logs_concurrent_branches_leading_to_a_merge(self, legit_cmd):
+    def test_it_logs_concurrent_branches_leading_to_a_merge(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline")
         expected = textwrap.dedent(f"""\
             {self.master[0]} K
@@ -394,7 +449,7 @@ class TestWithAGraphOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_the_first_parent_of_a_merge(self, legit_cmd):
+    def test_it_logs_the_first_parent_of_a_merge(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "master^^")
         expected = textwrap.dedent(f"""\
             {self.master[2]} D
@@ -404,7 +459,7 @@ class TestWithAGraphOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_the_second_parent_of_a_merge(self, legit_cmd):
+    def test_it_logs_the_second_parent_of_a_merge(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "master^^2")
         expected = textwrap.dedent(f"""\
             {self.topic[1]} G
@@ -415,14 +470,16 @@ class TestWithAGraphOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_logs_unmerged_commits_on_a_branch(self, legit_cmd):
+    def test_it_logs_unmerged_commits_on_a_branch(self, legit_cmd: LegitCmd) -> None:
         _, _, stdout, _ = legit_cmd("log", "--pretty=oneline", "master..topic")
         expected = textwrap.dedent(f"""\
             {self.topic[0]} H
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_does_not_show_patches_for_merge_commits(self, legit_cmd):
+    def test_it_does_not_show_patches_for_merge_commits(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd(
             "log", "--pretty=oneline", "--patch", "topic..master", "^master^^^"
         )
@@ -456,7 +513,7 @@ class TestWithAGraphOfCommits:
             """)
         assert_stdout(stdout, expected)
 
-    def test_it_shows_combined_patches_for_merges(self, legit_cmd):
+    def test_it_shows_combined_patches_for_merges(self, legit_cmd: LegitCmd) -> None:
         *_, stdout, _ = legit_cmd(
             "log", "--pretty=oneline", "--cc", "topic..master", "^master^^^"
         )
@@ -501,8 +558,8 @@ class TestWithAGraphOfCommits:
         assert_stdout(stdout, expected)
 
     def test_it_does_not_list_merges_with_treesame_parents_for_prune_paths(
-        self, legit_cmd
-    ):
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "g.txt")
         expected = textwrap.dedent(f"""\
             {self.topic[1]} G
@@ -515,7 +572,12 @@ class TestWithAGraphOfCommits:
 
 class TestWithChangesThatAreUndoneOnABranchLeadingToAMerge:
     @pytest.fixture(autouse=True)
-    def setup(self, commit_tree, legit_cmd, resolve_revision):
+    def setup(
+        self,
+        commit_tree: CommitTree,
+        legit_cmd: LegitCmd,
+        resolve_revision: ResolveRevision,
+    ) -> None:
         time = datetime.now().astimezone()
 
         commit_tree("A", {"f.txt": "0", "g.txt": "0"}, time)
@@ -557,7 +619,9 @@ class TestWithChangesThatAreUndoneOnABranchLeadingToAMerge:
         _ = legit_cmd("merge", "topic^", "-m", "J")
         commit_tree("K", {"f.txt": "K"}, time + timedelta(seconds=3))
 
-    def test_it_does_not_list_commits_on_the_filtered_branch(self, legit_cmd):
+    def test_it_does_not_list_commits_on_the_filtered_branch(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         *_, stdout, _ = legit_cmd("log", "--pretty=oneline", "g.txt")
         expected = textwrap.dedent(f"""\
             {self.topic[1]} G
