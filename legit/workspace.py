@@ -26,6 +26,7 @@ class Workspace:
         ".pytest_cache",
         ".mypy_cache",
         ".ruff_cache",
+        "legit.egg-info",
     ]
 
     def __init__(self, path: Path) -> None:
