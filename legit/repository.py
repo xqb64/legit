@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from legit.commit import Commit
 from legit.db_entry import DatabaseEntry
@@ -164,7 +164,7 @@ class Sequencer:
 
         self.open_todo_file()
 
-    def get_option(self, name: str) -> Any:
+    def get_option(self, name: Sequence[str]) -> Any:
         self.config.open()
         return self.config.get(["options", name])
 

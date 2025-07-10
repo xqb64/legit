@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from types import NoneType
 from typing import Optional
 from legit.config import ConfigFile
 from legit.refs import Refs
@@ -22,9 +23,11 @@ class Remotes:
 
     def set_upstream(self, branch: str, upstream: str) -> tuple[str, str]:
         for name in self.list_remotes():
-            ref = self.get(name).set_upstream(branch, upstream)
-            if ref is not None:
-                return name, ref
+            remote = self.get(name)
+            if remote is not None:
+                ref = remote.set_upstream(branch, upstream)
+                if ref is not None:
+                    return name, ref
         raise self.InvalidBranch(
             f"Cannot setup tracking information; starting point '{upstream}' is not a branch"
         )
@@ -35,14 +38,17 @@ class Remotes:
         self.config.unset(["branch", branch, "merge"])
         self.config.save()
 
-    def get_upstream(self, branch: str) -> str:
+    def get_upstream(self, branch: str) -> str | None:
         self.config.open()
         name = self.config.get(["branch", branch, "remote"])
+        if name is None:
+            return None
+        assert isinstance(name, str)
         thing = self.get(name)
         if thing is not None:
             return thing.get_upstream(branch)
 
-    def add(self, name, url, branches=[]) -> None:
+    def add(self, name, url, branches: list[str] | None = None) -> None:
         if not branches:
             branches = ["*"]
         self.config.open_for_update()
@@ -71,11 +77,13 @@ class Remotes:
         finally:
             self.config.save()
 
-    def list_remotes(self):
+    def list_remotes(self) -> list[str]:
         self.config.open()
         return self.config.subsections("remote")
 
-    def get(self, name: str) -> "Remote":
+    def get(self, name: str | None) -> "Remote | None":
+        if name is None:
+            return None
         self.config.open()
         if not self.config.section_exists(["remote", name]):
             return None
@@ -91,12 +99,13 @@ class Refspec:
         self.forced: bool = forced
 
     @staticmethod
-    def invert(specs, ref) -> str:
+    def invert(specs, ref) -> str | None:
         specs = [Refspec.parse(spec) for spec in specs]
 
         _map = {}
 
         for spec in specs:
+            assert spec is not None
             spec.source, spec.target = spec.target, spec.source
             _map.update(spec.match_refs([ref]))
 
@@ -108,11 +117,13 @@ class Refspec:
         return matches[0]
 
     @staticmethod
-    def parse(spec: str) -> "Refspec":
+    def parse(spec: str) -> "Refspec | None":
         m = Refspec.REFSPEC_FORMAT.match(spec)
-        source = Refspec.canonical(m.group(2)) or ""
-        target = Refspec.canonical(m.group(4)) or source
-        return Refspec(source, target, m.group(1) == "+")
+        if m is not None:
+            source = Refspec.canonical(m.group(2)) or ""
+            target = Refspec.canonical(m.group(4)) or source
+            return Refspec(source, target, m.group(1) == "+")
+        return None
 
     @staticmethod
     def canonical(name: str) -> Optional[str]:
@@ -138,6 +149,7 @@ class Refspec:
         specs = [Refspec.parse(spec) for spec in specs]
         mappings = {}
         for spec in specs:
+            assert spec is not None
             mappings.update(spec.match_refs(refs))
         return mappings
 
@@ -176,7 +188,7 @@ class Remote:
 
         self.config.open()
 
-    def set_upstream(self, branch: str, upstream: str) -> str:
+    def set_upstream(self, branch: str, upstream: str) -> str | None:
         ref_name = Refspec.invert(self.fetch_specs, upstream)
         if ref_name is None:
             return None

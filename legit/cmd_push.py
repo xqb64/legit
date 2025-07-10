@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import re
+from typing import Pattern
 
 from legit.cmd_base import Base
 from legit.fast_forward import FastForwardMixin
@@ -9,20 +11,19 @@ from legit.send_objects import SendObjectsMixin
 from legit.remotes import Remotes, Refspec
 from legit.revision import Revision
 
-import logging
 
 log = logging.getLogger(__name__)
 
 
 class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
-    CAPABILITIES = ["report-status"]
-    RECEIVE_PACK = "git-receive-pack"
+    CAPABILITIES: list[str] = ["report-status"]
+    RECEIVE_PACK: str = "git-receive-pack"
 
-    UNPACK_LINE = re.compile(r"^unpack (.+)$".encode())
-    UPDATE_LINE = re.compile(r"^(ok|ng) (\S+)(.*)$".encode())
+    UNPACK_LINE: Pattern[bytes] = re.compile(r"^unpack (.+)$".encode())
+    UPDATE_LINE: Pattern[bytes] = re.compile(r"^(ok|ng) (\S+)(.*)$".encode())
 
     def define_options(self) -> None:
-        self.options = {"force": False}
+        self.options = {"force": False, "receiver": ""}
         positional = []
         args_iter = iter(self.args)
         for arg in args_iter:
@@ -52,7 +53,8 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         log.debug("sending objects")
         self.send_objects()
         log.debug("sent objects")
-
+        
+        assert self.conn.output is not None
         self.conn.output.close()
 
         log.debug("printing summary")
@@ -176,7 +178,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
             if unpack_match:
                 unpack_result = unpack_match.group(1)
                 if unpack_result != b"ok":
-                    self.stderr.write(f"error: remote unpack failed: {unpack_result}\n")
+                    self.stderr.write(f"error: remote unpack failed: {unpack_result.decode()}\n")
             else:
                 self.handle_status(unpack_line)
 
