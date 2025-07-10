@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 import hashlib
-from typing import Callable, Tuple, BinaryIO, Optional
+from typing import Callable, Tuple, BinaryIO, Optional, TypeVar
 
 from legit.pack import InvalidPack
 
+T = TypeVar("T")
 
 class Stream:
     def __init__(self, inp: BinaryIO, buffer: bytes = b"") -> None:
@@ -21,7 +22,7 @@ class Stream:
         self.buffer = bytearray(data) + self.buffer
         self.offset -= len(data)
 
-    def capture(self, block: Callable[[], "T"]) -> Tuple["T", bytes]:
+    def capture(self, block: Callable[[], T]) -> Tuple[T, bytes]:
         self._capture = bytearray()
         try:
             result = block()
