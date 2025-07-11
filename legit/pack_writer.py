@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import reveal_type
 import zlib
 import hashlib
 import struct

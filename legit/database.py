@@ -44,7 +44,7 @@ class Database:
     def has(self, oid: str) -> bool:
         return self.backend.has(oid)
 
-    def load_info(self, oid: str) -> Raw:
+    def load_info(self, oid: str) -> Raw | None:
         return self.backend.load_info(oid)
 
     def load_raw(self, oid: str) -> Raw:

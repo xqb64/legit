@@ -3,6 +3,7 @@ from __future__ import annotations
 import binascii
 from typing import Any, Tuple, Optional
 from pathlib import Path
+from legit.db_loose import Raw
 from legit.pack import TYPE_CODES
 from legit.numbers import VarIntBE
 
@@ -12,7 +13,7 @@ REF_DELTA = 7
 
 
 class Entry:
-    def __init__(self, oid: str, info: Any, path: Optional[Path], ofs: bool = False):
+    def __init__(self, oid: str, info: Raw | None, path: Optional[Path], ofs: bool = False):
         self.oid: str = oid
         self._info = info
         self._path: Optional[Path] = path
@@ -23,10 +24,12 @@ class Entry:
 
     @property
     def ty(self) -> str:
+        assert self._info is not None
         return self._info.ty
 
     @property
     def size(self) -> int:
+        assert self._info is not None
         return self._info.size
 
     def sort_key(self) -> Tuple[int, Optional[str], Optional[Path], int]:
