@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Optional, cast, reveal_type
 from legit.diff import diff_hunks, combined_hunks
 from legit.hunk import Hunk
 from legit.myers import Edit
@@ -44,10 +44,8 @@ class PrintDiffMixin:
     def diff_fmt(self, name: str, text: str) -> str:
         key = ["color", "diff", name]
         style_str = self.repo.config.get(key)
-        
-        assert isinstance(style_str, str)
-
         if style_str:
+            assert isinstance(style_str, str)
             style = style_str.split()
         else:
             style = DIFF_FORMATS.get(name)
