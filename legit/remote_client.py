@@ -2,15 +2,22 @@ from __future__ import annotations
 
 import re
 import subprocess
-from typing import reveal_type
+from typing import TYPE_CHECKING, TextIO, reveal_type
+from urllib.parse import ParseResult
 from legit.protocol import Remotes
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class RemoteClientMixin:
+    repo: Repository
+    stderr: TextIO
+
     REF_LINE = re.compile(r"^([0-9a-f]+) (.*)$".encode())
     ZERO_OID = b"0" * 40
 
-    def recv_references(self):
+    def recv_references(self) -> None:
         self.remote_refs = {}
 
         for line in self.conn.recv_until(None):
@@ -29,7 +36,7 @@ class RemoteClientMixin:
             if oid != RemoteClientMixin.ZERO_OID.decode():
                 self.remote_refs[ref] = oid.lower()
 
-    def start_agent(self, name, program, url, capabilities=None):
+    def start_agent(self, name: str, program: str, url: str, capabilities: list[str] | None = None) -> None:
         capabilities = capabilities or []
         argv = self.build_agent_command(program, url)
         proc = subprocess.Popen(
@@ -42,10 +49,13 @@ class RemoteClientMixin:
 
         child_stdin = proc.stdin
         child_stdout = proc.stdout
+        
+        assert child_stdin is not None
+        assert child_stdout is not None
 
         self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
-    def build_agent_command(self, program, url):
+    def build_agent_command(self, program: str, url: str) -> list[str]:
         import shlex
         from urllib.parse import urlparse
 
@@ -57,13 +67,14 @@ class RemoteClientMixin:
             argv = shlex.split(program)
 
         uri = urlparse(url)
+
         argv += [uri.path]
         if uri.scheme == "file":
             return argv
         elif uri.scheme == "ssh":
             return self.ssh_command(uri, argv)
 
-    def ssh_command(self, uri, argv):
+    def ssh_command(self, uri: ParseResult, argv: list[str]) -> list[str]:
         ssh = ["ssh", uri.hostname]
         if uri.username:
             ssh += ["-l", uri.username]
@@ -72,7 +83,12 @@ class RemoteClientMixin:
         return ssh + argv
 
     def report_ref_update(
-        self, ref_names, error, old_oid=None, new_oid=None, is_ff=False
+        self,
+        ref_names: list[str],
+        error: str,
+        old_oid: str | None = None,
+        new_oid: str | None = None,
+        is_ff: bool = False,
     ):
         if error:
             return self.show_ref_update("!", "[rejected]", ref_names, error)
@@ -87,7 +103,13 @@ class RemoteClientMixin:
         else:
             self.report_range_update(ref_names, old_oid, new_oid, is_ff)
 
-    def report_range_update(self, ref_names, old_oid, new_oid, is_ff):
+    def report_range_update(
+        self,
+        ref_names: list[str],
+        old_oid: str | None,
+        new_oid: str | None,
+        is_ff: bool
+    ) -> None:
         old_oid = self.repo.database.short_oid(old_oid)
         new_oid = self.repo.database.short_oid(new_oid)
 

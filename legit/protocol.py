@@ -3,7 +3,7 @@ from __future__ import annotations
 from io import BytesIO
 import re
 import logging
-from typing import Generator, Optional
+from typing import IO, Generator, Optional, cast
 
 log = logging.getLogger(__name__)
 
@@ -13,13 +13,13 @@ class Remotes:
         def __init__(
             self, 
             command: str,
-            input_stream: BytesIO,
-            output_stream: BytesIO,
+            input_stream: IO[bytes],
+            output_stream: IO[bytes],
             capabilities: Optional[list[str]] = None
         ) -> None:
             self.command: str = command
-            self.input: BytesIO = input_stream
-            self.output: BytesIO = output_stream
+            self.input: IO[bytes] = input_stream
+            self.output: IO[bytes] = output_stream
             self.caps_local: list[str] = capabilities or []
             self.caps_remote: Optional[list[str]] = None
             self.caps_sent: bool = False
@@ -69,12 +69,12 @@ class Remotes:
 
             return self.detect_caps(body)
 
-        def recv_until(self, terminator: bytes) -> Generator[bytes]:
+        def recv_until(self, terminator: bytes | None) -> Generator[bytes]:
             while True:
                 line = self.recv_packet()
-                if line is None or line == terminator:
+                if line == terminator:
                     break
-                yield line
+                yield cast(bytes, line)
 
         def append_caps(self, line: bytes) -> bytes:
             if self.caps_sent:
