@@ -47,7 +47,7 @@ class Tree:
         return cls(entries)
 
     @classmethod
-    def from_entries(cls, entries: dict[Path, Entry]) -> "Tree":
+    def from_entries(cls, entries: dict[tuple[Path, int], Entry]) -> "Tree":
         entries = dict(sorted(entries.items(), key=lambda x: x[1].path))
 
         root = Tree()

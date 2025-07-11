@@ -3,11 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 from datetime import datetime
-from typing import MutableMapping, Optional
+from typing import MutableMapping, Optional, TYPE_CHECKING, Sequence, TextIO
 from legit.author import Author
 from legit.commit import Commit as CommitObject
 from legit.tree import Tree
 from legit.editor import Editor
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 CONFLICT_MESSAGE: str = textwrap.dedent("""\
@@ -45,6 +48,17 @@ CHERRY_PICK_NOTES = textwrap.dedent(
 class WriteCommitMixin:
     repo: Repository
     env: MutableMapping[str, str]
+    args: Sequence[str]
+    stderr: TextIO
+
+    message: Optional[str]
+    file: Optional[Path]
+    edit: bool
+    
+    if TYPE_CHECKING:
+        def exit(self, _n: int = 0) -> None: ...
+        def expanded_path(self, p: str) -> Path: ...
+        def println(self, msg: str) -> None: ...
 
     def current_author(self) -> Author:
         config_name = self.repo.config.get(["user", "name"])
@@ -53,18 +67,22 @@ class WriteCommitMixin:
         name = self.env.get("GIT_AUTHOR_NAME", config_name)
         email = self.env.get("GIT_AUTHOR_EMAIL", config_email)
 
+        assert isinstance(name, str)
+        assert isinstance(email, str)
+
         return Author(name, email, datetime.now().astimezone())
 
     def commit_message_path(self) -> Path:
         return self.repo.git_path / "COMMIT_EDITMSG"
 
-    def read_message(self) -> str:
+    def read_message(self) -> str | None:
         if self.message is not None:
             return f"{self.message}\n"
         elif self.file is not None:
             return self.file.read_text()
+        return None
 
-    def define_write_commit_options(self):
+    def define_write_commit_options(self) -> None:
         self.message = None
         self.file = None
         self.edit = False
@@ -81,8 +99,6 @@ class WriteCommitMixin:
             elif arg == "-m":
                 try:
                     self.message = next(args_iter)
-                    if self.edit == "auto":
-                        self.edit = False
                 except StopIteration:
                     pass
 
@@ -107,7 +123,7 @@ class WriteCommitMixin:
 
         self.println(f"[{info}] {commit.title_line()}")
 
-    def write_commit(self, parents, message):
+    def write_commit(self, parents: list[str | None], message: str) -> CommitObject:
         tree = self.write_tree()
 
         author = self.current_author()
@@ -120,12 +136,12 @@ class WriteCommitMixin:
 
         return commit
 
-    def write_tree(self):
+    def write_tree(self) -> Tree:
         root = Tree.from_entries(self.repo.index.entries)
         root.traverse(lambda tree: self.repo.database.store(tree))
         return root
 
-    def resume_merge(self, ty: str):
+    def resume_merge(self, ty: str) -> None:
         if ty == "merge":
             self.write_merge_commit()
         elif ty == "cherry_pick":
@@ -139,7 +155,7 @@ class WriteCommitMixin:
         self.handle_conflicted_index()
         parents = [self.repo.refs.read_head(), self.repo.pending_commit().merge_oid()]
         message = self.compose_merge_message(MERGE_NOTES)
-        self.write_commit(parents, message)
+        self.write_commit(parents, message or '')
         self.repo.pending_commit().clear("merge")
 
     def write_cherry_pick_commit(self) -> None:
@@ -149,14 +165,16 @@ class WriteCommitMixin:
         message = self.compose_merge_message(CHERRY_PICK_NOTES)
 
         pick_oid = self.repo.pending_commit().merge_oid("cherry_pick")
+        
         commit = self.repo.database.load(pick_oid)
+        assert isinstance(commit, CommitObject)
 
         picked = CommitObject(
             parents,
             self.write_tree().oid,
             commit.author,
             self.current_author(),
-            message,
+            message or '',
         )
 
         self.repo.database.store(picked)
@@ -169,7 +187,7 @@ class WriteCommitMixin:
 
         parents = [self.repo.refs.read_head()]
         message = self.compose_merge_message()
-        self.write_commit(parents, message)
+        self.write_commit(parents, message or '')
 
         self.repo.pending_commit().clear("revert")
 
@@ -184,7 +202,7 @@ class WriteCommitMixin:
         self.exit(128)
 
     def compose_merge_message(self, notes: Optional[str] = None) -> Optional[str]:
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(self.repo.pending_commit().merge_message)
             if notes is not None:
                 editor.note(notes)
