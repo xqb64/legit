@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional, Union 
+from typing import TYPE_CHECKING, Any, Optional, Union, cast 
 from legit.blob import Blob
 from legit.commit import Commit
 from legit.tree import Tree
 
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 class HintedError:
     def __init__(self, msg: str, hint: list[str]) -> None:
@@ -63,7 +65,7 @@ class Revision:
     class Ancestor:
         def __init__(
             self,
-            rev: Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor"],
+            rev: Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"],
             n: int,
         ) -> None:
             self.rev = rev
@@ -90,12 +92,13 @@ class Revision:
 
     class Upstream:
         def __init__(
-            self, rev: "Revision.Ref | Revision.Parent | Revision.Ancestor"
+            self, rev: "Revision.Ref | Revision.Parent | Revision.Ancestor | Revision.Upstream"
         ) -> None:
             self.rev = rev
 
         def resolve(self, context: "Revision") -> Optional[str]:
-            upstream_name = context.upstream(self.rev.name)
+            upstream_name = context.upstream(cast(Revision.Ref, self.rev).name)
+            assert upstream_name is not None
             return context.read_ref(upstream_name)
 
         def __eq__(self, other) -> bool:
@@ -139,7 +142,7 @@ class Revision:
         self.repo: Repository = repo
         self.expr: str = expr
         self.query: Optional[
-            Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor"]
+            Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"]
         ] = Revision.parse(self.expr)
         self.errors: list[HintedError] = []
 
@@ -192,6 +195,8 @@ class Revision:
         if commit is None:
             return None
 
+        assert isinstance(commit, Commit)
+
         if n <= 0 or n > len(commit.parents):
             return None
 
@@ -212,7 +217,7 @@ class Revision:
             self.errors.append(HintedError(msg, []))
             return None
 
-    def upstream(self, branch: str) -> str:
+    def upstream(self, branch: str) -> str | None:
         if branch == "HEAD":
             branch = self.repo.refs.current_ref().short_name()
         return self.repo.remotes.get_upstream(branch)
@@ -240,6 +245,7 @@ class Revision:
 
             if obj.type() == "commit":
                 assert isinstance(obj, Commit)
+                assert obj.author is not None
                 date = obj.author.short_date()
                 title = obj.title_line()
                 line = f"{info} {date} - {title}"
