@@ -30,14 +30,14 @@ class Packed:
     def has(self, oid: str) -> bool:
         return self.index.oid_offset(oid) is not None
 
-    def load_raw(self, oid: str):
+    def load_raw(self, oid: str) -> Record | OfsDelta | RefDelta | None:
         offset = self.index.oid_offset(oid)
         if offset is not None:
             return self.load_raw_at(offset)
         else:
             return None
 
-    def load_raw_at(self, offset):
+    def load_raw_at(self, offset: int) -> Record | OfsDelta | RefDelta | None:
         self.pack_file_handle.seek(offset)
         record = self.reader.read_record()
 

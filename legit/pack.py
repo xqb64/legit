@@ -52,6 +52,6 @@ class RefDelta:
 
 
 class OfsDelta:
-    def __init__(self, base_ofs: str, delta_data: bytes) -> None:
-        self.base_ofs: str = base_ofs
+    def __init__(self, base_ofs: int, delta_data: bytes) -> None:
+        self.base_ofs: int = base_ofs
         self.delta_data: bytes = delta_data

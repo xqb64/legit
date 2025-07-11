@@ -1,24 +1,29 @@
 from __future__ import annotations
 
 from legit.pack_entry import Entry
-from typing import Any, Optional, List
+from typing import TYPE_CHECKING, Any, Optional, List, cast
 from legit.pack_window import Window
 from legit.pack_delta import Delta
 
 
-class Compressor:
-    OBJECT_SIZE_MIN = 50
-    OBJECT_SIZE_MAX = 0x20000000
-    MAX_DEPTH = 50
-    WINDOW_SIZE = 8
+if TYPE_CHECKING:
+    from legit.database import Database
+    from legit.progress import Progress
 
-    def __init__(self, database: Any, progress: Optional[Any]):
+
+class Compressor:
+    OBJECT_SIZE_MIN: int = 50
+    OBJECT_SIZE_MAX: int = 0x20000000
+    MAX_DEPTH: int = 50
+    WINDOW_SIZE: int = 8
+
+    def __init__(self, database: Database, progress: Optional[Progress]):
         self._database = database
         self._window = Window(self.WINDOW_SIZE)
         self._progress = progress
         self._objects: List[Any] = []
 
-    def max_size_heuristic(self, source, target):
+    def max_size_heuristic(self, source: Window.Unpacked, target: Window.Unpacked) -> float:
         if target.delta:
             max_size = target.delta.size
             ref_depth = target.depth
@@ -53,12 +58,12 @@ class Compressor:
 
     def _build_delta(self, entry: Entry) -> None:
         obj = self._database.load_raw(entry.oid)
-        target = self._window.add(entry, obj.data)
+        target = self._window.add(entry, cast(bytes, obj.data))
 
         for source in self._window:
             self._try_delta(source, target)
 
-    def _try_delta(self, source: Any, target: Any) -> None:
+    def _try_delta(self, source: Window.Unpacked, target: Window.Unpacked) -> None:
         if source.type != target.type:
             return
         if source.depth >= self.MAX_DEPTH:
@@ -78,7 +83,7 @@ class Compressor:
 
         target.entry.assign_delta(delta)
 
-    def compatible_sizes(self, source, target, max_size):
+    def compatible_sizes(self, source: Window.Unpacked, target: Window.Unpacked, max_size: float) -> bool:
         size_diff = max([target.size - source.size, 0])
         if max_size == 0:
             return False

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import hashlib
-from typing import MutableMapping, Optional, Type
+from typing import MutableMapping, Optional, Type, cast
 import random
 import string
 from pathlib import Path
 from legit.db_entry import DatabaseEntry
+from legit.pack import OfsDelta, Record, RefDelta
 from legit.tree import Tree
 from legit.commit import Commit
 from legit.blob import Blob
@@ -29,11 +30,10 @@ class Database:
         "tree": Tree,
     }
 
-    def close(self):
-        if hasattr(self, "backend"):
-            self.backend.close()
+    def close(self) -> None:
+        self.backend.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
     def __init__(self, path: Path) -> None:
@@ -47,7 +47,7 @@ class Database:
     def load_info(self, oid: str) -> Raw | None:
         return self.backend.load_info(oid)
 
-    def load_raw(self, oid: str) -> Raw:
+    def load_raw(self, oid: str) -> Raw | Record | OfsDelta | RefDelta | None:
         return self.backend.load_raw(oid)
 
     def prefix_match(self, name: str) -> list[str]:
@@ -60,9 +60,9 @@ class Database:
     def pack_path(self):
         return self.path / "pack"
 
-    def read_object(self, oid):
+    def read_object(self, oid: str) -> Blob | Commit | Tree:
         raw = self.load_raw(oid)
-        obj = TYPES[raw.ty].parse(raw.data)
+        obj = TYPES[raw.ty].parse(cast(bytes, raw.data))
         obj.oid = oid
         return obj
 
@@ -76,14 +76,14 @@ class Database:
         diff.compare_oids(a, b, pathfilter)
         return diff.changes
 
-    def load(self, oid: str) -> Blob | Commit | Tree:
+    def load(self, oid: str) -> Blob | Commit | Tree | Record:
         obj = self.read_object(oid)
         self.objects[oid] = obj
         return obj
 
     def load_tree_entry(self, oid: str, path: Optional[Path]) -> DatabaseEntry:
         commit = self.load(oid)
-        root = DatabaseEntry(commit.tree, 0o40000)
+        root = DatabaseEntry(cast(Commit, commit).tree, 0o40000)
 
         if path is None:
             return root
@@ -107,7 +107,7 @@ class Database:
         self.build_list(thing, entry, path if path is not None else Path())
         return thing
 
-    def build_list(self, thing, entry, prefix: Path):
+    def build_list(self, thing, entry, prefix: Path) -> None:
         if entry is None:
             return
 
@@ -115,10 +115,10 @@ class Database:
             thing[prefix] = entry
             return entry
 
-        for name, item in self.load(entry.oid).entries.items():
+        for name, item in cast(Tree, self.load(entry.oid)).entries.items():
             self.build_list(thing, item, prefix / name)
 
-    def store(self, obj: Blob | Commit | Tree) -> None:
+    def store(self, obj: Blob | Commit | Tree | Record) -> None:
         content = self.serialize_object(obj)
         obj.oid = self.hash_content(content)
 
@@ -127,7 +127,7 @@ class Database:
     def hash_object(self, obj: Blob | Commit | Tree) -> str:
         return self.hash_content(self.serialize_object(obj))
 
-    def serialize_object(self, obj: Blob | Commit | Tree) -> bytes:
+    def serialize_object(self, obj: Blob | Commit | Tree | Record) -> bytes:
         string = obj.to_bytes()
         header = f"{obj.type()} {len(string)}".encode("utf-8") + b"\x00"
 

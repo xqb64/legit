@@ -1,18 +1,31 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, reveal_type, cast
 
 from legit.pack import OfsDelta, Record, RefDelta
 from legit.pack_expander import Expander
 
 
+if TYPE_CHECKING:
+    from legit.database import Database
+    from legit.progress import Progress
+    from legit.pack_reader import Reader 
+    from legit.pack_stream import Stream
+
 class Unpacker:
-    def __init__(self, database, reader, stream, progress):
+    def __init__(
+        self,
+        database: Database,
+        reader: Reader,
+        stream: Stream,
+        progress: Progress | None
+    ) -> None:
         self.database = database
         self.reader = reader
         self.stream = stream
         self.progress = progress
         self.offsets = {}
 
-    def process_pack(self):
+    def process_pack(self) -> None:
         if self.progress is not None:
             self.progress.start("Unpacking objects", self.reader.count)
 
@@ -26,15 +39,16 @@ class Unpacker:
 
         self.stream.verify_checksum()
 
-    def process_record(self):
+    def process_record(self) -> None:
         offset = self.stream.offset
         record, data = self.stream.capture(lambda: self.reader.read_record())
+        assert record is not None
         record = self.resolve(record, offset)
         if record is not None:
             self.database.store(record)
             self.offsets[offset] = record.oid
 
-    def resolve(self, record, offset):
+    def resolve(self, record: Record | OfsDelta | RefDelta, offset: int) -> Record:
         if isinstance(record, Record):
             return record
         elif isinstance(record, OfsDelta):
@@ -42,14 +56,14 @@ class Unpacker:
         elif isinstance(record, RefDelta):
             return self.resolve_ref_delta(record)
 
-    def resolve_ofs_delta(self, delta, offset):
+    def resolve_ofs_delta(self, delta: OfsDelta, offset: int) -> Record:
         oid = self.offsets[offset - delta.base_ofs]
         return self.resolve_delta(oid, delta.delta_data)
 
-    def resolve_ref_delta(self, delta):
+    def resolve_ref_delta(self, delta: RefDelta) -> Record:
         return self.resolve_delta(delta.base_oid, delta.delta_data)
 
-    def resolve_delta(self, oid, delta_data):
-        base = self.database.load_raw(oid)
+    def resolve_delta(self, oid: str, delta_data: bytes) -> Record:
+        base = cast(Record, self.database.load_raw(oid))
         data = Expander.expand(base.data, delta_data)
         return Record(base.ty, data)

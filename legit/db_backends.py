@@ -4,8 +4,9 @@ import os
 from pathlib import Path
 
 from functools import lru_cache
-from legit.db_loose import Loose
+from legit.db_loose import Loose, Raw
 from legit.db_packed import Packed
+from legit.pack import OfsDelta, Record, RefDelta
 
 
 class Backends:
@@ -51,7 +52,7 @@ class Backends:
                 return info
         return None
 
-    def load_raw(self, oid):
+    def load_raw(self, oid : str) -> Raw | Record | RefDelta | OfsDelta | None:
         for store in self.stores:
             raw = store.load_raw(oid)
             if raw is not None:
