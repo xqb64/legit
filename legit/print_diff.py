@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional, cast
 from legit.diff import diff_hunks, combined_hunks
 from legit.hunk import Hunk
 from legit.myers import Edit
+
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 DIFF_FORMATS: dict[str, str] = {
@@ -16,7 +21,7 @@ DIFF_FORMATS: dict[str, str] = {
 
 
 class Target:
-    NULL_PATH = "/dev/null"
+    NULL_PATH: str = "/dev/null"
 
     def __init__(self, path: Path, oid: str, mode: str | None, data: str) -> None:
         self.path: Path = path
@@ -29,9 +34,18 @@ class Target:
 
 
 class PrintDiffMixin:
+    repo: Repository
+    args: list[str]
+
+    if TYPE_CHECKING:
+        def println(self, msg: str) -> None: ...
+        def fmt(self, style: Optional[list[str] | str], text: str) -> str: ...
+
     def diff_fmt(self, name: str, text: str) -> str:
         key = ["color", "diff", name]
         style_str = self.repo.config.get(key)
+        
+        assert isinstance(style_str, str)
 
         if style_str:
             style = style_str.split()
@@ -106,7 +120,7 @@ class PrintDiffMixin:
     def print_diff_hunk(self, hunk: Hunk) -> None:
         self.println(self.diff_fmt("frag", hunk.header()))
         for edit in hunk.edits:
-            self.print_diff_edit(edit)
+            self.print_diff_edit(cast(Edit, edit))
 
     def print_diff_edit(self, edit: Edit) -> None:
         text = str(edit)
