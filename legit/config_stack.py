@@ -32,7 +32,7 @@ class ConfigStack:
             return None
 
     def get_all(self, key: Sequence[str]) -> list[ConfigValue]:
-        values: list = []
+        values: list[ConfigValue] = []
         for name in ("system", "global", "local"):
             cfg = self.configs[name]
             cfg.open()

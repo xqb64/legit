@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, cast, Protocol
-from legit.myers import Edit, Line
+from typing import List, Optional, Sequence, cast, Protocol, runtime_checkable
+from legit.myers import Line
 
 
 HUNK_CONTEXT = 3
 
 
+@runtime_checkable
 class EditLike(Protocol):
-    ty: str
+    @property
+    def ty(self) -> str: ...
     @property
     def a_lines(self) -> list[Line | None]: ...
     @property

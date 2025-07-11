@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import cast, List, Optional, Generator, Iterable
 
 from legit.myers import Edit, Line
-from legit.diff import EditLike
+from legit.hunk import EditLike
 
 SYMBOLS: dict[str, str] = {
     "del": "-",
