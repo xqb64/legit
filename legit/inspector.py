@@ -3,11 +3,14 @@ from __future__ import annotations
 import os
 import stat
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from legit.index import Entry
 from legit.db_entry import DatabaseEntry
 from legit.blob import Blob
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class Inspector:

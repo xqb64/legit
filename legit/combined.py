@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import cast, List, Optional, Generator, Iterable
 
 from legit.myers import Edit, Line
+from legit.diff import EditLike
 
 SYMBOLS: dict[str, str] = {
     "del": "-",
@@ -53,11 +54,11 @@ class Combined:
 
             return "".join(symbols) + line.text
 
-    def __init__(self, diffs: List[List[Optional[Edit]]]):
+    def __init__(self, diffs: List[List[Edit]]):
         self._diffs = diffs
         self._offsets: List[int] = []
 
-    def __iter__(self) -> Generator[Combined.Row, None, None]:
+    def __iter__(self) -> Generator[EditLike, None, None]:
         self._offsets = [0] * len(self._diffs)
 
         while True:
@@ -67,7 +68,7 @@ class Combined:
             if self._is_complete():
                 return
 
-            edits = [diff[offset] for offset, diff in self._offset_diffs()]
+            edits = cast(List[Optional[Edit]], [diff[offset] for offset, diff in self._offset_diffs()])
             self._offsets = [offset + 1 for offset in self._offsets]
 
             yield self.Row(edits)
@@ -75,13 +76,13 @@ class Combined:
     def _is_complete(self) -> bool:
         return all(offset == len(diff) for offset, diff in self._offset_diffs())
 
-    def _offset_diffs(self) -> Iterable[tuple[int, List[Optional[Edit]]]]:
+    def _offset_diffs(self) -> Iterable[tuple[int, List[Edit]]]:
         return zip(self._offsets, self._diffs)
 
     def _consume_deletions(
-        self, diff: List[Optional[Edit]], i: int
+        self, diff: List[Edit], i: int
     ) -> Generator[Combined.Row, None, None]:
-        while self._offsets[i] < len(diff) and cast(Edit, diff[self._offsets[i]]).ty == "del":
+        while self._offsets[i] < len(diff) and diff[self._offsets[i]].ty == "del":
             edits: List[Optional[Edit]] = [None] * len(self._diffs)
             edits[i] = diff[self._offsets[i]]
             self._offsets[i] += 1

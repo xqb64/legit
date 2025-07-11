@@ -1,21 +1,29 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, cast
+from typing import List, Optional, Sequence, cast, Protocol
 from legit.myers import Edit, Line
 
 
 HUNK_CONTEXT = 3
 
 
+class EditLike(Protocol):
+    ty: str
+    @property
+    def a_lines(self) -> list[Line | None]: ...
+    @property
+    def b_line(self) -> Line | None: ...
+
+
 @dataclass
 class Hunk:
     a_starts: List[int]
     b_start: Optional[int]
-    edits: List[Edit] = field(default_factory=list)
+    edits: List[EditLike] = field(default_factory=list)
 
     @staticmethod
-    def filter(edits: List[Edit]) -> List[Hunk]:
+    def filter(edits: Sequence[EditLike]) -> List[Hunk]:
         hunks: List[Hunk] = []
         offset = 0
 
@@ -42,7 +50,7 @@ class Hunk:
             offset = Hunk._build(hunks[-1], edits, offset)
 
     @staticmethod
-    def _build(hunk: Hunk, edits: List[Edit], offset: int) -> int:
+    def _build(hunk: Hunk, edits: Sequence[EditLike], offset: int) -> int:
         counter = -1
 
         while counter != 0:
