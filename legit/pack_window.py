@@ -3,13 +3,15 @@ from __future__ import annotations
 from typing import Any, Iterator, Optional, List
 
 from legit.pack_entry import Entry
+from legit.pack_xdelta import XDelta
+
 
 class Window:
     class Unpacked:
         def __init__(self, entry: Entry, data: bytes) -> None:
             self.entry = entry
             self.data = data
-            self.delta_index: Optional[int] = None
+            self.delta_index: Optional[XDelta] = None
 
         @property
         def type(self) -> str:
