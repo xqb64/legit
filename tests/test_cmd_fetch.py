@@ -187,6 +187,8 @@ def test_fetch_unpack_limit_commits_loadable(remote_single_branch, legit_cmd, re
 
     pack_dir = repo.git_path / "objects" / "pack"
 
+    repo.database.backend.close()
+
     repo.database.backend.stores = [
         repo.database.backend.loose
     ] + repo.database.backend.packed()

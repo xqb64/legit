@@ -29,8 +29,8 @@ def tests_it_compresses_a_blob():
     assert len(delta) == 2
 
 
-def create_db(path):
-    path = path.expanduser().resolve()
+def create_db(base: Path, name: str) -> Database:
+    path = base / name
     path.mkdir(parents=True, exist_ok=True)
     return Database(path)
 
@@ -44,8 +44,8 @@ tests = {
 @pytest.mark.parametrize("allow_ofs", [False, True], ids=lambda b: f"ofs_delta={b}")
 @pytest.mark.parametrize("name, processor", tests.items())
 def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
-    source_db = create_db(Path("../db-source"))
-    target_db = create_db(Path("../db-target"))
+    source_db = create_db(tmp_path, "db-source")
+    target_db = create_db(tmp_path, "db-target")
 
     blobs_to_pack = []
     for data in [blob_text_1, blob_text_2]:
@@ -67,7 +67,7 @@ def test_pack_processing(name: str, processor, allow_ofs: bool, tmp_path: Path):
     proc_instance.process_pack()
     
     target_db.close()
-    target_db = create_db(Path("../db-target"))
+    target_db = create_db(tmp_path, "db-target")
 
     oids = [b[0].oid for b in blobs_to_pack]
 
