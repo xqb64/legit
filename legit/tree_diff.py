@@ -1,19 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
+from legit.pathfilter import PathFilter
 from legit.tree import Tree
 from legit.db_entry import DatabaseEntry
+
+if TYPE_CHECKING:
+    from legit.database import Database
+
 
 class TreeDiff:
     def __init__(self, database: Database) -> None:
         self.database: Database = database
         self.changes: dict[Path, list[Optional[DatabaseEntry]]] = {}
 
-    def compare_oids(self, a: Optional[str], b: Optional[str], pathfilter) -> None:
+    def compare_oids(self, a: Optional[str], b: Optional[str], pathfilter: PathFilter) -> None:
         if a == b:
             return
 
@@ -22,11 +27,11 @@ class TreeDiff:
 
         a_entries = cast(
             dict[Path, DatabaseEntry],
-            ({k: v for k, v in a_tree.entries.items()} if a_tree else {}),
+            ({Path(k): v for k, v in a_tree.entries.items()} if a_tree else {}),
         )
         b_entries = cast(
             dict[Path, DatabaseEntry],
-            ({k: v for k, v in b_tree.entries.items()} if b_tree else {}),
+            ({Path(k): v for k, v in b_tree.entries.items()} if b_tree else {}),
         )
 
         self.detect_deletions(a_entries, b_entries, pathfilter)
@@ -53,7 +58,12 @@ class TreeDiff:
         else:
             return None
 
-    def detect_deletions(self, a: dict, b: dict, path_filter) -> None:
+    def detect_deletions(
+        self,
+        a: dict[Path, DatabaseEntry],
+        b: dict[Path, DatabaseEntry],
+        path_filter: PathFilter
+    ) -> None:
         for name, entry in path_filter.each_entry(a):
             other = b.get(name)
             if entry == other:
@@ -69,7 +79,12 @@ class TreeDiff:
             if any(blobs):
                 self.changes[sub_filter.path] = blobs
 
-    def detect_additions(self, a: dict, b: dict, path_filter) -> None:
+    def detect_additions(
+        self,
+        a: dict[Path, DatabaseEntry],
+        b: dict[Path, DatabaseEntry],
+        path_filter: PathFilter
+    ) -> None:
         for name, entry in path_filter.each_entry(b):
             other = a.get(name)
             if other is not None:
