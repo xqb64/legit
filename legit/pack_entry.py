@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import binascii
-from typing import Any, Tuple, Optional
+from typing import cast, Tuple, Optional, TYPE_CHECKING
 from pathlib import Path
 from legit.db_loose import Raw
 from legit.pack import TYPE_CODES
 from legit.numbers import VarIntBE
+
+if TYPE_CHECKING:
+    from legit.pack_delta import Delta
 
 
 OFS_DELTA = 6
@@ -17,7 +20,7 @@ class Entry:
         self.oid: str = oid
         self._info = info
         self._path: Optional[Path] = path
-        self.delta: Optional[Any] = None
+        self.delta: Optional[Delta] = None
         self.depth: int = 0
         self.offset = 0
         self.ofs = ofs
@@ -37,7 +40,7 @@ class Entry:
         dirname = self._path.parent if self._path else None
         return (self.packed_type, basename, dirname, self.size)
 
-    def assign_delta(self, delta: Any) -> None:
+    def assign_delta(self, delta: Delta) -> None:
         self.delta = delta
         self.depth = delta.base.depth + 1
 
@@ -59,6 +62,6 @@ class Entry:
             return b""
 
         if self.ofs:
-            return VarIntBE.write(self.offset - self.delta.base.offset)
+            return VarIntBE.write(self.offset - cast(Entry, self.delta.base).offset)
         else:
-            return binascii.unhexlify(self.delta.base.oid)
+            return binascii.unhexlify(cast(Entry, self.delta.base).oid)

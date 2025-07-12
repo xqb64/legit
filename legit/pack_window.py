@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Iterator, Optional, List
+from typing import Iterator, Optional, List, TYPE_CHECKING
 
 from legit.pack_entry import Entry
 from legit.pack_xdelta import XDelta
+
+
+if TYPE_CHECKING:
+    from legit.pack_delta import Delta
 
 
 class Window:
@@ -22,14 +26,14 @@ class Window:
             return self.entry.size
 
         @property
-        def delta(self) -> Optional[Any]:
+        def delta(self) -> Optional[Delta]:
             return self.entry.delta
 
         @property
         def depth(self) -> int:
             return self.entry.depth
 
-    def __init__(self, size: int):
+    def __init__(self, size: int) -> None:
         if size <= 0:
             raise ValueError("Window size must be positive.")
         self._objects: List[Optional[Window.Unpacked]] = [None] * size

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+
+from legit.db_loose import Raw
 from legit.pack_entry import Entry
-from typing import TYPE_CHECKING, Any, Optional, List, cast
+from typing import TYPE_CHECKING, Optional, List, cast
 from legit.pack_window import Window
 from legit.pack_delta import Delta
 
@@ -9,7 +11,7 @@ from legit.pack_delta import Delta
 if TYPE_CHECKING:
     from legit.database import Database
     from legit.progress import Progress
-
+    
 
 class Compressor:
     OBJECT_SIZE_MIN: int = 50
@@ -21,14 +23,14 @@ class Compressor:
         self._database = database
         self._window = Window(self.WINDOW_SIZE)
         self._progress = progress
-        self._objects: List[Any] = []
+        self._objects: List[Entry] = []
 
     def max_size_heuristic(self, source: Window.Unpacked, target: Window.Unpacked) -> float:
         if target.delta:
             max_size = target.delta.size
             ref_depth = target.depth
         else:
-            max_size = target.size / 2 - 20
+            max_size = target.size // 2 - 20
             ref_depth = 1
 
         return (
@@ -37,7 +39,7 @@ class Compressor:
             / (Compressor.MAX_DEPTH + 1 - ref_depth)
         )
 
-    def add(self, entry: Any) -> None:
+    def add(self, entry: Entry) -> None:
         if not (self.OBJECT_SIZE_MIN <= entry.size <= self.OBJECT_SIZE_MAX):
             return
         self._objects.append(entry)
@@ -58,7 +60,7 @@ class Compressor:
 
     def _build_delta(self, entry: Entry) -> None:
         obj = self._database.load_raw(entry.oid)
-        target = self._window.add(entry, cast(bytes, obj.data))
+        target = self._window.add(entry, cast(bytes, cast(Raw, obj).data))
 
         for source in self._window:
             self._try_delta(source, target)
