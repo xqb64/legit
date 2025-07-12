@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 from legit.cmd_base import Base
+from legit.db_entry import DatabaseEntry
 from legit.revision import Revision
 
 
@@ -18,7 +19,7 @@ class Reset(Base):
 
         if not self.args and self.commit_oid is not None:
             head_oid = self.repo.refs.update_head(self.commit_oid)
-            self.repo.refs.update_ref("ORIG_HEAD", head_oid)
+            self.repo.refs.update_ref("ORIG_HEAD", cast(str, head_oid))
 
         self.exit(0)
 
@@ -27,6 +28,7 @@ class Reset(Base):
             return
 
         if self.mode == "hard":
+            assert self.commit_oid is not None
             return self.repo.hard_reset(self.commit_oid)
 
         if not self.args:
@@ -64,4 +66,4 @@ class Reset(Base):
             self.repo.index.remove(path)
 
         for item_path, entry in listing.items():
-            self.repo.index.add_from_db(item_path, entry)
+            self.repo.index.add_from_db(item_path, cast(DatabaseEntry, entry))
