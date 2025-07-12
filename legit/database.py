@@ -127,7 +127,7 @@ class Database:
 
         self.write_object(obj.oid, content)
 
-    def hash_object(self, obj: Blob | Commit | Tree) -> str:
+    def hash_object(self, obj: Blob | Commit | Tree | Record) -> str:
         return self.hash_content(self.serialize_object(obj))
 
     def serialize_object(self, obj: Blob | Commit | Tree | Record) -> bytes:
