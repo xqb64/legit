@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING, TextIO, cast
 from legit.commit import Commit
 from legit.repository import Repository, Sequencer, PendingCommit
 from legit.resolve import Resolve
@@ -91,7 +91,7 @@ class SequencingMixin:
 
         if commit.is_merge():
             if mainline:
-                return commit.parents[mainline - 1]
+                return commit.parents[cast(int, mainline) - 1]
 
             self.stderr.write(
                 f"error: commit {commit.oid} is a merge but no -m option was given\n"

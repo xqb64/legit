@@ -47,7 +47,7 @@ class Repository:
     def status(self, commit_oid: Optional[str] = None) -> Status:
         return Status(self, commit_oid)
 
-    def migration(self, tree_diff: dict[Path, list[DatabaseEntry]]) -> "Migration":
+    def migration(self, tree_diff: dict[Path, list[DatabaseEntry | None]]) -> "Migration":
         return Migration(self, tree_diff)
 
     def pending_commit(self) -> "PendingCommit":
@@ -152,7 +152,7 @@ class Sequencer:
         self.commands: list[tuple[str, Commit]] = []
         self.config: ConfigFile = ConfigFile(self.path / "opts")
 
-    def start(self, options: dict[str, Optional[str]]) -> None:
+    def start(self, options: dict[str, Optional[str | int]]) -> None:
         self.path.mkdir(parents=True, exist_ok=False)
 
         self.config.open_for_update()

@@ -3,12 +3,15 @@ from __future__ import annotations
 import os
 import stat as _stat
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from legit.blob import Blob
 from legit.index import Entry
 from legit.inspector import Inspector
 from legit.db_entry import DatabaseEntry
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class Migration:
@@ -36,11 +39,11 @@ class Migration:
 
     def __init__(
         self,
-        repo: "Repository",
-        tree_diff: dict[Path, list[DatabaseEntry]],
+        repo: Repository,
+        tree_diff: dict[Path, list[DatabaseEntry | None]],
     ) -> None:
-        self.repo: "Repository" = repo
-        self.tree_diff: dict[Path, list[DatabaseEntry]] = tree_diff
+        self.repo: Repository = repo
+        self.tree_diff: dict[Path, list[DatabaseEntry | None]] = tree_diff
 
         self.changes: Dict[str, List[Tuple[Path, Optional[DatabaseEntry]]]] = {
             k: [] for k in ("create", "update", "delete")
