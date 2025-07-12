@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from typing import TYPE_CHECKING, TextIO, reveal_type
+from typing import TYPE_CHECKING, Optional, Pattern, TextIO, reveal_type, cast
 from urllib.parse import ParseResult
 from legit.protocol import Remotes
 
@@ -14,8 +14,8 @@ class RemoteClientMixin:
     repo: Repository
     stderr: TextIO
 
-    REF_LINE = re.compile(r"^([0-9a-f]+) (.*)$".encode())
-    ZERO_OID = b"0" * 40
+    REF_LINE: Pattern[bytes] = re.compile(r"^([0-9a-f]+) (.*)$".encode())
+    ZERO_OID: bytes = b"0" * 40
 
     def recv_references(self) -> None:
         self.remote_refs = {}
@@ -38,7 +38,10 @@ class RemoteClientMixin:
 
     def start_agent(self, name: str, program: str, url: str, capabilities: list[str] | None = None) -> None:
         capabilities = capabilities or []
-        argv = self.build_agent_command(program, url)
+        
+        argv = cast(list[str], self.build_agent_command(program, url))
+        assert argv is not None
+
         proc = subprocess.Popen(
             argv,
             stdin=subprocess.PIPE,
@@ -55,7 +58,7 @@ class RemoteClientMixin:
 
         self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
-    def build_agent_command(self, program: str, url: str) -> list[str]:
+    def build_agent_command(self, program: str, url: str) -> Optional[list[str]]:
         import shlex
         from urllib.parse import urlparse
 
@@ -74,22 +77,26 @@ class RemoteClientMixin:
         elif uri.scheme == "ssh":
             return self.ssh_command(uri, argv)
 
+        return None
+
     def ssh_command(self, uri: ParseResult, argv: list[str]) -> list[str]:
-        ssh = ["ssh", uri.hostname]
-        if uri.username:
+        ssh = ["ssh"]
+        if uri.hostname is not None:
+            ssh += [uri.hostname]
+        if uri.username is not None:
             ssh += ["-l", uri.username]
-        if uri.port:
+        if uri.port is not None:
             ssh += ["-p", str(uri.port)]
         return ssh + argv
 
     def report_ref_update(
         self,
-        ref_names: list[str],
+        ref_names: list[Optional[str]],
         error: str,
         old_oid: str | None = None,
         new_oid: str | None = None,
         is_ff: bool = False,
-    ):
+    ) -> None:
         if error:
             return self.show_ref_update("!", "[rejected]", ref_names, error)
 
@@ -105,13 +112,13 @@ class RemoteClientMixin:
 
     def report_range_update(
         self,
-        ref_names: list[str],
+        ref_names: list[Optional[str]],
         old_oid: str | None,
         new_oid: str | None,
         is_ff: bool
     ) -> None:
-        old_oid = self.repo.database.short_oid(old_oid)
-        new_oid = self.repo.database.short_oid(new_oid)
+        old_oid = self.repo.database.short_oid(cast(str, old_oid))
+        new_oid = self.repo.database.short_oid(cast(str, new_oid))
 
         if is_ff:
             revisions = f"{old_oid}..{new_oid}"
@@ -120,7 +127,7 @@ class RemoteClientMixin:
             revisions = f"{old_oid}...{new_oid}"
             self.show_ref_update("+", revisions, ref_names, "forced update")
 
-    def show_ref_update(self, flag, summary, ref_names, reason=None):
+    def show_ref_update(self, flag: str, summary: str, ref_names: list[Optional[str]], reason: str | None = None) -> None:
         names = [
             self.repo.refs.short_name(
                 name.decode() if isinstance(name, bytes) else name
