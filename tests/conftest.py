@@ -33,10 +33,12 @@ MakeUnreadable: TypeAlias = Callable[[str], None]
 EditBlock: TypeAlias = Callable[[Editor], None]
 StubEditorFactory: TypeAlias = Callable[[str], None]
 
+
 @pytest.fixture
 def load_commit(repo: Repository, resolve_revision: ResolveRevision) -> LoadCommit:
     def _load_commit(expression: str) -> Blob | CommitObj | Tree | Record:
         return repo.database.load(resolve_revision(expression))
+
     return _load_commit
 
 
@@ -44,6 +46,7 @@ def load_commit(repo: Repository, resolve_revision: ResolveRevision) -> LoadComm
 def resolve_revision(repo: Repository) -> ResolveRevision:
     def _resolve_revision(expression: str) -> str:
         return Revision(repo, expression).resolve()
+
     return _resolve_revision
 
 
@@ -54,7 +57,9 @@ def repo_path(tmp_path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown(repo_path: Path) -> Generator[None]:
-    Command.execute(repo_path, {}, ["legit", "init"], StringIO(), StringIO(), StringIO())
+    Command.execute(
+        repo_path, {}, ["legit", "init"], StringIO(), StringIO(), StringIO()
+    )
     yield
     shutil.rmtree(repo_path, ignore_errors=True)
 
@@ -71,7 +76,9 @@ def repo(repo_path: Path) -> Generator[Repository]:
 
 @pytest.fixture
 def commit(legit_cmd: LegitCmd) -> Commit:
-    def _commit(message: str, when: Optional[datetime] = None, author: bool = True) -> LegitCmdResult:
+    def _commit(
+        message: str, when: Optional[datetime] = None, author: bool = True
+    ) -> LegitCmdResult:
         if author:
             env = {
                 "GIT_AUTHOR_NAME": "A. U. Thor",
@@ -96,6 +103,7 @@ def write_file(repo_path: Path) -> WriteFile:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             f.write(contents)
+
     return _write_file
 
 
@@ -104,6 +112,7 @@ def mkdir(repo_path: Path) -> Mkdir:
     def _mkdir(name: str) -> None:
         path = repo_path / name
         path.mkdir(parents=True, exist_ok=True)
+
     return _mkdir
 
 
@@ -112,6 +121,7 @@ def touch(repo_path: Path) -> Touch:
     def _touch(name: str) -> None:
         path = repo_path / name
         path.touch()
+
     return _touch
 
 
@@ -123,6 +133,7 @@ def delete(repo_path: Path) -> Delete:
             shutil.rmtree(path, ignore_errors=True)
         else:
             path.unlink(missing_ok=True)
+
     return _delete
 
 
@@ -131,6 +142,7 @@ def make_executable(repo_path: Path) -> MakeExecutable:
     def _make_executable(name: str) -> None:
         path = repo_path / name
         path.chmod(0o755)
+
     return _make_executable
 
 
@@ -139,6 +151,7 @@ def make_unreadable(repo_path: Path) -> MakeUnreadable:
     def _make_unreadable(name: str) -> None:
         path = repo_path / name
         path.chmod(0o200)
+
     return _make_unreadable
 
 
@@ -146,7 +159,9 @@ def make_unreadable(repo_path: Path) -> MakeUnreadable:
 def legit_cmd(repo_path: Path) -> Generator[LegitCmd]:
     to_close = []
 
-    def _legit_cmd(*argv: Any, env: dict[str, str] | None = None, stdin_data: str = "") -> LegitCmdResult:
+    def _legit_cmd(
+        *argv: Any, env: dict[str, str] | None = None, stdin_data: str = ""
+    ) -> LegitCmdResult:
         env = env or {}
         stdin = StringIO(stdin_data)
         stdout = StringIO()
@@ -166,9 +181,13 @@ def legit_cmd(repo_path: Path) -> Generator[LegitCmd]:
 @pytest.fixture
 def stub_editor(monkeypatch: pytest.MonkeyPatch) -> StubEditorFactory:
     def factory(message_to_return: str) -> None:
-        def fake_edit(path: Path, command: str | None = None, *, block: EditBlock | None = None) -> str:
+        def fake_edit(
+            path: Path, command: str | None = None, *, block: EditBlock | None = None
+        ) -> str:
             if block is not None:
                 block(Editor(path, command))
             return message_to_return
+
         monkeypatch.setattr(Editor, "edit", fake_edit)
+
     return factory

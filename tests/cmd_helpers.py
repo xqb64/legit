@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import tempfile
-from io import TextIOBase 
+from io import TextIOBase
 from pathlib import Path
 
 from contextlib import contextmanager
@@ -66,7 +66,7 @@ def assert_stdout(stdout: TextIO, expected: str) -> None:
     assert data == expected, f"Expected stdout {expected!r}, got {data!r}"
 
 
-def assert_stderr(stderr: TextIO, expected: str) -> None:
+def assert_stderr(stderr: CapturedStderr, expected: str) -> None:
     stderr.seek(0)
     data = stderr.read()
     assert data == expected, f"Expected stderr {expected!r}, got {data!r}"
@@ -95,6 +95,8 @@ def assert_index(repo: Repository, expected: dict[str, str]) -> None:
     repo.index.load()
 
     for entry in repo.index.entries.values():
-        files[str(entry.path)] = cast(Blob, repo.database.load(entry.oid)).data.decode("utf-8")
+        files[str(entry.path)] = cast(Blob, repo.database.load(entry.oid)).data.decode(
+            "utf-8"
+        )
 
     assert files == expected
