@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from pathlib import Path
 from typing import Optional, cast
 from legit.cmd_base import Base
@@ -62,8 +63,10 @@ class Diff(PrintDiffMixin, Base):
         if not self.patch:
             return
 
-        paths = self.status_state.conflicts.copy()
-        paths.update(self.status_state.workspace_changes)
+        paths: dict[str, str | list[int]] = {
+            **self.status_state.conflicts,
+            **self.status_state.workspace_changes
+        }
 
         for path, state in paths.items():
             if path in self.status_state.conflicts:

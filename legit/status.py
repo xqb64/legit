@@ -26,8 +26,8 @@ class Status:
         self.inspector: Inspector = Inspector(repo)
         self.repo = repo
         self.stats: MutableMapping[Path, os.stat_result] = {}
-        self.index_changes: MutableMapping[str, str] = {}
-        self.workspace_changes: MutableMapping[str, str] = {}
+        self.index_changes: dict[str, str] = {}
+        self.workspace_changes: dict[str, str] = {}
         self.changed: set[str] = set()
         self.untracked: set[str] = set()
         self.conflicts: defaultdict[str, list[int]] = defaultdict(list[int])

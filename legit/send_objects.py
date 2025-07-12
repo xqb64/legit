@@ -13,9 +13,12 @@ if TYPE_CHECKING:
     from legit.protocol import Remotes
 
 class SendObjectsMixin:
-    repo: Repository
-    conn: Remotes.Protocol
-    stderr: TextIO
+    if TYPE_CHECKING:
+        @property
+        def repo(self) -> Repository: ...
+
+        conn: Remotes.Protocol
+        stderr: TextIO
 
     def send_packet_objects(self, revs: list[str]) -> None:
         rev_opts = {"objects": True, "missing": True}

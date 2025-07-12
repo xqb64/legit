@@ -109,9 +109,9 @@ class Config(Base):
         self._read_config(lambda config: config.get_all(key))
 
     def _read_config(self, operation: Callable[[ConfigFile | ConfigStack], ConfigValue | None | list[ConfigValue]]) -> None:
-        config = self.repo.config
+        config: ConfigFile | ConfigStack = self.repo.config
         if self.options["file"]:
-            config = config.file(self.options["file"])
+            config = cast(ConfigStack, config).file(self.options["file"])
 
         config.open()
 

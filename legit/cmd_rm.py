@@ -30,7 +30,7 @@ class Rm(Base):
                 self.expand_path(Path(p)) for p in self.args
             ))
         except ValueError as e:
-            expanded = itertools.chain.from_iterable([])
+            expanded = [] 
             self.repo.index.release_lock()
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)

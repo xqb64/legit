@@ -98,7 +98,7 @@ class Commit(WriteCommitMixin, Base):
         return commit.message
 
     def compose_message(self, message: Optional[str]) -> Optional[str]:
-        def editor_setup(editor: Editor):
+        def editor_setup(editor: Editor) -> None:
             editor.println(message or "")
             editor.println("")
             editor.note(COMMIT_NOTES)

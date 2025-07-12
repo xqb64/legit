@@ -51,7 +51,7 @@ class Checkout(Base):
             self.handle_migration_conflict(migration)
 
         self.repo.index.write_updates()
-        self.repo.refs.set_head(self.target, self.target_oid)
+        self.repo.refs.set_head(self.target, cast(str, self.target_oid))
 
         self.new_ref = self.repo.refs.current_ref()
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional, cast
 from legit.author import Author
 from legit.blob import Blob
 from legit.cmd_base import Base
 from legit.commit import Commit
+from legit.db_entry import DatabaseEntry
 from legit.print_diff import PrintDiffMixin, Target
 from legit.refs import Refs
 from legit.rev_list import RevList
@@ -123,7 +125,7 @@ class Log(PrintDiffMixin, Base):
 
         return None
 
-    def from_diff_item(self, path, item) -> Target:
+    def from_diff_item(self, path: Path, item: Optional[DatabaseEntry]) -> Target:
         if item is not None:
             blob = cast(Blob, self.repo.database.load(item.oid))
             return Target(path, item.oid, oct(item.mode)[2:], blob.data.decode("utf-8"))
