@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from types import NoneType
-from typing import Optional
+from typing import cast, Optional
 from legit.config import ConfigFile
 from legit.refs import Refs
 from legit.revision import Revision
@@ -47,8 +46,9 @@ class Remotes:
         thing = self.get(name)
         if thing is not None:
             return thing.get_upstream(branch)
+        return None
 
-    def add(self, name, url, branches: list[str] | None = None) -> None:
+    def add(self, name: str, url: str, branches: list[str] | None = None) -> None:
         if not branches:
             branches = ["*"]
         self.config.open_for_update()
@@ -68,7 +68,7 @@ class Remotes:
 
         self.config.save()
 
-    def remove(self, name) -> None:
+    def remove(self, name: str) -> None:
         try:
             self.config.open_for_update()
 
@@ -145,10 +145,10 @@ class Refspec:
             return str((prefix.parent if prefix else Refs.HEADS_DIR) / name)
 
     @staticmethod
-    def expand(specs, refs):
-        specs = [Refspec.parse(spec) for spec in specs]
+    def expand(specs: list[str], refs: list[str]) -> dict[str, tuple[str, bool]]:
+        parsed_specs = [Refspec.parse(spec) for spec in specs]
         mappings = {}
-        for spec in specs:
+        for spec in parsed_specs:
             assert spec is not None
             mappings.update(spec.match_refs(refs))
         return mappings
@@ -202,7 +202,7 @@ class Remote:
 
     def get_upstream(self, branch: str) -> str | None:
         merge = self.config.get(["branch", branch, "merge"])
-        targets = Refspec.expand(self.fetch_specs, [merge])
+        targets = Refspec.expand(cast(list[str], self.fetch_specs), [cast(str, merge)])
 
         return list(sorted(targets.keys()))[0]
 
