@@ -83,7 +83,7 @@ class Log(PrintDiffMixin, Base):
 
     def show_patch(self, commit: Commit) -> str | None:
         if not self.patch:
-            return
+            return None
 
         if commit.is_merge():
             return self.show_merge_patch(commit)
@@ -99,13 +99,15 @@ class Log(PrintDiffMixin, Base):
                 self.from_diff_item(path, old_item), self.from_diff_item(path, new_item)
             )
 
+        return None
+
     def show_merge_patch(self, commit: Commit) -> Optional[str]:
         if not self.combined:
-            return
+            return None
 
         diffs = [self.rev_list.tree_diff(oid, commit.oid) for oid in commit.parents]
         if not diffs:
-            return
+            return None
 
         paths = [
             path for path in diffs[0].keys() if all(path in diff for diff in diffs[1:])
@@ -118,6 +120,8 @@ class Log(PrintDiffMixin, Base):
             child = self.from_diff_item(path, diffs[0][path][1])
 
             self.print_combined_diff(parents, child)
+
+        return None
 
     def from_diff_item(self, path, item) -> Target:
         if item is not None:

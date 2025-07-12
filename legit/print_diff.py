@@ -58,7 +58,7 @@ class PrintDiffMixin:
         if any(x in self.args for x in ("-s", "--no-patch")):
             self.patch = False
 
-    def print_combined_diff(self, a_versions, b_version):
+    def print_combined_diff(self, a_versions: list[Target], b_version: Target) -> None:
         self._header(f"diff --cc {b_version.path}")
 
         a_oids = [self._short(a.oid) for a in a_versions]

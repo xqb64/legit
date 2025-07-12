@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import defaultdict
 from typing import Any, Callable, Generator, Optional, cast
 from legit.tree import Tree
+from legit.refs import Refs
 from legit.commit import Commit
 from legit.db_entry import DatabaseEntry
 from legit.revision import Revision
@@ -19,18 +20,18 @@ class RevList:
     def __init__(self, repo: Repository, revs: list[str], options: Optional[dict[str, Any]] = None) -> None:
         options = options or {}
         self.repo: Repository = repo
-        self.commits: dict[str, Any] = {}
-        self.flags = defaultdict(set)
+        self.commits: dict[str, Commit] = {}
+        self.flags: defaultdict[str, set[str]] = defaultdict(set)
         self.limited: bool = False
-        self.output = []
-        self.queue = []
-        self.prune = []
-        self.diffs = {}
-        self.walk = options.get("walk", True)
-        self.objects = options.get("objects", False)
-        self.missing = options.get("missing", False)
-        self.pending = []
-        self.paths = {}
+        self.output: list[Commit] = []
+        self.queue: list[Commit] = []
+        self.prune: list[Path] = []
+        self.diffs: dict[tuple[str, str], dict[Path, list[DatabaseEntry | None]]] = {}
+        self.walk: bool = options.get("walk", True)
+        self.objects: bool = options.get("objects", False)
+        self.missing: bool = options.get("missing", False)
+        self.pending: list[DatabaseEntry] = []
+        self.paths: dict[str, Path] = {}
 
         if options.get("all"):
             self.include_refs(self.repo.refs.list_all_refs())
@@ -47,7 +48,7 @@ class RevList:
 
         self.filter = PathFilter.build(self.prune)
 
-    def include_refs(self, refs) -> None:
+    def include_refs(self, refs: list[Refs.SymRef]) -> None:
         oids = [ref.read_oid() for ref in refs]
         for oid in oids:
             if oid is not None:
@@ -66,7 +67,7 @@ class RevList:
             return None
 
         if oid not in self.commits:
-            self.commits[oid] = self.repo.database.load(oid)
+            self.commits[oid] = cast(Commit, self.repo.database.load(oid))
         return self.commits[oid]
 
     def mark(self, oid: str, flag: str) -> bool:
@@ -175,7 +176,7 @@ class RevList:
                 assert parent is not None
                 self.mark_tree_uninteresting(parent.tree)
 
-    def traverse_tree(self, entry: DatabaseEntry, visitor: Callable[[Any], bool], path: Path = Path()):
+    def traverse_tree(self, entry: DatabaseEntry, visitor: Callable[[Any], bool], path: Path = Path()) -> bool:
         if entry.oid not in self.paths:
             self.paths[entry.oid] = path
 
@@ -194,7 +195,7 @@ class RevList:
     def mark_tree_uninteresting(self, tree_oid: str) -> None:
         entry = self.repo.database.tree_entry(tree_oid)
 
-        def _mark(o):
+        def _mark(o: DatabaseEntry) -> bool:
             return self.mark(o.oid, "uninteresting")
 
         self.traverse_tree(entry, _mark)
@@ -274,9 +275,9 @@ class RevList:
             return commit.parents
     
         parents = commit.parents
-        parents = [None] if not parents else parents
+        processed_parents = [None] if not parents else parents
 
-        for oid in parents:
+        for oid in processed_parents:
             if self.tree_diff(cast(str, oid), commit.oid):
                 continue
             self.mark(commit.oid, "treesame")
