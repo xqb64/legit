@@ -18,7 +18,7 @@ class RemoteClientMixin:
     ZERO_OID: bytes = b"0" * 40
 
     def recv_references(self) -> None:
-        self.remote_refs = {}
+        self.remote_refs: dict[str, str] = {}
 
         for line in self.conn.recv_until(None):
             m = self.REF_LINE.match(line)
@@ -36,7 +36,7 @@ class RemoteClientMixin:
             if oid != RemoteClientMixin.ZERO_OID.decode():
                 self.remote_refs[ref] = oid.lower()
 
-    def start_agent(self, name: str, program: str, url: str, capabilities: list[str] | None = None) -> None:
+    def start_agent(self, name: str, program: str | list[str], url: str, capabilities: list[str] | None = None) -> None:
         capabilities = capabilities or []
         
         argv = cast(list[str], self.build_agent_command(program, url))
@@ -58,7 +58,7 @@ class RemoteClientMixin:
 
         self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
-    def build_agent_command(self, program: str, url: str) -> Optional[list[str]]:
+    def build_agent_command(self, program: list[str] | str, url: str) -> Optional[list[str]]:
         import shlex
         from urllib.parse import urlparse
 
@@ -91,7 +91,7 @@ class RemoteClientMixin:
 
     def report_ref_update(
         self,
-        ref_names: list[Optional[str]],
+        ref_names: tuple[Optional[str], Optional[str]],
         error: str,
         old_oid: str | None = None,
         new_oid: str | None = None,
@@ -112,7 +112,7 @@ class RemoteClientMixin:
 
     def report_range_update(
         self,
-        ref_names: list[Optional[str]],
+        ref_names: tuple[Optional[str], Optional[str]],
         old_oid: str | None,
         new_oid: str | None,
         is_ff: bool
@@ -127,7 +127,7 @@ class RemoteClientMixin:
             revisions = f"{old_oid}...{new_oid}"
             self.show_ref_update("+", revisions, ref_names, "forced update")
 
-    def show_ref_update(self, flag: str, summary: str, ref_names: list[Optional[str]], reason: str | None = None) -> None:
+    def show_ref_update(self, flag: str, summary: str, ref_names: tuple[Optional[str], Optional[str]], reason: str | None = None) -> None:
         names = [
             self.repo.refs.short_name(
                 name.decode() if isinstance(name, bytes) else name
