@@ -11,7 +11,7 @@ from legit.pack_delta import Delta
 if TYPE_CHECKING:
     from legit.database import Database
     from legit.progress import Progress
-    
+
 
 class Compressor:
     OBJECT_SIZE_MIN: int = 50
@@ -25,7 +25,9 @@ class Compressor:
         self._progress = progress
         self._objects: List[Entry] = []
 
-    def max_size_heuristic(self, source: Window.Unpacked, target: Window.Unpacked) -> float:
+    def max_size_heuristic(
+        self, source: Window.Unpacked, target: Window.Unpacked
+    ) -> float:
         if target.delta:
             max_size = target.delta.size
             ref_depth = target.depth
@@ -85,7 +87,9 @@ class Compressor:
 
         target.entry.assign_delta(delta)
 
-    def compatible_sizes(self, source: Window.Unpacked, target: Window.Unpacked, max_size: float) -> bool:
+    def compatible_sizes(
+        self, source: Window.Unpacked, target: Window.Unpacked, max_size: float
+    ) -> bool:
         size_diff = max([target.size - source.size, 0])
         if max_size == 0:
             return False

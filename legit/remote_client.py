@@ -36,9 +36,15 @@ class RemoteClientMixin:
             if oid != RemoteClientMixin.ZERO_OID.decode():
                 self.remote_refs[ref] = oid.lower()
 
-    def start_agent(self, name: str, program: str | list[str], url: str, capabilities: list[str] | None = None) -> None:
+    def start_agent(
+        self,
+        name: str,
+        program: str | list[str],
+        url: str,
+        capabilities: list[str] | None = None,
+    ) -> None:
         capabilities = capabilities or []
-        
+
         argv = cast(list[str], self.build_agent_command(program, url))
         assert argv is not None
 
@@ -52,13 +58,15 @@ class RemoteClientMixin:
 
         child_stdin = proc.stdin
         child_stdout = proc.stdout
-        
+
         assert child_stdin is not None
         assert child_stdout is not None
 
         self.conn = Remotes.Protocol(name, child_stdout, child_stdin, capabilities)
 
-    def build_agent_command(self, program: list[str] | str, url: str) -> Optional[list[str]]:
+    def build_agent_command(
+        self, program: list[str] | str, url: str
+    ) -> Optional[list[str]]:
         import shlex
         from urllib.parse import urlparse
 
@@ -115,7 +123,7 @@ class RemoteClientMixin:
         ref_names: tuple[Optional[str], Optional[str]],
         old_oid: str | None,
         new_oid: str | None,
-        is_ff: bool
+        is_ff: bool,
     ) -> None:
         old_oid = self.repo.database.short_oid(cast(str, old_oid))
         new_oid = self.repo.database.short_oid(cast(str, new_oid))
@@ -127,7 +135,13 @@ class RemoteClientMixin:
             revisions = f"{old_oid}...{new_oid}"
             self.show_ref_update("+", revisions, ref_names, "forced update")
 
-    def show_ref_update(self, flag: str, summary: str, ref_names: tuple[Optional[str], Optional[str]], reason: str | None = None) -> None:
+    def show_ref_update(
+        self,
+        flag: str,
+        summary: str,
+        ref_names: tuple[Optional[str], Optional[str]],
+        reason: str | None = None,
+    ) -> None:
         names = [
             self.repo.refs.short_name(
                 name.decode() if isinstance(name, bytes) else name

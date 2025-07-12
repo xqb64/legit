@@ -54,7 +54,7 @@ class Packed:
         elif isinstance(record, RefDelta):
             base = self.load_raw(record.base_oid)
             return self.expand_delta(cast(Record, base), record)
-        
+
         else:
             return None
 

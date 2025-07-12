@@ -4,13 +4,25 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Pattern, TextIO, Tuple, Sequence, Callable, TypeAlias, cast
+from typing import (
+    List,
+    Optional,
+    Pattern,
+    TextIO,
+    Tuple,
+    Sequence,
+    Callable,
+    TypeAlias,
+    cast,
+)
 from legit.lockfile import Lockfile
 
 
 ConfigValue: TypeAlias = bool | int | str
 
-SECTION_LINE: Pattern[str] = re.compile(r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I)
+SECTION_LINE: Pattern[str] = re.compile(
+    r'^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*(?:$|#|;)', re.I
+)
 VARIABLE_LINE: Pattern[str] = re.compile(
     r"^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*(?:$|#|;)", re.I | re.M
 )
@@ -24,8 +36,10 @@ VALID_VARIABLE: Pattern[str] = re.compile(r"^[a-z][a-z0-9-]*$", re.I)
 class Conflict(Exception):
     pass
 
+
 class ParseError(Exception):
     pass
+
 
 @dataclass
 class Section:
@@ -132,7 +146,7 @@ class ConfigFile:
     def replace_all(self, key: Sequence[str], value: ConfigValue) -> None:
         key, var = self.split_key(key)
         section, lines = self.find_lines(key, var)
-        
+
         assert section is not None
         self.remove_all(section, lines)
         self.add_variable(section, key, var, value)
@@ -140,12 +154,14 @@ class ConfigFile:
     def unset(
         self,
         key: Sequence[str],
-        block: Optional[Callable[[List["Line"]], None]] = None, 
+        block: Optional[Callable[[List["Line"]], None]] = None,
     ) -> None:
         if block is None:
+
             def _default_block(lines: List["Line"]) -> None:
                 if len(lines) > 1:
                     raise Conflict(f"{key} has multiple values")
+
             block = _default_block
 
         self.unset_all(key, block)
@@ -205,9 +221,7 @@ class ConfigFile:
         return (key, var)
 
     def find_lines(
-        self,
-        key: Sequence[str],
-        var: str
+        self, key: Sequence[str], var: str
     ) -> Tuple[Optional[Section], List[Line]]:
         name = Section.normalize(key)
         if name not in self.lines:
@@ -226,7 +240,11 @@ class ConfigFile:
         return section
 
     def add_variable(
-        self, section: Optional[Section], key: Sequence[str], var: str, value: ConfigValue
+        self,
+        section: Optional[Section],
+        key: Sequence[str],
+        var: str,
+        value: ConfigValue,
     ) -> None:
         section = section or self.add_section(key)
         text = Variable.serialize(var, value)

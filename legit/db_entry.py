@@ -21,5 +21,3 @@ class DatabaseEntry:
             and self.mode == other.mode
             and self.is_tree() == other.is_tree()
         )
-
-

@@ -71,7 +71,9 @@ class Loose:
         file.write(zlib.compress(content, zlib.Z_BEST_SPEED))
         file.move(Path(object_path.name))
 
-    def read_object_header(self, oid: str, read_bytes: int | None = None) -> tuple[str, int, tuple[bytes, int]]:
+    def read_object_header(
+        self, oid: str, read_bytes: int | None = None
+    ) -> tuple[str, int, tuple[bytes, int]]:
         path = self.path / str(oid[:2]) / str(oid[2:])
 
         with open(path, "rb") as f:

@@ -34,11 +34,7 @@ class Combined:
 
         def __str__(self) -> str:
             symbols = "".join(
-                [
-                    SYMBOLS[edit.ty]
-                    if edit is not None else " "
-                    for edit in self.edits 
-                ]
+                [SYMBOLS[edit.ty] if edit is not None else " " for edit in self.edits]
             )
 
             del_edit = next(
@@ -49,7 +45,7 @@ class Combined:
                 line = del_edit.a_line
             else:
                 line = cast(Edit, self.edits[0]).b_line
-            
+
             assert line is not None
 
             return "".join(symbols) + line.text
@@ -68,7 +64,10 @@ class Combined:
             if self._is_complete():
                 return
 
-            edits = cast(List[Optional[Edit]], [diff[offset] for offset, diff in self._offset_diffs()])
+            edits = cast(
+                List[Optional[Edit]],
+                [diff[offset] for offset, diff in self._offset_diffs()],
+            )
             self._offsets = [offset + 1 for offset in self._offsets]
 
             yield self.Row(edits)

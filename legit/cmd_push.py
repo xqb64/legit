@@ -55,7 +55,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
         log.debug("sending objects")
         self.send_objects()
         log.debug("sent objects")
-        
+
         assert self.conn.output is not None
         self.conn.output.close()
 
@@ -71,8 +71,12 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
 
     def configure(self) -> None:
         current_branch = self.repo.refs.current_ref().short_name()
-        branch_remote = cast(str, self.repo.config.get(["branch", current_branch, "remote"]))
-        branch_merge = cast(str, self.repo.config.get(["branch", current_branch, "merge"]))
+        branch_remote = cast(
+            str, self.repo.config.get(["branch", current_branch, "remote"])
+        )
+        branch_merge = cast(
+            str, self.repo.config.get(["branch", current_branch, "merge"])
+        )
 
         try:
             name = self.args[0]
@@ -81,11 +85,20 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
 
         remote = self.repo.remotes.get(name)
 
-        self.push_url = cast(str, remote.push_url) if remote is not None else self.args[0]
-        self.fetch_specs = cast(list[str], remote.fetch_specs if remote is not None else [])
-        self.receiver = cast(str | list[str], (
-            self.options.get("receiver") or cast(Remote, remote).receiver or self.RECEIVE_PACK
-        ))
+        self.push_url = (
+            cast(str, remote.push_url) if remote is not None else self.args[0]
+        )
+        self.fetch_specs = cast(
+            list[str], remote.fetch_specs if remote is not None else []
+        )
+        self.receiver = cast(
+            str | list[str],
+            (
+                self.options.get("receiver")
+                or cast(Remote, remote).receiver
+                or self.RECEIVE_PACK
+            ),
+        )
 
         if len(self.args) > 1:
             self.push_specs = self.args[1:]
@@ -93,11 +106,17 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
             spec = Refspec(current_branch, branch_merge, False)
             self.push_specs = [str(spec)]
         else:
-            self.push_specs = cast(list[str], remote.push_specs if remote is not None else None)
+            self.push_specs = cast(
+                list[str], remote.push_specs if remote is not None else None
+            )
 
     def send_update_requests(self) -> None:
-        self.updates: dict[str, tuple[Optional[str], Optional[str], Optional[str], Optional[str]]] = {}
-        self.errors: list[tuple[tuple[Optional[str], Optional[str]], Optional[str]]] = []
+        self.updates: dict[
+            str, tuple[Optional[str], Optional[str], Optional[str], Optional[str]]
+        ] = {}
+        self.errors: list[
+            tuple[tuple[Optional[str], Optional[str]], Optional[str]]
+        ] = []
 
         local_refs = list(sorted(ref.path for ref in self.repo.refs.list_all_refs()))
         targets = Refspec.expand(self.push_specs, local_refs)
@@ -180,7 +199,9 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
             if unpack_match:
                 unpack_result = unpack_match.group(1)
                 if unpack_result != b"ok":
-                    self.stderr.write(f"error: remote unpack failed: {unpack_result.decode()}\n")
+                    self.stderr.write(
+                        f"error: remote unpack failed: {unpack_result.decode()}\n"
+                    )
             else:
                 self.handle_status(unpack_line)
 
@@ -213,5 +234,4 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
     def report_update(self, target: str, error: str) -> None:
         source, ff_error, old_oid, new_oid = self.updates[target]
         ref_names = (source, target)
-        self.report_ref_update(
-            ref_names, error, old_oid, new_oid, ff_error is None)
+        self.report_ref_update(ref_names, error, old_oid, new_oid, ff_error is None)

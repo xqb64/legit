@@ -56,8 +56,10 @@ class Delta:
         def __repr__(self) -> str:
             return f"Insert(data={self.data!r})"
 
-    def __init__(self, source: 'Window.Unpacked', target: 'Window.Unpacked') -> None:
-        self.base: Entry | Window.Unpacked = source.entry if hasattr(source, "entry") else source
+    def __init__(self, source: "Window.Unpacked", target: "Window.Unpacked") -> None:
+        self.base: Entry | Window.Unpacked = (
+            source.entry if hasattr(source, "entry") else source
+        )
 
         data_parts = [self._sizeof(source), self._sizeof(target)]
 
@@ -75,6 +77,6 @@ class Delta:
     def size(self) -> int:
         return len(self.data)
 
-    def _sizeof(self, entry: 'Window.Unpacked') -> bytes:
+    def _sizeof(self, entry: "Window.Unpacked") -> bytes:
         byte_array = VarIntLE.write(entry.size, 7)
         return bytes(byte_array)

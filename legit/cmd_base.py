@@ -40,6 +40,7 @@ class Base:
         def editor_setup(editor: Editor) -> None:
             if not self.isatty:
                 editor.close()
+
         return Editor.edit(path, block=editor_setup)
 
     def editor_command(self) -> str | None:
@@ -47,7 +48,7 @@ class Base:
         git_editor = self.env.get("GIT_EDITOR")
         visual = self.env.get("VISUAL")
         editor = self.env.get("EDITOR")
-        return (git_editor or core_editor or visual or editor)
+        return git_editor or core_editor or visual or editor
 
     def setup_pager(self) -> None:
         if self.pager is not None:

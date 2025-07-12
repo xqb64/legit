@@ -16,7 +16,9 @@ REF_DELTA = 7
 
 
 class Entry:
-    def __init__(self, oid: str, info: Raw | None, path: Optional[Path], ofs: bool = False):
+    def __init__(
+        self, oid: str, info: Raw | None, path: Optional[Path], ofs: bool = False
+    ):
         self.oid: str = oid
         self._info = info
         self._path: Optional[Path] = path

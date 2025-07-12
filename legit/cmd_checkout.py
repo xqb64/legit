@@ -42,7 +42,9 @@ class Checkout(Base):
 
         self.repo.index.load_for_update()
 
-        tree_diff = self.repo.database.tree_diff(cast(str, self.current_oid), cast(str, self.target_oid))
+        tree_diff = self.repo.database.tree_diff(
+            cast(str, self.current_oid), cast(str, self.target_oid)
+        )
         migration = self.repo.migration(tree_diff)
 
         try:
@@ -82,7 +84,9 @@ class Checkout(Base):
 
     def print_previous_head(self) -> None:
         if self.current_ref.is_head() and self.current_oid != self.target_oid:
-            self.print_head_position("Previous HEAD position was", cast(str, self.current_oid))
+            self.print_head_position(
+                "Previous HEAD position was", cast(str, self.current_oid)
+            )
 
     def print_head_position(self, msg: str, oid: str) -> None:
         commit = self.repo.database.load(oid)

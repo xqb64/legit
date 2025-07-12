@@ -13,7 +13,6 @@ def git_sort_key(item: tuple[str, "DatabaseEntry | Entry | Tree"]) -> str:
     return name
 
 
-
 class Tree:
     def __init__(
         self, entries: MutableMapping[str, "DatabaseEntry | Entry | Tree"] | None = None

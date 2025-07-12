@@ -10,7 +10,7 @@ from legit.rev_list import RevList
 
 gitdir = Path(".git")
 pack_dir = gitdir / "objects" / "pack"
-pack_dir.mkdir(parents=True, exist_ok=True) 
+pack_dir.mkdir(parents=True, exist_ok=True)
 
 repo = Repository(gitdir)
 rev_list = RevList(repo, ["refs/heads/master"])
@@ -23,7 +23,7 @@ try:
         output=tmp_file,
         database=repo.database,
         options={
-            "compression": 6,  
+            "compression": 6,
             "progress": None,
         },
     )

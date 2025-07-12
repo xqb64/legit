@@ -17,7 +17,12 @@ class RevList:
     RANGE = re.compile(r"^(.*)\.\.(.*)$")
     EXCLUDE = re.compile(r"^\^(.+)$")
 
-    def __init__(self, repo: Repository, revs: list[str], options: Optional[dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        repo: Repository,
+        revs: list[str],
+        options: Optional[dict[str, Any]] = None,
+    ) -> None:
         options = options or {}
         self.repo: Repository = repo
         self.commits: dict[str, Commit] = {}
@@ -54,7 +59,9 @@ class RevList:
             if oid is not None:
                 self.handle_revision(oid)
 
-    def tree_diff(self, old_oid: str, new_oid: str) -> dict[Path, list[DatabaseEntry | None]]:
+    def tree_diff(
+        self, old_oid: str, new_oid: str
+    ) -> dict[Path, list[DatabaseEntry | None]]:
         key = (old_oid, new_oid)
         if key not in self.diffs:
             self.diffs[key] = self.repo.database.tree_diff(
@@ -176,7 +183,9 @@ class RevList:
                 assert parent is not None
                 self.mark_tree_uninteresting(parent.tree)
 
-    def traverse_tree(self, entry: DatabaseEntry, visitor: Callable[[Any], bool], path: Path = Path()) -> bool:
+    def traverse_tree(
+        self, entry: DatabaseEntry, visitor: Callable[[Any], bool], path: Path = Path()
+    ) -> bool:
         if entry.oid not in self.paths:
             self.paths[entry.oid] = path
 
@@ -273,7 +282,7 @@ class RevList:
     def simplify_commit(self, commit: Commit) -> list[str]:
         if not self.prune:
             return commit.parents
-    
+
         parents = commit.parents
         processed_parents = [None] if not parents else parents
 

@@ -39,11 +39,11 @@ class Hunk:
             offset -= HUNK_CONTEXT + 1
 
             a_starts = (
-                [] if offset < 0 else [
-                    line.number for line in edits[offset].a_lines if line is not None
-                ]
+                []
+                if offset < 0
+                else [line.number for line in edits[offset].a_lines if line is not None]
             )
-           
+
             b_start = None if offset < 0 else cast(Line, edits[offset].b_line).number
 
             hunk = Hunk(a_starts=a_starts, b_start=b_start, edits=[])

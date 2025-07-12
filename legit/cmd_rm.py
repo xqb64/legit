@@ -26,11 +26,13 @@ class Rm(Base):
         self.both_changed: list[Path] = []
 
         try:
-            expanded = list(itertools.chain.from_iterable(
-                self.expand_path(Path(p)) for p in self.args
-            ))
+            expanded = list(
+                itertools.chain.from_iterable(
+                    self.expand_path(Path(p)) for p in self.args
+                )
+            )
         except ValueError as e:
-            expanded = [] 
+            expanded = []
             self.repo.index.release_lock()
             self.stderr.write(f"fatal: {e}\n")
             self.exit(128)
@@ -90,7 +92,9 @@ class Rm(Base):
         item = self.repo.database.load_tree_entry(cast(str, self.head_oid), path)
         entry = self.repo.index.entry_for_path(path)
 
-        staged_change = self.inspector.compare_tree_to_index(cast(DatabaseEntry, item), entry)
+        staged_change = self.inspector.compare_tree_to_index(
+            cast(DatabaseEntry, item), entry
+        )
         if stat_result is not None:
             unstaged_change = self.inspector.compare_index_to_workspace(
                 entry, stat_result

@@ -42,7 +42,9 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
 
     def configure(self) -> None:
         current_branch = self.repo.refs.current_ref().short_name()
-        branch_remote = cast(str, self.repo.config.get(["branch", current_branch, "remote"]))
+        branch_remote = cast(
+            str, self.repo.config.get(["branch", current_branch, "remote"])
+        )
 
         try:
             name = self.args[0]
@@ -61,13 +63,16 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
             or (cast(str, remote.uploader) if remote is not None else None)
             or Fetch.UPLOAD_PACK
         )
-        self.fetch_specs: list[str] = cast(list[str], (
-            self.args[1:]
-            if len(self.args) > 1
-            else remote.fetch_specs
-            if remote is not None
-            else None
-        ))
+        self.fetch_specs: list[str] = cast(
+            list[str],
+            (
+                self.args[1:]
+                if len(self.args) > 1
+                else remote.fetch_specs
+                if remote is not None
+                else None
+            ),
+        )
 
     def send_want_list(self) -> None:
         self.targets = Refspec.expand(self.fetch_specs, list(self.remote_refs.keys()))
@@ -123,7 +128,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         ref_names = (source, target)
         ff_error = self.fast_forward_error(old_oid, new_oid)
 
-        error = ''
+        error = ""
 
         if self.options["force"] or forced or ff_error is None:
             self.repo.refs.update_ref(target, new_oid)

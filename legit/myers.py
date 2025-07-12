@@ -110,6 +110,6 @@ class Myers:
                 v[k] = x
 
                 if x >= n and y >= m:
-                    return trace 
+                    return trace
 
-        return trace 
+        return trace

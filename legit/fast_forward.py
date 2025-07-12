@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 class FastForwardMixin:
     repo: Repository
 
-    def fast_forward_error(self, old_oid: Optional[str], new_oid: Optional[str]) -> Optional[str]:
+    def fast_forward_error(
+        self, old_oid: Optional[str], new_oid: Optional[str]
+    ) -> Optional[str]:
         if not (old_oid and new_oid):
             return None
 

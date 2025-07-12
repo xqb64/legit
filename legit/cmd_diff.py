@@ -65,7 +65,7 @@ class Diff(PrintDiffMixin, Base):
 
         paths: dict[str, str | list[int]] = {
             **self.status_state.conflicts,
-            **self.status_state.workspace_changes
+            **self.status_state.workspace_changes,
         }
 
         for path, state in paths.items():

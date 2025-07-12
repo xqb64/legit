@@ -47,7 +47,9 @@ class Repository:
     def status(self, commit_oid: Optional[str] = None) -> Status:
         return Status(self, commit_oid)
 
-    def migration(self, tree_diff: dict[Path, list[DatabaseEntry | None]]) -> "Migration":
+    def migration(
+        self, tree_diff: dict[Path, list[DatabaseEntry | None]]
+    ) -> "Migration":
         return Migration(self, tree_diff)
 
     def pending_commit(self) -> "PendingCommit":
@@ -78,7 +80,9 @@ class HardReset:
             return
 
         blob = cast(Blob, self.repo.database.load(entry.oid))
-        self.repo.workspace.write_file(path, blob.data, cast(DatabaseEntry, entry).mode, True)
+        self.repo.workspace.write_file(
+            path, blob.data, cast(DatabaseEntry, entry).mode, True
+        )
 
         stat = self.repo.workspace.stat_file(path)
         assert stat is not None
@@ -221,13 +225,16 @@ class Sequencer:
             return
 
         for line in self.todo_path.read_text().splitlines():
-            action, oid, _rest = cast(re.Match[str], re.compile(r"^(\S+) (\S+) (.*)$").match(line)).groups()
+            action, oid, _rest = cast(
+                re.Match[str], re.compile(r"^(\S+) (\S+) (.*)$").match(line)
+            ).groups()
             oids = self.repo.database.prefix_match(oid)
             commit = cast(Commit, self.repo.database.load(oids[0]))
             self.commands.append((action, commit))
 
     def quit(self) -> None:
         import shutil
+
         shutil.rmtree(self.path)
 
     def abort(self) -> None:
@@ -241,7 +248,7 @@ class Sequencer:
             raise ValueError(UNSAFE_MESSAGE)
 
         self.repo.hard_reset(head_oid)
-        
+
         orig_head = self.repo.refs.update_head(head_oid)
         assert orig_head is not None
 
@@ -256,10 +263,10 @@ class Divergence:
 
         left = ref.read_oid()
         assert left is not None
-        
+
         right = repo.refs.read_ref(self.upstream)
         assert right is not None
-        
+
         common: CommonAncestors = CommonAncestors(repo.database, left, [right])
         common.find()
 

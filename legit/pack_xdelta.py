@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING 
+from typing import TYPE_CHECKING
 
 from legit.pack import MAX_COPY_SIZE, MAX_INSERT_SIZE
 from collections import defaultdict
@@ -16,7 +16,7 @@ class XDelta:
         self.index: defaultdict[bytes, list[int]] = index
 
     @staticmethod
-    def create_index(source: bytes) -> 'XDelta':
+    def create_index(source: bytes) -> "XDelta":
         blocks = len(source) // XDelta.BLOCK_SIZE
         index = defaultdict(list)
 
@@ -28,11 +28,11 @@ class XDelta:
 
         return XDelta(source, index)
 
-    def compress(self, target: bytes) -> list['Delta.Copy | Delta.Insert']:
+    def compress(self, target: bytes) -> list["Delta.Copy | Delta.Insert"]:
         self.target = target
         self.offset = 0
         self.insert: list[int] = []
-        self.ops: list['Delta.Copy | Delta.Insert'] = []
+        self.ops: list["Delta.Copy | Delta.Insert"] = []
 
         while self.offset < len(self.target):
             self.generate_ops()

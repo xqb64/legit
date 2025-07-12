@@ -134,7 +134,7 @@ class Merge(WriteCommitMixin, Base):
 
     def commit_merge(self) -> None:
         parents = [self.inputs.left_oid, self.inputs.right_oid]
-        
+
         message = self.compose_message()
         assert message is not None
 

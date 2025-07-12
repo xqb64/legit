@@ -8,8 +8,9 @@ from legit.pack_expander import Expander
 if TYPE_CHECKING:
     from legit.database import Database
     from legit.progress import Progress
-    from legit.pack_reader import Reader 
+    from legit.pack_reader import Reader
     from legit.pack_stream import Stream
+
 
 class Unpacker:
     def __init__(
@@ -17,7 +18,7 @@ class Unpacker:
         database: Database,
         reader: Reader,
         stream: Stream,
-        progress: Progress | None
+        progress: Progress | None,
     ) -> None:
         self.database = database
         self.reader = reader

@@ -18,7 +18,9 @@ class TreeDiff:
         self.database: Database = database
         self.changes: dict[Path, list[Optional[DatabaseEntry]]] = {}
 
-    def compare_oids(self, a: Optional[str], b: Optional[str], pathfilter: PathFilter) -> None:
+    def compare_oids(
+        self, a: Optional[str], b: Optional[str], pathfilter: PathFilter
+    ) -> None:
         if a == b:
             return
 
@@ -62,7 +64,7 @@ class TreeDiff:
         self,
         a: dict[Path, DatabaseEntry],
         b: dict[Path, DatabaseEntry],
-        path_filter: PathFilter
+        path_filter: PathFilter,
     ) -> None:
         for name, entry in path_filter.each_entry(a):
             other = b.get(name)
@@ -83,7 +85,7 @@ class TreeDiff:
         self,
         a: dict[Path, DatabaseEntry],
         b: dict[Path, DatabaseEntry],
-        path_filter: PathFilter
+        path_filter: PathFilter,
     ) -> None:
         for name, entry in path_filter.each_entry(b):
             other = a.get(name)

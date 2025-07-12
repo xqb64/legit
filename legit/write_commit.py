@@ -54,8 +54,9 @@ class WriteCommitMixin:
     message: Optional[str]
     file: Optional[Path]
     edit: bool
-    
+
     if TYPE_CHECKING:
+
         def exit(self, _n: int = 0) -> None: ...
         def expanded_path(self, p: str) -> Path: ...
         def println(self, msg: str) -> None: ...
@@ -155,7 +156,7 @@ class WriteCommitMixin:
         self.handle_conflicted_index()
         parents = [self.repo.refs.read_head(), self.repo.pending_commit().merge_oid()]
         message = self.compose_merge_message(MERGE_NOTES)
-        self.write_commit(parents, message or '')
+        self.write_commit(parents, message or "")
         self.repo.pending_commit().clear("merge")
 
     def write_cherry_pick_commit(self) -> None:
@@ -165,7 +166,7 @@ class WriteCommitMixin:
         message = self.compose_merge_message(CHERRY_PICK_NOTES)
 
         pick_oid = self.repo.pending_commit().merge_oid("cherry_pick")
-        
+
         commit = self.repo.database.load(pick_oid)
         assert isinstance(commit, CommitObject)
 
@@ -174,7 +175,7 @@ class WriteCommitMixin:
             self.write_tree().oid,
             commit.author,
             self.current_author(),
-            message or '',
+            message or "",
         )
 
         self.repo.database.store(picked)
@@ -187,7 +188,7 @@ class WriteCommitMixin:
 
         parents = [self.repo.refs.read_head()]
         message = self.compose_merge_message()
-        self.write_commit(parents, message or '')
+        self.write_commit(parents, message or "")
 
         self.repo.pending_commit().clear("revert")
 

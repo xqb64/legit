@@ -39,7 +39,7 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
 
     def pick_merge_inputs(self, commit: Commit) -> CherryPickInput:
         short = self.repo.database.short_oid(commit.oid)
-        
+
         parent = self.select_parent(commit)
         assert parent is not None
 

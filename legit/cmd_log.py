@@ -187,7 +187,7 @@ class Log(PrintDiffMixin, Base):
         elif self.decorate == "full":
             name = ref.path
         else:
-            name = ''
+            name = ""
 
         name = self.fmt(self.ref_color(ref), name)
 

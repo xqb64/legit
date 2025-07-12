@@ -43,7 +43,7 @@ class Index:
         self.changed: bool = False
         self.parents: dict[Path, set[Path]] = defaultdict(set)
 
-    def conflict_paths(self) -> set['Entry']:
+    def conflict_paths(self) -> set["Entry"]:
         paths = set()
         for entry in self.entries.values():
             if entry.stage != 0:

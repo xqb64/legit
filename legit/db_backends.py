@@ -52,7 +52,7 @@ class Backends:
                 return info
         return None
 
-    def load_raw(self, oid : str) -> Raw | Record | RefDelta | OfsDelta | None:
+    def load_raw(self, oid: str) -> Raw | Record | RefDelta | OfsDelta | None:
         for store in self.stores:
             raw = store.load_raw(oid)
             if raw is not None:

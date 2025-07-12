@@ -11,11 +11,11 @@ log = logging.getLogger(__name__)
 class Remotes:
     class Protocol:
         def __init__(
-            self, 
+            self,
             command: str,
             input_stream: IO[bytes],
             output_stream: IO[bytes],
-            capabilities: Optional[list[str]] = None
+            capabilities: Optional[list[str]] = None,
         ) -> None:
             self.command: str = command
             self.input: IO[bytes] = input_stream
@@ -112,6 +112,10 @@ class Remotes:
             else:
                 caps_str = b""
 
-            self.caps_remote = [cap.decode() for cap in re.split(rb" +", caps_str.strip())] if caps_str else []
+            self.caps_remote = (
+                [cap.decode() for cap in re.split(rb" +", caps_str.strip())]
+                if caps_str
+                else []
+            )
 
             return sep.join(parts)

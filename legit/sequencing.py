@@ -23,8 +23,9 @@ class SequencingMixin:
     repo: Repository
     stderr: TextIO
     args: list[str]
-        
+
     if TYPE_CHECKING:
+
         def merge_type(self) -> str: ...
         def pick(self, _commit: Commit) -> None: ...
         def revert(self, _commit: Commit) -> None: ...

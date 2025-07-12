@@ -82,7 +82,9 @@ class Database:
         self.objects[oid] = obj
         return obj
 
-    def load_tree_entry(self, oid: str, path: Optional[Path]) -> DatabaseEntry | Entry | Tree | None:
+    def load_tree_entry(
+        self, oid: str, path: Optional[Path]
+    ) -> DatabaseEntry | Entry | Tree | None:
         commit = self.load(oid)
         root = DatabaseEntry(cast(Commit, commit).tree, 0o40000)
 
@@ -91,15 +93,21 @@ class Database:
 
         return self.traverse_path_loop(path, root)
 
-    def traverse_path_loop(self, path: Path, root: DatabaseEntry) -> DatabaseEntry | Entry | Tree | None:
+    def traverse_path_loop(
+        self, path: Path, root: DatabaseEntry
+    ) -> DatabaseEntry | Entry | Tree | None:
         entry = root
         for name in path.parts:
             if not entry:
                 break
-            entry = cast(DatabaseEntry, cast(Tree, self.load(entry.oid)).entries.get(name))
+            entry = cast(
+                DatabaseEntry, cast(Tree, self.load(entry.oid)).entries.get(name)
+            )
         return entry
 
-    def load_tree_list(self, oid: Optional[str], path: Optional[Path] = None) -> dict[Path, DatabaseEntry | Entry | Tree | None]:
+    def load_tree_list(
+        self, oid: Optional[str], path: Optional[Path] = None
+    ) -> dict[Path, DatabaseEntry | Entry | Tree | None]:
         if oid is None:
             return {}
 
@@ -108,7 +116,12 @@ class Database:
         self.build_list(thing, entry, path if path is not None else Path())
         return thing
 
-    def build_list(self, thing: dict[Path, DatabaseEntry | Entry | Tree | None], entry: DatabaseEntry | Entry | Tree | None, prefix: Path) -> DatabaseEntry | Entry | Tree | None:
+    def build_list(
+        self,
+        thing: dict[Path, DatabaseEntry | Entry | Tree | None],
+        entry: DatabaseEntry | Entry | Tree | None,
+        prefix: Path,
+    ) -> DatabaseEntry | Entry | Tree | None:
         if entry is None:
             return None
 

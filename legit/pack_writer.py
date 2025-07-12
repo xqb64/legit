@@ -19,7 +19,12 @@ from legit.rev_list import RevList
 
 
 class Writer:
-    def __init__(self, output: IO[bytes], database: Database, options: Optional[dict[str, Any]] = None):
+    def __init__(
+        self,
+        output: IO[bytes],
+        database: Database,
+        options: Optional[dict[str, Any]] = None,
+    ):
         options = options or {}
         self.output: IO[bytes] = output
         self.digest = hashlib.sha1()
@@ -94,7 +99,7 @@ class Writer:
         entry.offset = self.offset
 
         obj = entry.delta or cast(Raw, self.database.load_raw(entry.oid))
-    
+
         header = VarIntLE.write(entry.packed_size, 4)
         header_list = list(header)
         header_list[0] |= entry.packed_type << 4

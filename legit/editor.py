@@ -20,10 +20,11 @@ class Editor:
     def __enter__(self) -> Editor:
         return self
 
-    def __exit__(self, 
+    def __exit__(
+        self,
         exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType]
+        traceback: Optional[TracebackType],
     ) -> Optional[bool]:
         self._edit_file()
         return None

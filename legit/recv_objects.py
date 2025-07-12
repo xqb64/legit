@@ -20,7 +20,9 @@ class RecvObjectsMixin:
     repo: Repository
     stderr: TextIO
 
-    def recv_packed_objects(self, unpack_limit: int | None = None, prefix: bytes = b"") -> None:
+    def recv_packed_objects(
+        self, unpack_limit: int | None = None, prefix: bytes = b""
+    ) -> None:
         stream = Stream(self.conn.input, prefix)
         reader = Reader(stream)
         if not self.conn.input is sys.stdin:
@@ -35,7 +37,9 @@ class RecvObjectsMixin:
 
         processor.process_pack()
 
-    def select_processor_class(self, reader: Reader, unpack_limit: int | None) -> Type[Indexer | Unpacker]:
+    def select_processor_class(
+        self, reader: Reader, unpack_limit: int | None
+    ) -> Type[Indexer | Unpacker]:
         if unpack_limit is None:
             unpack_limit = self.transfer_unpack_limit()
 
@@ -45,4 +49,7 @@ class RecvObjectsMixin:
             return Unpacker
 
     def transfer_unpack_limit(self) -> int:
-        return cast(int, self.repo.config.get(["transfer", "unpackLimit"])) or self.UNPACK_LIMIT
+        return (
+            cast(int, self.repo.config.get(["transfer", "unpackLimit"]))
+            or self.UNPACK_LIMIT
+        )

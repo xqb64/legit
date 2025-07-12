@@ -75,7 +75,7 @@ class Migration:
             self.check_for_conflict(path, old_item, new_item)
             self.record_change(path, old_item, new_item)
 
-        self.collect_errors() 
+        self.collect_errors()
 
     @staticmethod
     def _ancestor_dirs(p: Path) -> List[Path]:

@@ -60,10 +60,7 @@ class Resolve:
                 self.file_dir_conflict(path, self.right_diff, self.inputs.right_name)
 
     def file_dir_conflict(
-        self,
-        path: Path,
-        diff: dict[Path, list[DatabaseEntry | None]],
-        name: str
+        self, path: Path, diff: dict[Path, list[DatabaseEntry | None]], name: str
     ) -> None:
         for parent in path.parents:
             old_item, new_item = diff.get(parent, (None, None))
@@ -106,11 +103,14 @@ class Resolve:
         if left is not None and right is not None:
             self.log(f"Auto-merging {path}")
 
-        oid_ok, oid = cast(tuple[bool, Optional[int | str]], self.merge_blobs(
-            base.oid if base is not None else None,
-            left.oid if left is not None else None,
-            right.oid if right is not None else None,
-        ))
+        oid_ok, oid = cast(
+            tuple[bool, Optional[int | str]],
+            self.merge_blobs(
+                base.oid if base is not None else None,
+                left.oid if left is not None else None,
+                right.oid if right is not None else None,
+            ),
+        )
 
         mode_ok, mode = self.merge_modes(
             base.mode if base is not None else None,
@@ -163,14 +163,18 @@ class Resolve:
         a, b = self.inputs.left_name, self.inputs.right_name
         return (b, a) if self.conflicts[path][1] else (a, b)
 
-    def merge_blobs(self, base_oid: Optional[str], left_oid: Optional[str], right_oid: Optional[str]) -> Optional[tuple[bool, Optional[int | str]]]:
+    def merge_blobs(
+        self, base_oid: Optional[str], left_oid: Optional[str], right_oid: Optional[str]
+    ) -> Optional[tuple[bool, Optional[int | str]]]:
         result = self.merge3(base_oid, left_oid, right_oid)
         if result is not None:
             return result
 
         oids = [base_oid, left_oid, right_oid]
         blobs = [
-            cast(Blob, self.repo.database.load(oid)).data.decode("utf-8") if oid is not None else ""
+            cast(Blob, self.repo.database.load(oid)).data.decode("utf-8")
+            if oid is not None
+            else ""
             for oid in oids
         ]
         merge = Diff3.merge(*blobs)
@@ -196,13 +200,23 @@ class Resolve:
             ]
         )
 
-    def merge_modes(self, base_mode: Optional[int], left_mode: Optional[int], right_mode: Optional[int]) -> tuple[bool, Optional[int | str]]:
+    def merge_modes(
+        self,
+        base_mode: Optional[int],
+        left_mode: Optional[int],
+        right_mode: Optional[int],
+    ) -> tuple[bool, Optional[int | str]]:
         result = self.merge3(base_mode, left_mode, right_mode)
         if result is not None:
             return result
         return (False, left_mode)
 
-    def merge3(self, base: Optional[int | str], left: Optional[int | str], right: Optional[int | str]) -> Optional[tuple[bool, Optional[int | str]]]:
+    def merge3(
+        self,
+        base: Optional[int | str],
+        left: Optional[int | str],
+        right: Optional[int | str],
+    ) -> Optional[tuple[bool, Optional[int | str]]]:
         if left is None:
             return (False, right)
 

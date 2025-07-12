@@ -13,8 +13,9 @@ class RemoteAgentMixin:
     args: list[str]
     stdin: TextIO
     stdout: TextIO
-    
+
     if TYPE_CHECKING:
+
         def expanded_path(self, path: str) -> Path: ...
 
     ZERO_OID: bytes = b"0" * 40
@@ -26,7 +27,10 @@ class RemoteAgentMixin:
             return stream.buffer if hasattr(stream, "buffer") else stream
 
         self.conn = Remotes.Protocol(
-            name, cast(BinaryIO, as_bin(self.stdin)), cast(BinaryIO, as_bin(self.stdout)), capabilities
+            name,
+            cast(BinaryIO, as_bin(self.stdin)),
+            cast(BinaryIO, as_bin(self.stdout)),
+            capabilities,
         )
 
     @property

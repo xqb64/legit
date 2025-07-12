@@ -68,7 +68,7 @@ class Index:
 
         low = 0 if prefix == 0 else self.fanout[prefix - 1]
         high = self.fanout[prefix] - 1
-        
+
         return self.binary_search(packed, low, high)
 
     def binary_search(self, target: bytes, low: int, high: int) -> int:

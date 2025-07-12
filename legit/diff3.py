@@ -23,7 +23,9 @@ class Conflict:
     a_lines: List[str]
     b_lines: List[str]
 
-    def _separator(self, text: List[str], char: str, name: Optional[str] = None) -> None:
+    def _separator(
+        self, text: List[str], char: str, name: Optional[str] = None
+    ) -> None:
         text.append(char * 7)
         if name:
             text.append(f" {name}")
@@ -152,7 +154,9 @@ class Diff3:
             self.o[self.line_o :], self.a[self.line_a :], self.b[self.line_b :]
         )
 
-    def _write_chunk(self, o_lines: List[str], a_lines: List[str], b_lines: List[str]) -> None:
+    def _write_chunk(
+        self, o_lines: List[str], a_lines: List[str], b_lines: List[str]
+    ) -> None:
         if a_lines == o_lines or a_lines == b_lines:
             self.chunks.append(Clean(b_lines))
         elif b_lines == o_lines:

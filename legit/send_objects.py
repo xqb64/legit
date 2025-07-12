@@ -12,8 +12,10 @@ if TYPE_CHECKING:
     from legit.repository import Repository
     from legit.protocol import Remotes
 
+
 class SendObjectsMixin:
     if TYPE_CHECKING:
+
         @property
         def repo(self) -> Repository: ...
 

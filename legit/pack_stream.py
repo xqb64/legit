@@ -8,6 +8,7 @@ from legit.pack import InvalidPack
 
 T = TypeVar("T")
 
+
 class Stream:
     def __init__(self, inp: IO[bytes], buffer: bytes = b"") -> None:
         self.input: IO[bytes] = inp
@@ -35,7 +36,6 @@ class Stream:
         checksum_from_stream = self._read_buffered(20, block=True)
         if checksum_from_stream != self.digest.digest():
             raise InvalidPack("Checksum does not match value read from pack")
-
 
     def read(self, size: int) -> bytes:
         data = self._read_buffered(size, block=True)
@@ -103,4 +103,3 @@ class Stream:
             return True
         self.buffer.extend(b)
         return False
-

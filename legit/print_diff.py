@@ -38,6 +38,7 @@ class PrintDiffMixin:
     args: list[str]
 
     if TYPE_CHECKING:
+
         def println(self, msg: str) -> None: ...
         def fmt(self, style: Optional[list[str] | str], text: str) -> str: ...
 

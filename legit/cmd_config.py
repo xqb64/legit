@@ -108,7 +108,12 @@ class Config(Base):
         key = self._parse_key(self.options["get_all"])
         self._read_config(lambda config: config.get_all(key))
 
-    def _read_config(self, operation: Callable[[ConfigFile | ConfigStack], ConfigValue | None | list[ConfigValue]]) -> None:
+    def _read_config(
+        self,
+        operation: Callable[
+            [ConfigFile | ConfigStack], ConfigValue | None | list[ConfigValue]
+        ],
+    ) -> None:
         config: ConfigFile | ConfigStack = self.repo.config
         if self.options["file"]:
             config = cast(ConfigStack, config).file(self.options["file"])
@@ -119,7 +124,7 @@ class Config(Base):
 
         if result is None:
             self.exit(1)
-        
+
         assert result is not None
 
         values = result if isinstance(result, list) else [result]

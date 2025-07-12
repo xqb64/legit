@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Optional, Union, cast 
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 from legit.blob import Blob
 from legit.commit import Commit
 from legit.pack import Record
@@ -9,6 +9,7 @@ from legit.tree import Tree
 
 if TYPE_CHECKING:
     from legit.repository import Repository
+
 
 class HintedError:
     def __init__(self, msg: str, hint: list[str]) -> None:
@@ -66,7 +67,12 @@ class Revision:
     class Ancestor:
         def __init__(
             self,
-            rev: Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"],
+            rev: Union[
+                "Revision.Ref",
+                "Revision.Parent",
+                "Revision.Ancestor",
+                "Revision.Upstream",
+            ],
             n: int,
         ) -> None:
             self.rev = rev
@@ -93,7 +99,8 @@ class Revision:
 
     class Upstream:
         def __init__(
-            self, rev: "Revision.Ref | Revision.Parent | Revision.Ancestor | Revision.Upstream"
+            self,
+            rev: "Revision.Ref | Revision.Parent | Revision.Ancestor | Revision.Upstream",
         ) -> None:
             self.rev = rev
 
@@ -143,7 +150,12 @@ class Revision:
         self.repo: Repository = repo
         self.expr: str = expr
         self.query: Optional[
-            Union["Revision.Ref", "Revision.Parent", "Revision.Ancestor", "Revision.Upstream"]
+            Union[
+                "Revision.Ref",
+                "Revision.Parent",
+                "Revision.Ancestor",
+                "Revision.Upstream",
+            ]
         ] = Revision.parse(self.expr)
         self.errors: list[HintedError] = []
 

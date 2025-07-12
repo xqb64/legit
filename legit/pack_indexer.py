@@ -17,8 +17,15 @@ if TYPE_CHECKING:
     from legit.database import Database
     from legit.progress import Progress
 
+
 class Indexer:
-    def __init__(self, database: Database, reader: Reader, stream: Stream, progress: Optional[Progress]) -> None:
+    def __init__(
+        self,
+        database: Database,
+        reader: Reader,
+        stream: Stream,
+        progress: Optional[Progress],
+    ) -> None:
         self.database: Database = database
         self.reader: Reader = reader
         self.stream: Stream = stream
@@ -26,7 +33,9 @@ class Indexer:
 
         self.index: dict[str, list[int]] = {}
 
-        self.pending: defaultdict[int | str, list[list[int]]] = defaultdict(list[list[int]])
+        self.pending: defaultdict[int | str, list[list[int]]] = defaultdict(
+            list[list[int]]
+        )
 
         self.pack_file: PackFile = PackFile(self.database.pack_path, "tmp_pack")
         self.index_file: PackFile = PackFile(self.database.pack_path, "tmp_idx")
