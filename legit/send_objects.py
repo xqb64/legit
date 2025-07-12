@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, TextIO
 import zlib
 
 from legit.rev_list import RevList
@@ -7,8 +8,16 @@ from legit.pack_writer import Writer
 from legit.progress import Progress
 
 
+if TYPE_CHECKING:
+    from legit.repository import Repository
+    from legit.protocol import Remotes
+
 class SendObjectsMixin:
-    def send_packet_objects(self, revs):
+    repo: Repository
+    conn: Remotes.Protocol
+    stderr: TextIO
+
+    def send_packet_objects(self, revs: list[str]) -> None:
         rev_opts = {"objects": True, "missing": True}
         rev_list = RevList(self.repo, revs, rev_opts)
 

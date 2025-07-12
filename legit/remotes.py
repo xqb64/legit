@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import cast, Optional
-from legit.config import ConfigFile
+from legit.config import ConfigFile, ConfigValue
 from legit.refs import Refs
 from legit.revision import Revision
 
@@ -207,25 +207,25 @@ class Remote:
         return list(sorted(targets.keys()))[0]
 
     @property
-    def push_specs(self):
+    def push_specs(self) -> list[ConfigValue]:
         return self.config.get_all(["remote", self.name, "push"])
 
     @property
-    def receiver(self):
+    def receiver(self) -> list[ConfigValue]:
         return self.config.get_all(["remote", self.name, "receivepack"])
 
     @property
-    def fetch_url(self):
+    def fetch_url(self) -> ConfigValue | None:
         return self.config.get(["remote", self.name, "url"])
 
     @property
-    def push_url(self):
+    def push_url(self) -> ConfigValue | None:
         return self.config.get(["remote", self.name, "pushurl"]) or self.fetch_url
 
     @property
-    def fetch_specs(self):
+    def fetch_specs(self) -> list[ConfigValue]:
         return self.config.get_all(["remote", self.name, "fetch"])
 
     @property
-    def uploader(self):
+    def uploader(self) -> ConfigValue | None:
         return self.config.get(["remote", self.name, "uploadpack"])

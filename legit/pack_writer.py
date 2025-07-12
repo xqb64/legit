@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import IO, Any, Optional, cast
 import zlib
 import hashlib
 import struct
@@ -15,12 +15,13 @@ from legit.pack import HEADER_FORMAT, SIGNATURE, VERSION
 from legit.numbers import VarIntLE
 from legit.pack_entry import Entry
 from legit.pack_compressor import Compressor
+from legit.rev_list import RevList
 
 
 class Writer:
-    def __init__(self, output: BytesIO, database: Database, options: Optional[dict[str, Any]] = None):
+    def __init__(self, output: IO[bytes], database: Database, options: Optional[dict[str, Any]] = None):
         options = options or {}
-        self.output = output
+        self.output: IO[bytes] = output
         self.digest = hashlib.sha1()
         self.database = database
         self.compression = options.get("compression", zlib.Z_DEFAULT_COMPRESSION)
@@ -28,7 +29,7 @@ class Writer:
         self.allow_ofs: bool = cast(bool, options.get("allow_ofs"))
         self.offset = 0
 
-    def write_objects(self, rev_list: list[tuple[DatabaseEntry, Optional[Path]]]) -> None:
+    def write_objects(self, rev_list: RevList) -> None:
         self.prepare_pack_list(rev_list)
         self.compress_objects()
         self.write_header()
@@ -47,14 +48,14 @@ class Writer:
         self.digest.update(data)
         self.offset += len(data)
 
-    def prepare_pack_list(self, rev_list: list[tuple[DatabaseEntry, Optional[Path]]]) -> None:
+    def prepare_pack_list(self, rev_list: RevList) -> None:
         self.pack_list = []
 
         if self.progress is not None:
             self.progress.start("Counting objects")
 
         for obj, path in rev_list:
-            self.add_to_pack_list(obj, path)
+            self.add_to_pack_list(cast(DatabaseEntry, obj), path)
 
             if self.progress is not None:
                 self.progress.tick()
@@ -99,7 +100,7 @@ class Writer:
         header_list[0] |= entry.packed_type << 4
         self.write(bytes(header_list))
         self.write(entry.delta_prefix)
-        compressed = zlib.compress(obj.data, self.compression)
+        compressed = zlib.compress(cast(bytes, obj.data), self.compression)
         self.write(compressed)
 
         if self.progress is not None:
