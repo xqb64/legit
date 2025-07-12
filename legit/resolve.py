@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Callable, cast, Optional
 from legit.blob import Blob
 from legit.repository import Repository
-from legit.inputs import Inputs
+from legit.inputs import Inputs, CherryPick
 from legit.db_entry import DatabaseEntry
 from legit.diff3 import Diff3
 
@@ -13,9 +13,9 @@ ProgressCallback = Callable[[Any], None]
 
 
 class Resolve:
-    def __init__(self, repo: Repository, inputs: Inputs) -> None:
+    def __init__(self, repo: Repository, inputs: Inputs | CherryPick) -> None:
         self.repo: Repository = repo
-        self.inputs: Inputs = inputs
+        self.inputs: Inputs | CherryPick = inputs
         self._on_progress: ProgressCallback = lambda message: None
 
     def execute(self) -> None:

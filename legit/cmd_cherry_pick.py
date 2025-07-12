@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import cast
 
 from legit.cmd_base import Base
 from legit.commit import Commit
@@ -15,10 +16,11 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
     def store_commit_sequence(self) -> None:
         commits = RevList(self.repo, list(reversed(self.args)), {"walk": False})
         for commit, _ in reversed(list(commits.each())):
-            self.sequencer.pick(commit)
+            self.sequencer.pick(cast(Commit, commit))
 
-    def pick(self, commit: Commit):
+    def pick(self, commit: Commit) -> None:
         inputs = self.pick_merge_inputs(commit)
+        assert inputs is not None
 
         self.resolve_merge(inputs)
 
@@ -35,14 +37,20 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
 
         self.finish_commit(picked)
 
-    def pick_merge_inputs(self, commit: Commit) -> None:
+    def pick_merge_inputs(self, commit: Commit) -> CherryPickInput:
         short = self.repo.database.short_oid(commit.oid)
+        
         parent = self.select_parent(commit)
+        assert parent is not None
 
         left_name = "HEAD"
+
         left_oid = self.repo.refs.read_head()
+        assert left_oid is not None
 
         right_name = f"{short}... {commit.title_line().strip()}"
+
         right_oid = commit.oid
+        assert right_oid is not None
 
         return CherryPickInput(left_name, right_name, left_oid, right_oid, [parent])

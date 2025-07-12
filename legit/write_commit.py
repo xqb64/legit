@@ -48,7 +48,7 @@ CHERRY_PICK_NOTES = textwrap.dedent(
 class WriteCommitMixin:
     repo: Repository
     env: MutableMapping[str, str]
-    args: Sequence[str]
+    args: list[str]
     stderr: TextIO
 
     message: Optional[str]

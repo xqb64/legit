@@ -7,6 +7,7 @@ from legit.repository import Repository, Sequencer, PendingCommit
 from legit.resolve import Resolve
 from legit.editor import Editor
 from legit.inputs import Inputs
+from legit.inputs import CherryPick
 
 
 CONFLICT_NOTES = textwrap.dedent(
@@ -107,12 +108,12 @@ class SequencingMixin:
 
         return None
 
-    def resolve_merge(self, inputs: Inputs) -> None:
+    def resolve_merge(self, inputs: Inputs | CherryPick) -> None:
         self.repo.index.load_for_update()
         Resolve(self.repo, inputs).execute()
         self.repo.index.write_updates()
 
-    def fail_on_conflict(self, inputs: Inputs, message: str) -> None:
+    def fail_on_conflict(self, inputs: Inputs | CherryPick, message: str) -> None:
         self.sequencer.dump()
 
         self.repo.pending_commit().start(inputs.right_oid, self.merge_type())
