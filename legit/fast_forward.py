@@ -20,6 +20,8 @@ class FastForwardMixin:
         if not self.is_fast_forward(old_oid, new_oid):
             return "non-fast-forward"
 
+        return None
+
     def is_fast_forward(self, old_oid: str, new_oid: str) -> bool:
         common = CommonAncestors(self.repo.database, old_oid, [new_oid])
         common.find()

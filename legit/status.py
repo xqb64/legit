@@ -4,6 +4,7 @@ from collections import defaultdict
 import os
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     MutableMapping,
     Optional,
 )
@@ -13,6 +14,10 @@ from legit.tree import Tree
 from legit.blob import Blob
 from legit.index import Entry
 from legit.inspector import Inspector
+
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class Status:

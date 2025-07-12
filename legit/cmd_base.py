@@ -4,7 +4,7 @@ import io
 
 from functools import cache
 from pathlib import Path
-from typing import MutableMapping, TextIO
+from typing import Generator, MutableMapping, TextIO
 from legit.cmd_color import Color
 from legit.pager import Pager
 from legit.editor import Editor
@@ -33,10 +33,10 @@ class Base:
 
     @property
     @cache
-    def repo(self):
+    def repo(self) -> Repository:
         return Repository(self.dir / ".git")
 
-    def edit_file(self, path: Path):
+    def edit_file(self, path: Path) -> Generator:
         editor = Editor.edit(path, self.editor_command())
         yield editor
         if not self.isatty:

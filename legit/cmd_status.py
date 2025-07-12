@@ -20,7 +20,7 @@ LONG_STATUS: MutableMapping[str, str] = {
 }
 
 CONFLICT_LABEL_WIDTH: int = 17
-CONFLICT_LONG_STATUS = {
+CONFLICT_LONG_STATUS: dict[tuple[int, ...], str] = {
     (1, 2, 3): "both modified:",
     (1, 2): "deleted by them:",
     (1, 3): "deleted by us:",
@@ -29,12 +29,12 @@ CONFLICT_LONG_STATUS = {
     (3,): "added by them:",
 }
 
-UI_LABELS = {
+UI_LABELS: dict[str, MutableMapping[str, str] | dict[tuple[int, ...], str]] = {
     "normal": LONG_STATUS,
     "conflict": CONFLICT_LONG_STATUS,
 }
 
-UI_WIDTHS = {
+UI_WIDTHS: dict[str, int] = {
     "normal": LABEL_WIDTH,
     "conflict": CONFLICT_LABEL_WIDTH,
 }
@@ -51,18 +51,6 @@ CONFLICT_SHORT_STATUS = {
 
 
 class StatusCmd(Base):
-    def __init__(
-        self,
-        _dir: Path,
-        env: MutableMapping[str, str],
-        args: list[str],
-        stdin: TextIO,
-        stdout: TextIO,
-        stderr: TextIO,
-    ) -> None:
-        super().__init__(_dir, env, args, stdin, stdout, stderr)
-        self.status_state: Status | None = None
-
     def run(self) -> None:
         self.repo.index.load_for_update()
         self.status_state = self.repo.status()

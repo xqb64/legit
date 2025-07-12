@@ -114,7 +114,7 @@ class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):
         self.errors: dict[str, Optional[str]] = {}
 
         for target, oid in self.local_refs.items():
-            self.attempt_ref_update(target, oid)
+            self.attempt_ref_update(target, cast(str, oid))
 
     def attempt_ref_update(self, target: str, old_oid: str) -> None:
         source, forced = self.targets[target]

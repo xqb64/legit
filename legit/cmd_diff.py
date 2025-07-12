@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional, cast
 from legit.cmd_base import Base
+from legit.db_entry import DatabaseEntry
 from legit.index import Entry
 from legit.status import Status
 from legit.blob import Blob
@@ -20,14 +22,13 @@ class Diff(PrintDiffMixin, Base):
         else:
             self.cached = False
 
+        self.stage: Optional[int] = None
         if any(x in self.args for x in ("-1", "--base")):
             self.stage = 1
         elif any(x in self.args for x in ("-2", "--ours")):
             self.stage = 2
         elif any(x in self.args for x in ("-3", "--theirs")):
             self.stage = 3
-        else:
-            self.stage = None
 
         self.repo.index.load()
         self.status_state: Status = self.repo.status()
@@ -90,9 +91,8 @@ class Diff(PrintDiffMixin, Base):
             self.print_diff(self.from_index(Path(path)), self.from_nothing(Path(path)))
 
     def from_head(self, path: Path) -> "Target":
-        entry = self.status_state.head_tree[path]
-        blob = self.repo.database.load(entry.oid)
-        assert isinstance(blob, Blob)
+        entry = cast(DatabaseEntry, self.status_state.head_tree[path])
+        blob = cast(Blob, self.repo.database.load(entry.oid))
         return Target(path, entry.oid, oct(entry.mode)[2:], blob.data.decode("utf-8"))
 
     def from_index(self, path: Path, stage: int = 0) -> "Target | None":
