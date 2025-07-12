@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any 
+from typing import Any, Callable, cast, Optional
 from legit.blob import Blob
 from legit.repository import Repository
 from legit.inputs import Inputs
@@ -9,11 +9,14 @@ from legit.db_entry import DatabaseEntry
 from legit.diff3 import Diff3
 
 
+ProgressCallback = Callable[[Any], None]
+
+
 class Resolve:
     def __init__(self, repo: Repository, inputs: Inputs) -> None:
         self.repo: Repository = repo
         self.inputs: Inputs = inputs
-        self._on_progress = lambda message: None
+        self._on_progress: ProgressCallback = lambda message: None
 
     def execute(self) -> None:
         self.prepare_tree_diffs()
@@ -22,7 +25,7 @@ class Resolve:
         self.add_conflicts_to_index()
         self.write_untracked_files()
 
-    def on_progress(self, block):
+    def on_progress(self, block: ProgressCallback) -> None:
         self._on_progress = block
 
     def log(self, message: str) -> None:
@@ -30,7 +33,7 @@ class Resolve:
 
     def write_untracked_files(self) -> None:
         for path, item in self.untracked.items():
-            blob = self.repo.database.load(item.oid)
+            blob = cast(Blob, self.repo.database.load(item.oid))
             self.repo.workspace.write_file(path, blob.data)
 
     def add_conflicts_to_index(self) -> None:
@@ -102,11 +105,11 @@ class Resolve:
         if left is not None and right is not None:
             self.log(f"Auto-merging {path}")
 
-        oid_ok, oid = self.merge_blobs(
+        oid_ok, oid = cast(tuple[bool, Optional[int | str]], self.merge_blobs(
             base.oid if base is not None else None,
             left.oid if left is not None else None,
             right.oid if right is not None else None,
-        )
+        ))
 
         mode_ok, mode = self.merge_modes(
             base.mode if base is not None else None,
@@ -114,14 +117,14 @@ class Resolve:
             right.mode if right is not None else None,
         )
 
-        self.clean_diff[path] = [left, DatabaseEntry(oid, mode)]
+        self.clean_diff[path] = [left, DatabaseEntry(cast(str, oid), cast(int, mode))]
         if oid_ok and mode_ok:
             return
 
         self.conflicts[path] = [base, left, right]
         self.log_conflict(path)
 
-    def log_conflict(self, path, rename: str | None = None) -> None:
+    def log_conflict(self, path: Path, rename: str | None = None) -> None:
         base, left, right = self.conflicts[path]
 
         if left and right:
@@ -159,14 +162,14 @@ class Resolve:
         a, b = self.inputs.left_name, self.inputs.right_name
         return (b, a) if self.conflicts[path][1] else (a, b)
 
-    def merge_blobs(self, base_oid: str, left_oid: str, right_oid: str) -> list[Any]:
+    def merge_blobs(self, base_oid: Optional[str], left_oid: Optional[str], right_oid: Optional[str]) -> Optional[tuple[bool, Optional[int | str]]]:
         result = self.merge3(base_oid, left_oid, right_oid)
         if result is not None:
             return result
 
         oids = [base_oid, left_oid, right_oid]
         blobs = [
-            self.repo.database.load(oid).data.decode("utf-8") if oid is not None else ""
+            cast(Blob, self.repo.database.load(oid)).data.decode("utf-8") if oid is not None else ""
             for oid in oids
         ]
         merge = Diff3.merge(*blobs)
@@ -176,11 +179,11 @@ class Resolve:
         blob = Blob(data.encode("utf-8"))
         self.repo.database.store(blob)
 
-        return [merge.is_clean(), blob.oid]
+        return (merge.is_clean(), blob.oid)
 
-    def merged_data(self, left_oid, right_oid):
-        left_blob = self.repo.database.load(left_oid)
-        right_blob = self.repo.database.load(right_oid)
+    def merged_data(self, left_oid: str, right_oid: str) -> str:
+        left_blob = cast(Blob, self.repo.database.load(left_oid))
+        right_blob = cast(Blob, self.repo.database.load(right_oid))
 
         return "".join(
             [
@@ -192,22 +195,22 @@ class Resolve:
             ]
         )
 
-    def merge_modes(self, base_mode, left_mode, right_mode):
+    def merge_modes(self, base_mode: Optional[int], left_mode: Optional[int], right_mode: Optional[int]) -> tuple[bool, Optional[int | str]]:
         result = self.merge3(base_mode, left_mode, right_mode)
         if result is not None:
             return result
-        return [False, left_mode]
+        return (False, left_mode)
 
-    def merge3(self, base, left, right):
+    def merge3(self, base: Optional[int | str], left: Optional[int | str], right: Optional[int | str]) -> Optional[tuple[bool, Optional[int | str]]]:
         if left is None:
-            return [False, right]
+            return (False, right)
 
         if right is None:
-            return [False, left]
+            return (False, left)
 
         if left == base or left == right:
-            return [True, right]
+            return (True, right)
         elif right == base:
-            return [True, left]
+            return (True, left)
 
         return None
