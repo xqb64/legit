@@ -14,7 +14,7 @@ class CherryPick(WriteCommitMixin, SequencingMixin, Base):
 
     def store_commit_sequence(self) -> None:
         commits = RevList(self.repo, list(reversed(self.args)), {"walk": False})
-        for commit in reversed(list(commits.each())):
+        for commit, _ in reversed(list(commits.each())):
             self.sequencer.pick(commit)
 
     def pick(self, commit: Commit):

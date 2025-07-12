@@ -36,7 +36,7 @@ class RemoteAgentMixin:
 
         return None
 
-    def is_git_repository(self, dirname) -> None:
+    def is_git_repository(self, dirname) -> bool:
         return (
             (dirname / "HEAD").exists()
             and (dirname / "objects").exists()

@@ -6,7 +6,7 @@ from legit.database import Database
 
 
 class CommonAncestors:
-    def __init__(self, database: Database, one: str, twos: str) -> None:
+    def __init__(self, database: Database, one: str, twos: list[str]) -> None:
         self.database: Database = database
         self.flags = defaultdict(set)
         self.queue = []

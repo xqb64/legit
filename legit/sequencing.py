@@ -160,7 +160,7 @@ class SequencingMixin:
             cmd = self.sequencer.next_command()
             if cmd is None:
                 break
-            action, (commit, path) = cmd
+            action, commit = cmd
             if action == "revert":
                 self.revert(commit)
             elif action == "pick":

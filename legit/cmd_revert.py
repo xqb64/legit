@@ -24,7 +24,7 @@ class Revert(SequencingMixin, WriteCommitMixin, Base):
 
     def store_commit_sequence(self) -> None:
         commits = RevList(self.repo, self.args, {"walk": False})
-        for commit in commits.each():
+        for commit, _ in commits.each():
             self.sequencer.revert(commit)
 
     def revert(self, commit: Commit) -> None:
