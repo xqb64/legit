@@ -1,18 +1,26 @@
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING, cast, TextIO, Type
 
 from legit.pack_stream import Stream
 from legit.pack_reader import Reader
 from legit.progress import Progress
 from legit.pack_unpacker import Unpacker
 from legit.pack_indexer import Indexer
+from legit.protocol import Remotes
+
+if TYPE_CHECKING:
+    from legit.repository import Repository
 
 
 class RecvObjectsMixin:
-    UNPACK_LIMIT = 100
+    UNPACK_LIMIT: int = 100
+    conn: Remotes.Protocol
+    repo: Repository
+    stderr: TextIO
 
-    def recv_packed_objects(self, unpack_limit=None, prefix: bytes = b""):
+    def recv_packed_objects(self, unpack_limit: int | None = None, prefix: bytes = b"") -> None:
         stream = Stream(self.conn.input, prefix)
         reader = Reader(stream)
         if not self.conn.input is sys.stdin:
@@ -27,7 +35,7 @@ class RecvObjectsMixin:
 
         processor.process_pack()
 
-    def select_processor_class(self, reader, unpack_limit):
+    def select_processor_class(self, reader: Reader, unpack_limit: int | None) -> Type[Indexer | Unpacker]:
         if unpack_limit is None:
             unpack_limit = self.transfer_unpack_limit()
 
@@ -36,5 +44,5 @@ class RecvObjectsMixin:
         else:
             return Unpacker
 
-    def transfer_unpack_limit(self):
-        return self.repo.config.get(["transfer", "unpackLimit"]) or self.UNPACK_LIMIT
+    def transfer_unpack_limit(self) -> int:
+        return cast(int, self.repo.config.get(["transfer", "unpackLimit"])) or self.UNPACK_LIMIT

@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import os
 import hashlib
-from typing import Callable, Tuple, BinaryIO, Optional, TypeVar
+from typing import IO, Callable, Tuple, BinaryIO, Optional, TypeVar
 
 from legit.pack import InvalidPack
 
 T = TypeVar("T")
 
 class Stream:
-    def __init__(self, inp: BinaryIO, buffer: bytes = b"") -> None:
-        self.input: BinaryIO = inp
+    def __init__(self, inp: IO[bytes], buffer: bytes = b"") -> None:
+        self.input: IO[bytes] = inp
         self.digest = hashlib.sha1()
         self.offset = 0
         self.buffer = bytearray(buffer)
