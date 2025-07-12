@@ -35,7 +35,7 @@ class Resolve:
         for path, item in self.untracked.items():
             assert item is not None
             blob = cast(Blob, self.repo.database.load(item.oid))
-            self.repo.workspace.write_file(path, blob.data)
+            self.repo.workspace.write_file(Path(path), blob.data)
 
     def add_conflicts_to_index(self) -> None:
         for path, items in self.conflicts.items():
@@ -47,8 +47,8 @@ class Resolve:
         base_oid = self.inputs.base_oids[0]
         self.left_diff = self.repo.database.tree_diff(base_oid, self.inputs.left_oid)
         self.right_diff = self.repo.database.tree_diff(base_oid, self.inputs.right_oid)
-        self.clean_diff: dict[str, list[Optional[DatabaseEntry]]] = {}
-        self.conflicts: dict[str, list[Optional[DatabaseEntry]]] = {}
+        self.clean_diff: dict[Path, list[Optional[DatabaseEntry]]] = {}
+        self.conflicts: dict[Path, list[Optional[DatabaseEntry]]] = {}
 
         for path, (old_item, new_item) in self.right_diff.items():
             if new_item is not None:
