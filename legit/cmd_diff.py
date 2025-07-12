@@ -95,10 +95,10 @@ class Diff(PrintDiffMixin, Base):
         assert isinstance(blob, Blob)
         return Target(path, entry.oid, oct(entry.mode)[2:], blob.data.decode("utf-8"))
 
-    def from_index(self, path: Path, stage: int = 0) -> "Target":
+    def from_index(self, path: Path, stage: int = 0) -> "Target | None":
         entry = self.repo.index.entry_for_path(path, stage)
         if entry is None:
-            return
+            return None
 
         blob = self.repo.database.load(entry.oid)
         assert isinstance(blob, Blob)

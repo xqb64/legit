@@ -150,7 +150,7 @@ class Branch(FastForwardMixin, Base):
     def upstream_info(self, ref: Refs.SymRef) -> str | None:
         divergence = self.repo.divergence(ref)
         if divergence.upstream is None:
-            return
+            return None
 
         ahead = divergence.ahead
         behind = divergence.behind

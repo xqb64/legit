@@ -79,7 +79,10 @@ class PrintDiffMixin:
         for hunk in hunks:
             self.print_diff_hunk(hunk)
 
-    def print_diff(self, a: Target, b: Target) -> None:
+    def print_diff(self, a: Optional[Target], b: Optional[Target]) -> None:
+        assert a is not None
+        assert b is not None
+
         if a.oid == b.oid and a.mode == b.mode:
             return
 
