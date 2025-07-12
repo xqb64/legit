@@ -14,7 +14,7 @@ class Bases:
         if len(self.commits) <= 1:
             return self.commits
 
-        self.redundant = set()
+        self.redundant: set[str] = set()
 
         for commit in self.commits:
             self.filter_commit(commit)

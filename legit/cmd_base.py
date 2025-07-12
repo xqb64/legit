@@ -4,7 +4,7 @@ import io
 
 from functools import cache
 from pathlib import Path
-from typing import Generator, MutableMapping, TextIO
+from typing import MutableMapping, TextIO, cast
 from legit.cmd_color import Color
 from legit.pager import Pager
 from legit.editor import Editor
@@ -36,18 +36,18 @@ class Base:
     def repo(self) -> Repository:
         return Repository(self.dir / ".git")
 
-    def edit_file(self, path: Path) -> Generator:
-        editor = Editor.edit(path, self.editor_command())
-        yield editor
-        if not self.isatty:
-            editor.close()
+    def edit_file(self, path: Path) -> str | None:
+        def editor_setup(editor: Editor) -> None:
+            if not self.isatty:
+                editor.close()
+        return Editor.edit(path, block=editor_setup)
 
-    def editor_command(self) -> str:
-        core_editor = self.repo.config.get(["core", "editor"])
+    def editor_command(self) -> str | None:
+        core_editor = cast(str | None, self.repo.config.get(["core", "editor"]))
         git_editor = self.env.get("GIT_EDITOR")
         visual = self.env.get("VISUAL")
         editor = self.env.get("EDITOR")
-        return git_editor or core_editor or visual or editor
+        return (git_editor or core_editor or visual or editor)
 
     def setup_pager(self) -> None:
         if self.pager is not None:

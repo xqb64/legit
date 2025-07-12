@@ -44,6 +44,7 @@ class PrintDiffMixin:
     def diff_fmt(self, name: str, text: str) -> str:
         key = ["color", "diff", name]
         style_str = self.repo.config.get(key)
+        style: str | list[str] | None
         if style_str:
             assert isinstance(style_str, str)
             style = style_str.split()

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 from datetime import datetime
-from typing import MutableMapping, Optional, TYPE_CHECKING, Sequence, TextIO
+from typing import MutableMapping, Optional, TYPE_CHECKING, Sequence, TextIO, cast
 from legit.author import Author
 from legit.commit import Commit as CommitObject
 from legit.tree import Tree
@@ -170,7 +170,7 @@ class WriteCommitMixin:
         assert isinstance(commit, CommitObject)
 
         picked = CommitObject(
-            parents,
+            cast(list[str], parents),
             self.write_tree().oid,
             commit.author,
             self.current_author(),
