@@ -1,4 +1,3 @@
-from re import L
 from legit.repository import Repository
 from tests.cmd_helpers import assert_stdout, assert_stderr
 from tests.conftest import (
