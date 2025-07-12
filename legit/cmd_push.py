@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import logging
-from os import O_PATH
 import re
-from sys import byteorder
 from typing import Optional, cast, Pattern
 
 from legit.cmd_base import Base
