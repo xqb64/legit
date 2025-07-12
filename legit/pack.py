@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import reveal_type
 
 MAX_COPY_SIZE: int = 0xFFFFFF
 MAX_INSERT_SIZE: int = 0x7F
@@ -30,15 +31,17 @@ class InvalidPack(Exception):
 
 
 class Record:
-    def __init__(self, ty: str, data: bytes) -> None:
+    def __init__(self, ty: str, data: bytes | int) -> None:
         self.ty: str = ty
-        self.data: bytes = data
+        self.data: bytes | int = data
         self.oid: str | None = None
 
     def __str__(self) -> str:
-        return self.data.decode("utf-8", errors="replace")
+        if isinstance(self.data, bytes):
+            return self.data.decode("utf-8", errors="replace")
+        return str(self.data)
 
-    def to_bytes(self) -> bytes:
+    def to_bytes(self) -> bytes | int:
         return self.data
 
     def type(self) -> str:
@@ -46,12 +49,12 @@ class Record:
 
 
 class RefDelta:
-    def __init__(self, base_oid: str, delta_data: bytes) -> None:
+    def __init__(self, base_oid: str, delta_data: bytes | int) -> None:
         self.base_oid: str = base_oid
-        self.delta_data: bytes = delta_data
+        self.delta_data: bytes | int = delta_data
 
 
 class OfsDelta:
-    def __init__(self, base_ofs: int, delta_data: bytes) -> None:
+    def __init__(self, base_ofs: int, delta_data: bytes | int) -> None:
         self.base_ofs: int = base_ofs
-        self.delta_data: bytes = delta_data
+        self.delta_data: bytes | int = delta_data
