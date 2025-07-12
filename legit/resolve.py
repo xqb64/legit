@@ -33,6 +33,7 @@ class Resolve:
 
     def write_untracked_files(self) -> None:
         for path, item in self.untracked.items():
+            assert item is not None
             blob = cast(Blob, self.repo.database.load(item.oid))
             self.repo.workspace.write_file(path, blob.data)
 
@@ -41,13 +42,13 @@ class Resolve:
             self.repo.index.add_conflict_set(path, items)
 
     def prepare_tree_diffs(self) -> None:
-        self.untracked = {}
+        self.untracked: dict[str, DatabaseEntry | None] = {}
 
         base_oid = self.inputs.base_oids[0]
         self.left_diff = self.repo.database.tree_diff(base_oid, self.inputs.left_oid)
         self.right_diff = self.repo.database.tree_diff(base_oid, self.inputs.right_oid)
-        self.clean_diff = {}
-        self.conflicts = {}
+        self.clean_diff: dict[str, list[Optional[DatabaseEntry]]] = {}
+        self.conflicts: dict[str, list[Optional[DatabaseEntry]]] = {}
 
         for path, (old_item, new_item) in self.right_diff.items():
             if new_item is not None:

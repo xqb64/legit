@@ -63,14 +63,14 @@ class Index:
     def is_conflict(self) -> bool:
         return any(stage > 0 for _, stage in self.entries)
 
-    def add_conflict_set(self, path: Path, items: list[DatabaseEntry | None]) -> None:
-        self.remove_entry_with_stage(path, 0)
+    def add_conflict_set(self, path: str, items: list[DatabaseEntry | None]) -> None:
+        self.remove_entry_with_stage(Path(path), 0)
 
         for idx, item in enumerate(items):
             if not item:
                 continue
 
-            entry = Entry.create_from_db(path, item, idx + 1)
+            entry = Entry.create_from_db(Path(path), item, idx + 1)
             self.store_entry(entry)
 
         self.changed = True
