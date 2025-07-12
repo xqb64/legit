@@ -4,6 +4,7 @@ import re
 from typing import TYPE_CHECKING, Any, Optional, Union, cast 
 from legit.blob import Blob
 from legit.commit import Commit
+from legit.pack import Record
 from legit.tree import Tree
 
 if TYPE_CHECKING:
@@ -101,7 +102,7 @@ class Revision:
             assert upstream_name is not None
             return context.read_ref(upstream_name)
 
-        def __eq__(self, other) -> bool:
+        def __eq__(self, other: Any) -> bool:
             return isinstance(other, Revision.Upstream) and self.rev == other.rev
 
         def __hash__(self) -> int:
@@ -204,7 +205,7 @@ class Revision:
 
     def load_typed_object(
         self, oid: Optional[str], ty: str
-    ) -> Optional["Tree | Commit | Blob"]:
+    ) -> Optional["Tree | Commit | Blob | Record"]:
         if oid is None:
             return None
 
@@ -240,7 +241,7 @@ class Revision:
         objects = []
         for oid in sorted(candidates):
             obj = self.repo.database.load(oid)
-            short = self.repo.database.short_oid(obj.oid)
+            short = self.repo.database.short_oid(cast(str, obj.oid))
             info = f"  {short} {obj.type()}"
 
             if obj.type() == "commit":

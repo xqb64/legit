@@ -7,6 +7,7 @@ from typing import (
     TYPE_CHECKING,
     MutableMapping,
     Optional,
+    cast,
 )
 
 from legit.db_entry import DatabaseEntry
@@ -29,7 +30,7 @@ class Status:
         self.workspace_changes: MutableMapping[str, str] = {}
         self.changed: set[str] = set()
         self.untracked: set[str] = set()
-        self.conflicts = defaultdict(list)
+        self.conflicts: defaultdict[str, list[int]] = defaultdict(list[int])
 
         if commit_oid is None:
             commit_oid = self.repo.refs.read_head()
@@ -78,7 +79,7 @@ class Status:
             self.repo.index.update_entry_stat(entry, stat_result)
 
     def check_index_against_head_tree(self, entry: Entry) -> None:
-        item = self.head_tree.get(entry.path, None)
+        item = cast(DatabaseEntry | None, self.head_tree.get(entry.path, None))
         status = self.inspector.compare_tree_to_index(item, entry)
 
         if status is not None:

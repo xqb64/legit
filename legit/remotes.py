@@ -99,12 +99,12 @@ class Refspec:
         self.forced: bool = forced
 
     @staticmethod
-    def invert(specs, ref) -> str | None:
-        specs = [Refspec.parse(spec) for spec in specs]
+    def invert(specs: list[str], ref: str) -> str | None:
+        parsed_specs = [Refspec.parse(spec) for spec in specs]
 
         _map = {}
 
-        for spec in specs:
+        for spec in parsed_specs:
             assert spec is not None
             spec.source, spec.target = spec.target, spec.source
             _map.update(spec.match_refs([ref]))
@@ -189,7 +189,7 @@ class Remote:
         self.config.open()
 
     def set_upstream(self, branch: str, upstream: str) -> str | None:
-        ref_name = Refspec.invert(self.fetch_specs, upstream)
+        ref_name = Refspec.invert(cast(list[str], self.fetch_specs), upstream)
         if ref_name is None:
             return None
 

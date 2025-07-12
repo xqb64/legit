@@ -9,7 +9,7 @@ from legit.blob import Blob
 from legit.commit import Commit
 from legit.db_entry import DatabaseEntry
 from legit.database import Database
-from legit.index import Index
+from legit.index import Entry, Index
 from legit.refs import Refs
 from legit.workspace import Workspace
 from legit.status import Status
@@ -78,7 +78,7 @@ class HardReset:
             return
 
         blob = cast(Blob, self.repo.database.load(entry.oid))
-        self.repo.workspace.write_file(path, blob.data, entry.mode, True)
+        self.repo.workspace.write_file(path, blob.data, cast(DatabaseEntry, entry).mode, True)
 
         stat = self.repo.workspace.stat_file(path)
         assert stat is not None
