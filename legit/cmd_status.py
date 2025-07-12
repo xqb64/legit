@@ -1,26 +1,29 @@
 from __future__ import annotations
 
-from typing import TextIO, MutableMapping, cast
+from collections import defaultdict
+from typing import TextIO, MutableMapping, cast, Union
 from pathlib import Path
 
 from legit.cmd_base import Base
 
 LABEL_WIDTH = 12
 
-SHORT_STATUS: MutableMapping[str, str] = {
+StatusKey = Union[str, tuple[int, ...]]
+
+SHORT_STATUS: dict[str, str] = {
     "added": "A",
     "modified": "M",
     "deleted": "D",
 }
 
-LONG_STATUS: MutableMapping[str, str] = {
+LONG_STATUS: dict[StatusKey, str] = {
     "added": "new file:",
     "deleted": "deleted:",
     "modified": "modified:",
 }
 
 CONFLICT_LABEL_WIDTH: int = 17
-CONFLICT_LONG_STATUS: dict[tuple[int, ...], str] = {
+CONFLICT_LONG_STATUS: dict[StatusKey, str] = {
     (1, 2, 3): "both modified:",
     (1, 2): "deleted by them:",
     (1, 3): "deleted by us:",
@@ -29,7 +32,7 @@ CONFLICT_LONG_STATUS: dict[tuple[int, ...], str] = {
     (3,): "added by them:",
 }
 
-UI_LABELS: dict[str, MutableMapping[str, str] | dict[tuple[int, ...], str]] = {
+UI_LABELS: dict[str, dict[StatusKey, str]] = {
     "normal": LONG_STATUS,
     "conflict": CONFLICT_LONG_STATUS,
 }
@@ -173,7 +176,7 @@ class StatusCmd(Base):
     def print_changes(
         self,
         message: str,
-        changeset: MutableMapping[str, str],
+        changeset: MutableMapping[str, str] | defaultdict[str, list[int]],
         color: str,
         label_set: str = "normal",
     ) -> None:
@@ -187,7 +190,12 @@ class StatusCmd(Base):
         self.println("")
 
         for path, ty in changeset.items():
-            status = labels[ty].ljust(width, " ") if ty else ""
+            if label_set == "normal":
+                key: StatusKey = cast(str, ty)
+            else:
+                key = tuple(cast(list[int], ty))
+
+            status = labels[key].ljust(width, " ") if ty else ""
             self.println("\t" + self.fmt(color, f"{status}{path}"))
 
         self.println("")

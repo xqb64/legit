@@ -49,7 +49,7 @@ class Writer:
         self.offset += len(data)
 
     def prepare_pack_list(self, rev_list: RevList) -> None:
-        self.pack_list = []
+        self.pack_list: list[Entry] = []
 
         if self.progress is not None:
             self.progress.start("Counting objects")
