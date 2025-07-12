@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import hashlib
-from typing import MutableMapping, Optional, Type, cast
+from typing import MutableMapping, Optional, Type, cast, reveal_type
 import random
 import string
 from pathlib import Path
 from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 from legit.pack import OfsDelta, Record, RefDelta
 from legit.tree import Tree
 from legit.commit import Commit
@@ -57,11 +58,11 @@ class Database:
         return self.backend.write_object(oid, content)
 
     @property
-    def pack_path(self):
+    def pack_path(self) -> Path:
         return self.path / "pack"
 
     def read_object(self, oid: str) -> Blob | Commit | Tree:
-        raw = self.load_raw(oid)
+        raw = cast(Raw, self.load_raw(oid))
         obj = TYPES[raw.ty].parse(cast(bytes, raw.data))
         obj.oid = oid
         return obj
@@ -70,7 +71,7 @@ class Database:
         return DatabaseEntry(oid, 0o40000)
 
     def tree_diff(
-        self, a: str, b: str, pathfilter=PathFilter()
+        self, a: str, b: str, pathfilter: PathFilter = PathFilter()
     ) -> dict[Path, list[Optional[DatabaseEntry]]]:
         diff = TreeDiff(self)
         diff.compare_oids(a, b, pathfilter)
@@ -81,7 +82,7 @@ class Database:
         self.objects[oid] = obj
         return obj
 
-    def load_tree_entry(self, oid: str, path: Optional[Path]) -> DatabaseEntry:
+    def load_tree_entry(self, oid: str, path: Optional[Path]) -> DatabaseEntry | Entry | Tree | None:
         commit = self.load(oid)
         root = DatabaseEntry(cast(Commit, commit).tree, 0o40000)
 
@@ -90,33 +91,35 @@ class Database:
 
         return self.traverse_path_loop(path, root)
 
-    def traverse_path_loop(self, path: Path, root) -> DatabaseEntry:
+    def traverse_path_loop(self, path: Path, root: DatabaseEntry) -> DatabaseEntry | Entry | Tree | None:
         entry = root
         for name in path.parts:
             if not entry:
                 break
-            entry = self.load(entry.oid).entries.get(name)
+            entry = cast(DatabaseEntry, cast(Tree, self.load(entry.oid)).entries.get(name))
         return entry
 
-    def load_tree_list(self, oid: Optional[str], path: Optional[Path] = None):
+    def load_tree_list(self, oid: Optional[str], path: Optional[Path] = None) -> dict[Path, DatabaseEntry | Entry | Tree | None]:
         if oid is None:
             return {}
 
         entry = self.load_tree_entry(oid, path)
-        thing = {}
+        thing: dict[Path, DatabaseEntry | Entry | Tree | None] = {}
         self.build_list(thing, entry, path if path is not None else Path())
         return thing
 
-    def build_list(self, thing, entry, prefix: Path) -> None:
+    def build_list(self, thing: dict[Path, DatabaseEntry | Entry | Tree | None], entry: DatabaseEntry | Entry | Tree | None, prefix: Path) -> DatabaseEntry | Entry | Tree | None:
         if entry is None:
-            return
+            return None
 
-        if not entry.is_tree():
+        if not cast(DatabaseEntry, entry).is_tree():
             thing[prefix] = entry
             return entry
 
         for name, item in cast(Tree, self.load(entry.oid)).entries.items():
             self.build_list(thing, item, prefix / name)
+
+        return None
 
     def store(self, obj: Blob | Commit | Tree | Record) -> None:
         content = self.serialize_object(obj)
@@ -128,7 +131,7 @@ class Database:
         return self.hash_content(self.serialize_object(obj))
 
     def serialize_object(self, obj: Blob | Commit | Tree | Record) -> bytes:
-        string = obj.to_bytes()
+        string = cast(bytes, obj.to_bytes())
         header = f"{obj.type()} {len(string)}".encode("utf-8") + b"\x00"
 
         return header + string
