@@ -26,7 +26,9 @@ class TestConfig:
         assert_status(cmd, 0)
         assert_stdout(stdout, "ed\n")
 
-    def test_it_returns_the_value_of_a_set_variable_in_subsection(self, legit_cmd: LegitCmd) -> None:
+    def test_it_returns_the_value_of_a_set_variable_in_subsection(
+        self, legit_cmd: LegitCmd
+    ) -> None:
         _ = legit_cmd("config", "remote.origin.url", "git@github.com:jcoglan.jit")
 
         cmd, _, stdout, _ = legit_cmd("config", "--local", "Remote.origin.URL")
@@ -56,7 +58,9 @@ class TestConfig:
             assert_status(cmd, 0)
             assert_stdout(stdout, "master\ntopic\n")
 
-        def test_it_returns_5_on_trying_to_set_a_variable(self, legit_cmd: LegitCmd) -> None:
+        def test_it_returns_5_on_trying_to_set_a_variable(
+            self, legit_cmd: LegitCmd
+        ) -> None:
             cmd, _, _, _ = legit_cmd("config", "remote.origin.fetch", "new-value")
             assert_status(cmd, 5)
 
@@ -71,7 +75,9 @@ class TestConfig:
             assert_status(cmd, 0)
             assert_stdout(stdout, "new-value\n")
 
-        def test_it_returns_5_on_trying_to_unset_a_variable(self, legit_cmd: LegitCmd) -> None:
+        def test_it_returns_5_on_trying_to_unset_a_variable(
+            self, legit_cmd: LegitCmd
+        ) -> None:
             cmd, _, _, _ = legit_cmd("config", "--unset", "remote.origin.fetch")
             assert_status(cmd, 5)
 
