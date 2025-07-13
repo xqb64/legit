@@ -29,7 +29,9 @@ class TestWithFileInIndex:
         write_file("file.txt", "contents\n")
         _ = legit_cmd("add", ".")
 
-    def test_it_diffs_a_file_with_modified_contents(self, legit_cmd: LegitCmd, write_file: WriteFile) -> None:
+    def test_it_diffs_a_file_with_modified_contents(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("file.txt", "changed\n")
 
         expected_diff = (
@@ -43,7 +45,9 @@ class TestWithFileInIndex:
         )
         assert_diff(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode(self, legit_cmd: LegitCmd, make_executable: MakeExecutable) -> None:
+    def test_it_diffs_a_file_with_changed_mode(
+        self, legit_cmd: LegitCmd, make_executable: MakeExecutable
+    ) -> None:
         make_executable("file.txt")
 
         expected_diff = (
@@ -52,7 +56,10 @@ class TestWithFileInIndex:
         assert_diff(legit_cmd, expected_diff)
 
     def test_it_diffs_a_file_with_changed_mode_and_contents(
-        self, legit_cmd: LegitCmd, make_executable: MakeExecutable, write_file: WriteFile
+        self,
+        legit_cmd: LegitCmd,
+        make_executable: MakeExecutable,
+        write_file: WriteFile,
     ) -> None:
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
@@ -93,7 +100,9 @@ class TestWithHeadCommit:
         legit_cmd("add", ".")
         commit("first commit")
 
-    def test_it_diffs_a_file_with_modified_contents(self, legit_cmd: LegitCmd, write_file: WriteFile) -> None:
+    def test_it_diffs_a_file_with_modified_contents(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("file.txt", "changed\n")
         legit_cmd("add", ".")
 
@@ -108,7 +117,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_file_with_changed_mode(self, legit_cmd: LegitCmd, make_executable: MakeExecutable) -> None:
+    def test_it_diffs_a_file_with_changed_mode(
+        self, legit_cmd: LegitCmd, make_executable: MakeExecutable
+    ) -> None:
         make_executable("file.txt")
         legit_cmd("add", ".")
 
@@ -118,7 +129,10 @@ class TestWithHeadCommit:
         assert_diff_cached(legit_cmd, expected_diff)
 
     def test_it_diffs_a_file_with_changed_mode_and_contents(
-        self, legit_cmd: LegitCmd, make_executable: MakeExecutable, write_file: WriteFile
+        self,
+        legit_cmd: LegitCmd,
+        make_executable: MakeExecutable,
+        write_file: WriteFile,
     ) -> None:
         make_executable("file.txt")
         write_file("file.txt", "changed\n")
@@ -137,7 +151,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_a_deleted_file(self, legit_cmd: LegitCmd, delete: Delete, repo_path: Path) -> None:
+    def test_it_diffs_a_deleted_file(
+        self, legit_cmd: LegitCmd, delete: Delete, repo_path: Path
+    ) -> None:
         delete("file.txt")
         delete(".git/index")
         legit_cmd("add", ".")
@@ -153,7 +169,9 @@ class TestWithHeadCommit:
         )
         assert_diff_cached(legit_cmd, expected_diff)
 
-    def test_it_diffs_an_added_file(self, legit_cmd: LegitCmd, write_file: WriteFile) -> None:
+    def test_it_diffs_an_added_file(
+        self, legit_cmd: LegitCmd, write_file: WriteFile
+    ) -> None:
         write_file("another.txt", "hello\n")
         legit_cmd("add", ".")
 

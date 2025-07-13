@@ -1,7 +1,17 @@
 from io import StringIO
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, TextIO, TypeAlias, Protocol, cast, Mapping
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Optional,
+    TextIO,
+    TypeAlias,
+    Protocol,
+    cast,
+    Mapping,
+)
 import shutil
 
 import pytest
@@ -43,10 +53,7 @@ class LegitCmd(Protocol):
 
 class Commit(Protocol):
     def __call__(
-        self,
-        message: str,
-        when: Optional[datetime] = ...,
-        author: bool = ...
+        self, message: str, when: Optional[datetime] = ..., author: bool = ...
     ) -> LegitCmdResult: ...
 
 
@@ -186,7 +193,12 @@ def legit_cmd(repo_path: Path) -> Generator[LegitCmd]:
         stderr = CapturedStderr()
         to_close.append(stderr)
         cmd = Command.execute(
-            repo_path, cast(dict[str, str], env), ["legit"] + list(argv), stdin, stdout, cast(TextIO, stderr)
+            repo_path,
+            cast(dict[str, str], env),
+            ["legit"] + list(argv),
+            stdin,
+            stdout,
+            cast(TextIO, stderr),
         )
         return cmd, stdin, stdout, stderr
 
