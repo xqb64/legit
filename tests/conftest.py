@@ -1,7 +1,7 @@
 from io import StringIO
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, TextIO, TypeAlias, Protocol, cast
+from typing import Any, Callable, Generator, Optional, TextIO, TypeAlias, Protocol, cast, Mapping
 import shutil
 
 import pytest
@@ -19,7 +19,6 @@ from legit.revision import Revision
 from legit.editor import Editor
 
 LegitCmdResult: TypeAlias = tuple[Base, StringIO, StringIO, CapturedStderr]
-LegitCmd: TypeAlias = Callable[..., LegitCmdResult]
 
 ResolveRevision: TypeAlias = Callable[[str], str]
 LoadCommit: TypeAlias = Callable[[str], Blob | CommitObj | Tree | Record]
@@ -31,6 +30,15 @@ MakeExecutable: TypeAlias = Callable[[str], None]
 MakeUnreadable: TypeAlias = Callable[[str], None]
 EditBlock: TypeAlias = Callable[[Editor], None]
 StubEditorFactory: TypeAlias = Callable[[str], None]
+
+
+class LegitCmd(Protocol):
+    def __call__(
+        self,
+        *argv: str,
+        env: Mapping[str, str] | None = None,
+        stdin_data: str = "",
+    ) -> "LegitCmdResult": ...
 
 
 class Commit(Protocol):
@@ -168,7 +176,9 @@ def legit_cmd(repo_path: Path) -> Generator[LegitCmd]:
     to_close = []
 
     def _legit_cmd(
-        *argv: Any, env: dict[str, str] | None = None, stdin_data: str = ""
+        *argv: str,
+        env: Mapping[str, str] | None = None,
+        stdin_data: str = "",
     ) -> LegitCmdResult:
         env = env or {}
         stdin = StringIO(stdin_data)
@@ -176,7 +186,7 @@ def legit_cmd(repo_path: Path) -> Generator[LegitCmd]:
         stderr = CapturedStderr()
         to_close.append(stderr)
         cmd = Command.execute(
-            repo_path, env, ["legit"] + list(argv), stdin, stdout, cast(TextIO, stderr)
+            repo_path, cast(dict[str, str], env), ["legit"] + list(argv), stdin, stdout, cast(TextIO, stderr)
         )
         return cmd, stdin, stdout, stderr
 
