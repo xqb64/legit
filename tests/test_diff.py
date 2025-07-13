@@ -1,9 +1,7 @@
-import pytest
-
 from legit.diff import diff_hunks
 
 
-def hunks(a, b):
+def hunks(a: list[str], b: list[str]) -> list[list[str | list[str]]]:
     return [
         [hunk.header(), [str(edit) for edit in hunk.edits]] for hunk in diff_hunks(a, b)
     ]
@@ -12,13 +10,13 @@ def hunks(a, b):
 DOC = ["the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"]
 
 
-def test_it_detects_deletion_at_start():
+def test_it_detects_deletion_at_start() -> None:
     changed = ["quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"]
     expected = [["@@ -1,4 +1,3 @@", ["-the", " quick", " brown", " fox"]]]
     assert hunks(DOC, changed) == expected
 
 
-def test_it_detects_insertion_at_start():
+def test_it_detects_insertion_at_start() -> None:
     changed = [
         "so",
         "the",
@@ -35,7 +33,7 @@ def test_it_detects_insertion_at_start():
     assert hunks(DOC, changed) == expected
 
 
-def test_it_detects_change_skipping_start_and_end():
+def test_it_detects_change_skipping_start_and_end() -> None:
     changed = [
         "the",
         "quick",
@@ -67,7 +65,7 @@ def test_it_detects_change_skipping_start_and_end():
     assert hunks(DOC, changed) == expected
 
 
-def test_it_puts_nearby_changes_in_same_hunk():
+def test_it_puts_nearby_changes_in_same_hunk() -> None:
     changed = ["the", "brown", "fox", "jumps", "over", "the", "lazy", "cat"]
     expected = [
         [
@@ -89,7 +87,7 @@ def test_it_puts_nearby_changes_in_same_hunk():
     assert hunks(DOC, changed) == expected
 
 
-def test_it_puts_distant_changes_in_different_hunks():
+def test_it_puts_distant_changes_in_different_hunks() -> None:
     changed = ["a", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "cat"]
     expected = [
         ["@@ -1,4 +1,4 @@", ["-the", "+a", " quick", " brown", " fox"]],
