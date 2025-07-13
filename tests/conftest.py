@@ -1,7 +1,7 @@
 from io import StringIO
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, TextIO, TypeAlias, cast
+from typing import Any, Callable, Generator, Optional, TextIO, TypeAlias, Protocol, cast
 import shutil
 
 import pytest
@@ -23,7 +23,6 @@ LegitCmd: TypeAlias = Callable[..., LegitCmdResult]
 
 ResolveRevision: TypeAlias = Callable[[str], str]
 LoadCommit: TypeAlias = Callable[[str], Blob | CommitObj | Tree | Record]
-Commit: TypeAlias = Callable[[str, Optional[datetime], bool], LegitCmdResult]
 WriteFile: TypeAlias = Callable[[str, str], None]
 Mkdir: TypeAlias = Callable[[str], None]
 Touch: TypeAlias = Callable[[str], None]
@@ -32,6 +31,15 @@ MakeExecutable: TypeAlias = Callable[[str], None]
 MakeUnreadable: TypeAlias = Callable[[str], None]
 EditBlock: TypeAlias = Callable[[Editor], None]
 StubEditorFactory: TypeAlias = Callable[[str], None]
+
+
+class Commit(Protocol):
+    def __call__(
+        self,
+        message: str,
+        when: Optional[datetime] = ...,
+        author: bool = ...
+    ) -> LegitCmdResult: ...
 
 
 @pytest.fixture
