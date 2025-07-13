@@ -66,7 +66,7 @@ def assert_stdout(stdout: TextIO, expected: str) -> None:
     assert data == expected, f"Expected stdout {expected!r}, got {data!r}"
 
 
-def assert_stderr(stderr: CapturedStderr, expected: str) -> None:
+def assert_stderr(stderr: CapturedStderr | TextIO, expected: str) -> None:
     stderr.seek(0)
     data = stderr.read()
     assert data == expected, f"Expected stderr {expected!r}, got {data!r}"
