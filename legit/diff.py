@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Sequence, Union, List
-from legit.myers import Edit, Line, Myers
-from legit.hunk import EditLike, Hunk
+from typing import List, Sequence, Union
+
 from legit.combined import Combined
+from legit.hunk import EditLike, Hunk
+from legit.myers import Edit, Line, Myers
 
 
 def lines(document: Union[str, List[str]]) -> List[Line]:

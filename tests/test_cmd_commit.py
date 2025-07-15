@@ -1,4 +1,5 @@
 from typing import Callable, TypeAlias, cast
+
 import pytest
 
 from legit.author import Author
@@ -6,12 +7,12 @@ from legit.commit import Commit as CommitObj
 from legit.repository import Repository
 from legit.rev_list import RevList
 from tests.conftest import (
-    LoadCommit,
-    WriteFile,
-    LegitCmd,
     Commit,
-    StubEditorFactory,
+    LegitCmd,
+    LoadCommit,
     ResolveRevision,
+    StubEditorFactory,
+    WriteFile,
 )
 
 CommitChange: TypeAlias = Callable[[str], None]

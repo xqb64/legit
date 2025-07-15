@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 import subprocess
-from typing import TYPE_CHECKING, Optional, Pattern, TextIO, reveal_type, cast
+from typing import TYPE_CHECKING, Optional, Pattern, TextIO, cast, reveal_type
 from urllib.parse import ParseResult
+
 from legit.protocol import Remotes
 
 if TYPE_CHECKING:

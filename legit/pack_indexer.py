@@ -1,17 +1,26 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import cast, TYPE_CHECKING, Optional
-import zlib
 import hashlib
 import struct
+import zlib
 from collections import defaultdict
-from legit.pack import OfsDelta, Record, RefDelta, IDX_SIGNATURE, IDX_MAX_OFFSET
-from legit.temp_file import TempFile
-from legit.pack import HEADER_FORMAT, SIGNATURE, VERSION
-from legit.pack_reader import Reader
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional, cast
+
+from legit.pack import (
+    HEADER_FORMAT,
+    IDX_MAX_OFFSET,
+    IDX_SIGNATURE,
+    SIGNATURE,
+    VERSION,
+    OfsDelta,
+    Record,
+    RefDelta,
+)
 from legit.pack_expander import Expander
+from legit.pack_reader import Reader
 from legit.pack_stream import Stream
+from legit.temp_file import TempFile
 
 if TYPE_CHECKING:
     from legit.database import Database

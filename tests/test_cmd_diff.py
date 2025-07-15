@@ -1,14 +1,14 @@
-import pytest
-
 from pathlib import Path
+
+import pytest
 
 from tests.cmd_helpers import assert_stdout
 from tests.conftest import (
-    LegitCmd,
-    WriteFile,
     Commit,
-    MakeExecutable,
     Delete,
+    LegitCmd,
+    MakeExecutable,
+    WriteFile,
 )
 
 

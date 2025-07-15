@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional, cast, Pattern
+from typing import Optional, Pattern, cast
 
 from legit.cmd_base import Base
 from legit.fast_forward import FastForwardMixin
 from legit.remote_client import RemoteClientMixin
-from legit.send_objects import SendObjectsMixin
-from legit.remotes import Remote, Remotes, Refspec
+from legit.remotes import Refspec, Remote, Remotes
 from legit.revision import Revision
-
+from legit.send_objects import SendObjectsMixin
 
 log = logging.getLogger(__name__)
 

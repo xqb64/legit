@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import hashlib
 import os
-from pathlib import Path
 import stat
 import struct
+from collections import defaultdict
+from pathlib import Path
 from typing import (
     BinaryIO,
     Protocol,
     runtime_checkable,
 )
 
-from legit.lockfile import Lockfile
 from legit.db_entry import DatabaseEntry
+from legit.lockfile import Lockfile
 
 
 @runtime_checkable

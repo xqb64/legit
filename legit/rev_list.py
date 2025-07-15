@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Callable, Generator, Optional, cast
-from legit.tree import Tree
-from legit.refs import Refs
+
 from legit.commit import Commit
 from legit.db_entry import DatabaseEntry
-from legit.revision import Revision
-from legit.repository import Repository
 from legit.pathfilter import PathFilter
+from legit.refs import Refs
+from legit.repository import Repository
+from legit.revision import Revision
+from legit.tree import Tree
 
 
 class RevList:

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import cast, Optional
+from typing import Optional, cast
+
 from legit.config import ConfigFile, ConfigValue
 from legit.refs import Refs
 from legit.revision import Revision

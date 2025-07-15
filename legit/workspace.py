@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import os
-import stat
 import shutil
-from typing import MutableMapping, TYPE_CHECKING, Optional
+import stat
 from collections.abc import Iterator
 from pathlib import Path
-
+from typing import TYPE_CHECKING, MutableMapping, Optional
 
 if TYPE_CHECKING:
     from legit.migration import Migration

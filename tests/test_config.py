@@ -1,7 +1,7 @@
 import pytest
 
+from tests.cmd_helpers import assert_status, assert_stderr, assert_stdout
 from tests.conftest import LegitCmd
-from tests.cmd_helpers import assert_status, assert_stdout, assert_stderr
 
 
 class TestConfig:

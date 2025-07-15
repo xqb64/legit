@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import zlib
 from pathlib import Path
 from typing import Any
-import zlib
+
 from legit.temp_file import TempFile
 
 

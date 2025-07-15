@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import os
+from collections import defaultdict
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -10,12 +10,11 @@ from typing import (
     cast,
 )
 
-from legit.db_entry import DatabaseEntry
-from legit.tree import Tree
 from legit.blob import Blob
+from legit.db_entry import DatabaseEntry
 from legit.index import Entry
 from legit.inspector import Inspector
-
+from legit.tree import Tree
 
 if TYPE_CHECKING:
     from legit.repository import Repository

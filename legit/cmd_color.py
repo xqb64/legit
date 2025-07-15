@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 SGR_CODES: dict[str, int] = {
     "normal": 0,
     "bold": 1,

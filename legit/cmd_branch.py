@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import enum
-from typing import cast, Union
+from typing import Union, cast
 
 from legit.cmd_base import Base
 from legit.commit import Commit
+from legit.fast_forward import FastForwardMixin
 from legit.refs import Refs
 from legit.remotes import Remotes
 from legit.revision import Revision
-from legit.fast_forward import FastForwardMixin
 
 
 class Upstream(enum.Enum):

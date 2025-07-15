@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 from typing import Optional, cast, reveal_type
 
 from legit.cmd_base import Base
-from legit.remotes import Remotes, Refspec
-from legit.rev_list import RevList
-from legit.pack import SIGNATURE
-from legit.remote_client import RemoteClientMixin
-from legit.recv_objects import RecvObjectsMixin
 from legit.fast_forward import FastForwardMixin
+from legit.pack import SIGNATURE
+from legit.recv_objects import RecvObjectsMixin
+from legit.remote_client import RemoteClientMixin
+from legit.remotes import Refspec, Remotes
+from legit.rev_list import RevList
 
 
 class Fetch(RemoteClientMixin, RecvObjectsMixin, FastForwardMixin, Base):

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, cast, Protocol, runtime_checkable
-from legit.myers import Line
+from typing import List, Optional, Protocol, Sequence, cast, runtime_checkable
 
+from legit.myers import Line
 
 HUNK_CONTEXT = 3
 

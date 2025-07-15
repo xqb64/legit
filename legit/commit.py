@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 from typing import cast
+
 from legit.author import Author
 
 

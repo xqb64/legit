@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from io import BytesIO
-import re
 import logging
+import re
+from io import BytesIO
 from typing import IO, Generator, Optional, cast
 
 log = logging.getLogger(__name__)

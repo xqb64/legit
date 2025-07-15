@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 from typing import cast
 
 from legit.cmd_base import Base
 from legit.commit import Commit
-from legit.write_commit import WriteCommitMixin
 from legit.inputs import CherryPick as CherryPickInput
 from legit.rev_list import RevList
 from legit.sequencing import SequencingMixin
+from legit.write_commit import WriteCommitMixin
 
 
 class CherryPick(WriteCommitMixin, SequencingMixin, Base):

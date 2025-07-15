@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import textwrap
-from typing import cast, Optional
+from typing import Optional, cast
+
 from legit.cmd_base import Base
-from legit.write_commit import WriteCommitMixin
+from legit.commit import Commit as CommitObject
 from legit.editor import Editor
 from legit.revision import Revision
-from legit.commit import Commit as CommitObject
-
+from legit.write_commit import WriteCommitMixin
 
 COMMIT_NOTES = textwrap.dedent(
     """\

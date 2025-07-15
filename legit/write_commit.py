@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
 import textwrap
 from datetime import datetime
-from typing import MutableMapping, Optional, TYPE_CHECKING, Sequence, TextIO, cast
+from pathlib import Path
+from typing import TYPE_CHECKING, MutableMapping, Optional, Sequence, TextIO, cast
+
 from legit.author import Author
 from legit.commit import Commit as CommitObject
-from legit.tree import Tree
 from legit.editor import Editor
+from legit.tree import Tree
 
 if TYPE_CHECKING:
     from legit.repository import Repository

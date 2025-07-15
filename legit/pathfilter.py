@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from legit.db_entry import DatabaseEntry
 from collections import defaultdict
 from pathlib import Path
 from typing import Generator
+
+from legit.db_entry import DatabaseEntry
 
 
 class Trie:

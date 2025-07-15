@@ -1,14 +1,14 @@
 import datetime
 from pathlib import Path
 from typing import Callable, TypeAlias, cast
+
 import pytest
 
-from legit.database import Database
 from legit.author import Author
+from legit.bases import Bases
 from legit.commit import Commit
 from legit.common_ancestors import CommonAncestors
-from legit.bases import Bases
-
+from legit.database import Database
 
 Ancestor: TypeAlias = Callable[[str, str], str | list[str]]
 MergeBase: TypeAlias = Callable[[str, str], str | list[str]]

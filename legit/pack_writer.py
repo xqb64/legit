@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from io import BytesIO
-from pathlib import Path
-from typing import IO, Any, Optional, cast
-import zlib
 import hashlib
 import struct
 import sys
+import zlib
+from io import BytesIO
+from pathlib import Path
+from typing import IO, Any, Optional, cast
 
-from legit.db_loose import Raw
-from legit.db_entry import DatabaseEntry
 from legit.database import Database
-from legit.pack import HEADER_FORMAT, SIGNATURE, VERSION
+from legit.db_entry import DatabaseEntry
+from legit.db_loose import Raw
 from legit.numbers import VarIntLE
-from legit.pack_entry import Entry
+from legit.pack import HEADER_FORMAT, SIGNATURE, VERSION
 from legit.pack_compressor import Compressor
+from legit.pack_entry import Entry
 from legit.rev_list import RevList
 
 

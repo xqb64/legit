@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Iterator, Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator, List, Optional
 
 from legit.pack_entry import Entry
 from legit.pack_xdelta import XDelta
-
 
 if TYPE_CHECKING:
     from legit.pack_delta import Delta

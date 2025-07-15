@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast, BinaryIO, reveal_type
+from typing import BinaryIO, cast, reveal_type
 
-from legit.pack import Record, RefDelta, OfsDelta
-from legit.pack_expander import Expander
-from legit.pack_reader import Reader
-from legit.pack_index import Index
 from legit.db_loose import Raw
+from legit.pack import OfsDelta, Record, RefDelta
+from legit.pack_expander import Expander
+from legit.pack_index import Index
+from legit.pack_reader import Reader
 from legit.pack_stream import Stream
 
 

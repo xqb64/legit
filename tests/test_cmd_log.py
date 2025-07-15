@@ -1,6 +1,6 @@
+import textwrap
 from datetime import datetime, timedelta
 from enum import auto
-import textwrap
 from typing import Protocol, cast
 
 import pytest
@@ -8,15 +8,14 @@ import pytest
 from legit.author import Author
 from legit.commit import Commit as CommitObj
 from legit.repository import Repository
-
+from tests.cmd_helpers import assert_stdout
 from tests.conftest import (
-    WriteFile,
-    LegitCmd,
     Commit,
+    LegitCmd,
     LoadCommit,
     ResolveRevision,
+    WriteFile,
 )
-from tests.cmd_helpers import assert_stdout
 
 
 class CommitFile(Protocol):

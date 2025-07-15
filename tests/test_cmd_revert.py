@@ -5,24 +5,23 @@ from typing import cast
 
 import pytest
 
-from legit.rev_list import RevList
-from legit.repository import Repository
 from legit.commit import Commit as CommitObj
-
+from legit.repository import Repository
+from legit.rev_list import RevList
+from tests.cmd_helpers import (
+    assert_index,
+    assert_status,
+    assert_stderr,
+    assert_stdout,
+    assert_workspace,
+)
 from tests.conftest import (
+    Commit,
+    LegitCmd,
+    LoadCommit,
     ResolveRevision,
     StubEditorFactory,
     WriteFile,
-    LegitCmd,
-    Commit,
-    LoadCommit,
-)
-from tests.cmd_helpers import (
-    assert_index,
-    assert_workspace,
-    assert_stdout,
-    assert_stderr,
-    assert_status,
 )
 
 

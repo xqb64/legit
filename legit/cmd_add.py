@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from legit.blob import Blob
+from legit.cmd_base import Base
 from legit.lockfile import Lockfile
 from legit.workspace import Workspace
-from legit.cmd_base import Base
 
 
 class Add(Base):

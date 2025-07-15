@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import tempfile
+from contextlib import contextmanager
 from io import TextIOBase
 from pathlib import Path
-
-from contextlib import contextmanager
-from typing import cast, Generator, TextIO
+from typing import Generator, TextIO, cast
 
 from legit.blob import Blob
 from legit.cmd_base import Base

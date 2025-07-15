@@ -5,7 +5,6 @@ from typing import Sequence
 
 from legit.config import ConfigFile, ConfigValue
 
-
 GLOBAL_CONFIG = Path("~/.gitconfig").expanduser()
 SYSTEM_CONFIG = Path("/etc/gitconfig")
 

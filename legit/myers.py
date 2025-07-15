@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Dict, Generator
-
+from typing import Dict, Generator, List
 
 SYMBOLS: dict[str, str] = {
     "eql": " ",

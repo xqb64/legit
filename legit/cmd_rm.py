@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import stat
 import itertools
+import stat
 from pathlib import Path
 from typing import cast
+
 from legit.cmd_base import Base
 from legit.db_entry import DatabaseEntry
 from legit.inspector import Inspector
-
 
 BOTH_CHANGED = "staged content different from both the file and the HEAD"
 INDEX_CHANGED = "changes staged in the index"

@@ -1,14 +1,14 @@
 from __future__ import annotations
+
+import logging
 from typing import cast
+
 from typing_extensions import Optional
 
 from legit.cmd_base import Base
+from legit.fast_forward import FastForwardMixin
 from legit.recv_objects import RecvObjectsMixin
 from legit.remote_agent import RemoteAgentMixin
-from legit.fast_forward import FastForwardMixin
-
-import logging
-
 
 log = logging.getLogger(__name__)
 

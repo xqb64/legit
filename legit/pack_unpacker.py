@@ -1,15 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, reveal_type, cast
+
+from typing import TYPE_CHECKING, cast, reveal_type
 
 from legit.pack import OfsDelta, Record, RefDelta
 from legit.pack_expander import Expander
 
-
 if TYPE_CHECKING:
     from legit.database import Database
-    from legit.progress import Progress
     from legit.pack_reader import Reader
     from legit.pack_stream import Stream
+    from legit.progress import Progress
 
 
 class Unpacker:

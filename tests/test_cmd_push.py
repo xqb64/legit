@@ -1,24 +1,23 @@
 import shutil
 from pathlib import Path
+from typing import Any, Callable, Generator, TypeAlias, cast
 
 import pytest
 
-from typing import cast, Any, TypeAlias, Callable, Generator
-
-from legit.rev_list import RevList
 from legit.repository import Repository
-
-from tests.conftest import (
-    WriteFile,
-    LegitCmd,
-)
-from tests.remote_repo import RemoteRepo
+from legit.rev_list import RevList
 from tests.cmd_helpers import (
     assert_status,
-    assert_workspace as _assert_workspace,
     assert_stderr,
 )
-
+from tests.cmd_helpers import (
+    assert_workspace as _assert_workspace,
+)
+from tests.conftest import (
+    LegitCmd,
+    WriteFile,
+)
+from tests.remote_repo import RemoteRepo
 
 CreateRemoteRepo: TypeAlias = Callable[[str], RemoteRepo]
 WriteCommit: TypeAlias = Callable[[str], None]

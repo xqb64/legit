@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TextIO
 import zlib
+from typing import TYPE_CHECKING, TextIO
 
-from legit.rev_list import RevList
 from legit.pack_writer import Writer
 from legit.progress import Progress
-
+from legit.rev_list import RevList
 
 if TYPE_CHECKING:
-    from legit.repository import Repository
     from legit.protocol import Remotes
+    from legit.repository import Repository
 
 
 class SendObjectsMixin:

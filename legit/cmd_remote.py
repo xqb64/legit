@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from typing import cast
+
 from legit.cmd_base import Base
 from legit.remotes import Remotes
-from typing import cast
 
 
 class Remote(Base):

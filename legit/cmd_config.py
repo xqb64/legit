@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import cast, Tuple, Callable, Optional
+from typing import Callable, Optional, Tuple, cast
 
 from legit.cmd_base import Base
-from legit.config import ConfigFile, ConfigValue, ParseError, Conflict
+from legit.config import ConfigFile, ConfigValue, Conflict, ParseError
 from legit.config_stack import ConfigStack
 
 

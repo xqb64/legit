@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import binascii
-from typing import cast, Tuple, Optional, TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Tuple, cast
+
 from legit.db_loose import Raw
-from legit.pack import TYPE_CODES
 from legit.numbers import VarIntBE
+from legit.pack import TYPE_CODES
 
 if TYPE_CHECKING:
     from legit.pack_delta import Delta

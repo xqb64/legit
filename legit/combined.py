@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast, List, Optional, Generator, Iterable
+from typing import Generator, Iterable, List, Optional, cast
 
-from legit.myers import Edit, Line
 from legit.hunk import EditLike
+from legit.myers import Edit, Line
 
 SYMBOLS: dict[str, str] = {
     "del": "-",

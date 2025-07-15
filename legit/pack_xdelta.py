@@ -1,8 +1,9 @@
 from __future__ import annotations
+
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from legit.pack import MAX_COPY_SIZE, MAX_INSERT_SIZE
-from collections import defaultdict
 
 if TYPE_CHECKING:
     from legit.pack_delta import Delta

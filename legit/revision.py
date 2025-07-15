@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING, Any, Optional, Union, cast
+
 from legit.blob import Blob
 from legit.commit import Commit
 from legit.pack import Record

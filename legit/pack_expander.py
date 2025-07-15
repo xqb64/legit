@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from io import BytesIO
+
 from legit.numbers import VarIntLE
 from legit.pack_delta import Delta
 from legit.pack_stream import Stream
-
 
 GIT_MAX_COPY: int = 0x10000
 

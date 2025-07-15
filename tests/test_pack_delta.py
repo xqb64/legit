@@ -1,21 +1,21 @@
 import io
-from typing import cast, Optional, Type
-import pytest
 import secrets
 from pathlib import Path
+from typing import Optional, Type, cast
+
+import pytest
 
 from legit.blob import Blob
 from legit.database import Database
+from legit.db_entry import DatabaseEntry
 from legit.db_loose import Raw
-from legit.pack_writer import Writer
-from legit.pack_stream import Stream
-from legit.pack_reader import Reader
-from legit.pack_unpacker import Unpacker
 from legit.pack_indexer import Indexer
+from legit.pack_reader import Reader
+from legit.pack_stream import Stream
+from legit.pack_unpacker import Unpacker
+from legit.pack_writer import Writer
 from legit.pack_xdelta import XDelta
 from legit.rev_list import RevList
-from legit.db_entry import DatabaseEntry
-
 
 blob_text_1: str = secrets.token_hex(256)
 blob_text_2: str = blob_text_1 + "new_content"
@@ -44,7 +44,7 @@ tests: dict[str, Type[Unpacker | Indexer]] = {
 
 
 @pytest.mark.parametrize("allow_ofs", [False, True], ids=lambda b: f"ofs_delta={b}")
-@pytest.mark.parametrize("processor", tests.items())
+@pytest.mark.parametrize("name, processor", tests.items())
 def test_pack_processing(
     name: str, processor: Type[Indexer | Unpacker], allow_ofs: bool, tmp_path: Path
 ) -> None:

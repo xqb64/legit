@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from functools import cache
+from itertools import chain
+from pathlib import Path
+from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, cast, reveal_type
 
 from legit.protocol import Remotes
 from legit.repository import Repository
-from functools import cache
-from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, reveal_type, cast
-from pathlib import Path
-from itertools import chain
 
 
 class RemoteAgentMixin:

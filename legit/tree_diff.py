@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Optional, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
+from legit.db_entry import DatabaseEntry
 from legit.pathfilter import PathFilter
 from legit.tree import Tree
-from legit.db_entry import DatabaseEntry
 
 if TYPE_CHECKING:
     from legit.database import Database

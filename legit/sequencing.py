@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import textwrap
 from typing import TYPE_CHECKING, TextIO, cast
-from legit.commit import Commit
-from legit.repository import Repository, Sequencer, PendingCommit
-from legit.resolve import Resolve
-from legit.editor import Editor
-from legit.inputs import Inputs
-from legit.inputs import CherryPick
 
+from legit.commit import Commit
+from legit.editor import Editor
+from legit.inputs import CherryPick, Inputs
+from legit.repository import PendingCommit, Repository, Sequencer
+from legit.resolve import Resolve
 
 CONFLICT_NOTES = textwrap.dedent(
     """\

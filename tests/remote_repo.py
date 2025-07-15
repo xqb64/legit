@@ -1,6 +1,7 @@
 from io import StringIO
 from pathlib import Path
 from typing import Any, TextIO, cast
+
 from legit.cmd_base import Base
 from legit.command import Command
 from legit.repository import Repository

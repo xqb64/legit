@@ -3,8 +3,8 @@ from __future__ import annotations
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Optional, Callable, TextIO, Type
 from types import TracebackType
+from typing import Callable, Optional, TextIO, Type
 
 
 class Editor:

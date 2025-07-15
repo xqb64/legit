@@ -1,7 +1,6 @@
 from legit.pack_delta import Delta
 from legit.pack_xdelta import XDelta
 
-
 #   0               16               32               48
 #   +----------------+----------------+----------------+
 #   |the quick brown |fox jumps over t|he slow lazy dog|

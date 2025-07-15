@@ -1,26 +1,24 @@
 from __future__ import annotations
 
-import re
 import os
+import re
 from pathlib import Path
 from typing import Optional, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
-from legit.db_entry import DatabaseEntry
-from legit.database import Database
-from legit.index import Entry, Index
-from legit.refs import Refs
-from legit.workspace import Workspace
-from legit.status import Status
-from legit.migration import Migration
-from legit.lockfile import Lockfile
-from legit.config_stack import ConfigStack
-from legit.config import ConfigFile, ConfigValue
 from legit.common_ancestors import CommonAncestors
-from legit.remotes import Remotes
+from legit.config import ConfigFile, ConfigValue
+from legit.config_stack import ConfigStack
+from legit.database import Database
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry, Index
+from legit.lockfile import Lockfile
+from legit.migration import Migration
 from legit.refs import Refs
-
+from legit.remotes import Remotes
+from legit.status import Status
+from legit.workspace import Workspace
 
 UNSAFE_MESSAGE: str = "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 

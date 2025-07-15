@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, List, Optional, cast
 
 from legit.db_loose import Raw
-from legit.pack_entry import Entry
-from typing import TYPE_CHECKING, Optional, List, cast
-from legit.pack_window import Window
 from legit.pack_delta import Delta
-
+from legit.pack_entry import Entry
+from legit.pack_window import Window
 
 if TYPE_CHECKING:
     from legit.database import Database

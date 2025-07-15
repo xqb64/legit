@@ -5,18 +5,18 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    Callable,
     List,
     Optional,
     Pattern,
+    Sequence,
     TextIO,
     Tuple,
-    Sequence,
-    Callable,
     TypeAlias,
     cast,
 )
-from legit.lockfile import Lockfile
 
+from legit.lockfile import Lockfile
 
 ConfigValue: TypeAlias = bool | int | str
 

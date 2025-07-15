@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, cast, TextIO, Type
+from typing import TYPE_CHECKING, TextIO, Type, cast
 
-from legit.pack_stream import Stream
-from legit.pack_reader import Reader
-from legit.progress import Progress
-from legit.pack_unpacker import Unpacker
 from legit.pack_indexer import Indexer
+from legit.pack_reader import Reader
+from legit.pack_stream import Stream
+from legit.pack_unpacker import Unpacker
+from legit.progress import Progress
 from legit.protocol import Remotes
 
 if TYPE_CHECKING:

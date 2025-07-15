@@ -2,17 +2,17 @@ import textwrap
 
 import pytest
 
+from tests.cmd_helpers import (
+    assert_stdout,
+)
 from tests.conftest import (
+    Commit,
+    Delete,
     LegitCmd,
+    MakeExecutable,
     Mkdir,
     Touch,
     WriteFile,
-    Commit,
-    Delete,
-    MakeExecutable,
-)
-from tests.cmd_helpers import (
-    assert_stdout,
 )
 
 

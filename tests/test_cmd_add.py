@@ -1,10 +1,10 @@
 from legit.repository import Repository
-from tests.cmd_helpers import assert_stdout, assert_stderr
+from tests.cmd_helpers import assert_stderr, assert_stdout
 from tests.conftest import (
-    WriteFile,
     LegitCmd,
     MakeExecutable,
     MakeUnreadable,
+    WriteFile,
 )
 
 

@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from typing import cast, Optional
+from typing import Optional, cast
 
 from legit.cmd_base import Base
 from legit.commit import Commit
-from legit.migration import Migration
-from legit.revision import Revision
 from legit.db_entry import DatabaseEntry
+from legit.migration import Migration
 from legit.refs import Refs
-
+from legit.revision import Revision
 
 DETACHED_HEAD_MESSAGE = textwrap.dedent("""\
     You are in 'detached HEAD' state. You can look around, make experimental

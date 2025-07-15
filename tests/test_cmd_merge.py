@@ -5,23 +5,22 @@ from typing import Callable, Mapping, TypeAlias, cast
 
 import pytest
 
-from legit.repository import Repository
 from legit.commit import Commit as CommitObj
-
+from legit.repository import Repository
+from tests.cmd_helpers import (
+    assert_stderr,
+    assert_stdout,
+    assert_workspace,
+)
 from tests.conftest import (
-    LegitCmdResult,
-    WriteFile,
-    LegitCmd,
     Commit,
     Delete,
-    MakeExecutable,
+    LegitCmd,
+    LegitCmdResult,
     LoadCommit,
+    MakeExecutable,
     ResolveRevision,
-)
-from tests.cmd_helpers import (
-    assert_stdout,
-    assert_stderr,
-    assert_workspace,
+    WriteFile,
 )
 
 
@@ -432,7 +431,7 @@ class TestConflictedMergeAddAdd:
         expected = textwrap.dedent(
             """\
             Auto-merging g.txt
-            CONFLICT (add/add) -> None: Merge conflict in g.txt
+            CONFLICT (add/add): Merge conflict in g.txt
             Automatic merge failed; fix conflicts and then commit the result.
             """
         )
@@ -536,7 +535,7 @@ class TestConflictedMergeAddAddModeConflict:
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
             Auto-merging g.txt
-            CONFLICT (add/add) -> None: Merge conflict in g.txt
+            CONFLICT (add/add): Merge conflict in g.txt
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -625,7 +624,7 @@ class TestConflictedMergeFileDirectoryAddition:
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
             Adding g.txt/nested.txt
-            CONFLICT (file/directory) -> None: There is a directory with name g.txt in topic. Adding g.txt as g.txt~HEAD
+            CONFLICT (file/directory): There is a directory with name g.txt in topic. Adding g.txt as g.txt~HEAD
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -679,7 +678,7 @@ class TestConflictedMergeDirectoryFileAddition:
     def test_it_prints_the_merge_conflicts_directory_file(self) -> None:
         expected = textwrap.dedent("""\
             Adding g.txt/nested.txt
-            CONFLICT (directory/file) -> None: There is a directory with name g.txt in HEAD. Adding g.txt as g.txt~topic
+            CONFLICT (directory/file): There is a directory with name g.txt in HEAD. Adding g.txt as g.txt~topic
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -732,7 +731,7 @@ class TestConflictedMergeEditEdit:
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
             Auto-merging f.txt
-            CONFLICT (content) -> None: Merge conflict in f.txt
+            CONFLICT (content): Merge conflict in f.txt
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -794,7 +793,7 @@ class TestConflictedMergeEditDelete:
 
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
-            CONFLICT (modify/delete) -> None: f.txt deleted in topic and modified in HEAD. Version HEAD of f.txt left in tree.
+            CONFLICT (modify/delete): f.txt deleted in topic and modified in HEAD. Version HEAD of f.txt left in tree.
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -834,7 +833,7 @@ class TestConflictedMergeDeleteEdit:
 
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
-            CONFLICT (modify/delete) -> None: f.txt deleted in HEAD and modified in topic. Version topic of f.txt left in tree.
+            CONFLICT (modify/delete): f.txt deleted in HEAD and modified in topic. Version topic of f.txt left in tree.
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -874,8 +873,8 @@ class TestConflictedMergeEditAddParent:
 
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
-            CONFLICT (modify/delete) -> None: nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree.
-            CONFLICT (directory/file) -> None: There is a directory with name nest in HEAD. Adding nest as nest~topic
+            CONFLICT (modify/delete): nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree.
+            CONFLICT (directory/file): There is a directory with name nest in HEAD. Adding nest as nest~topic
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)
@@ -932,7 +931,7 @@ class TestConflictedMergeEditAddChild:
     def test_it_prints_the_merge_conflicts(self) -> None:
         expected = textwrap.dedent("""\
             Adding nest/f.txt/g.txt
-            CONFLICT (modify/delete) -> None: nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree at nest/f.txt~HEAD.
+            CONFLICT (modify/delete): nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree at nest/f.txt~HEAD.
             Automatic merge failed; fix conflicts and then commit the result.
         """)
         assert_stdout(self.stdout, expected)

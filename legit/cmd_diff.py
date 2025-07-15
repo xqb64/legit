@@ -3,12 +3,13 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional, cast
+
+from legit.blob import Blob
 from legit.cmd_base import Base
 from legit.db_entry import DatabaseEntry
 from legit.index import Entry
-from legit.status import Status
-from legit.blob import Blob
 from legit.print_diff import PrintDiffMixin, Target
+from legit.status import Status
 
 
 class Diff(PrintDiffMixin, Base):

@@ -3,17 +3,16 @@ from pathlib import Path
 import pytest
 
 from legit.repository import Repository
-
-from tests.conftest import (
-    Delete,
-    WriteFile,
-    LegitCmd,
-    Commit,
-)
 from tests.cmd_helpers import (
     assert_status,
     assert_stderr,
     assert_workspace,
+)
+from tests.conftest import (
+    Commit,
+    Delete,
+    LegitCmd,
+    WriteFile,
 )
 
 

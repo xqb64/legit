@@ -3,10 +3,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from legit.repository import Repository
 from legit.pack_writer import Writer
+from legit.repository import Repository
 from legit.rev_list import RevList
-
 
 gitdir = Path(".git")
 pack_dir = gitdir / "objects" / "pack"

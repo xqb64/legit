@@ -1,19 +1,20 @@
+from pathlib import Path
 from typing import cast
+
 import pytest
 
 from legit.commit import Commit as CommitObj
-from pathlib import Path
 from legit.repository import Repository
-from tests.conftest import (
-    Commit,
-    WriteFile,
-    LegitCmd,
-    Delete,
-)
 from tests.cmd_helpers import (
-    assert_workspace,
     assert_index,
     assert_stdout,
+    assert_workspace,
+)
+from tests.conftest import (
+    Commit,
+    Delete,
+    LegitCmd,
+    WriteFile,
 )
 
 

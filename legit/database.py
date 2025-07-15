@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import hashlib
-from typing import MutableMapping, Optional, Type, cast, reveal_type
 import random
 import string
 from pathlib import Path
+from typing import MutableMapping, Optional, Type, cast, reveal_type
+
+from legit.blob import Blob
+from legit.commit import Commit
+from legit.db_backends import Backends
 from legit.db_entry import DatabaseEntry
+from legit.db_loose import Raw
 from legit.index import Entry
 from legit.pack import OfsDelta, Record, RefDelta
-from legit.tree import Tree
-from legit.commit import Commit
-from legit.blob import Blob
-from legit.tree_diff import TreeDiff
 from legit.pathfilter import PathFilter
-from legit.db_loose import Raw
-from legit.db_backends import Backends
-
+from legit.tree import Tree
+from legit.tree_diff import TreeDiff
 
 TYPES: MutableMapping[str, Type[Blob | Commit | Tree]] = {
     "blob": Blob,

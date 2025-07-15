@@ -1,11 +1,11 @@
 from typing import cast
+
 import pytest
 
 from legit.commit import Commit as CommitObj
 from legit.repository import Repository
-
-from tests.cmd_helpers import assert_stdout, assert_stderr, assert_status
-from tests.conftest import ResolveRevision, WriteFile, LegitCmd, Commit, LoadCommit
+from tests.cmd_helpers import assert_status, assert_stderr, assert_stdout
+from tests.conftest import Commit, LegitCmd, LoadCommit, ResolveRevision, WriteFile
 
 
 class TestBranchWithChainOfCommitObjs:

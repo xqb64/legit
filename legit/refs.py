@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
-from typing import Any, Optional, Callable, Pattern
-from legit.lockfile import Lockfile
 from collections import defaultdict
+from pathlib import Path
+from typing import Any, Callable, Optional, Pattern
+
+from legit.lockfile import Lockfile
 
 INVALID_NAME = re.compile(
     r"""

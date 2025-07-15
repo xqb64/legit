@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Dict, Any, cast
+from typing import Any, Dict, cast
 
 import pytest
 
-from legit.db_entry import DatabaseEntry
-from legit.database import Database
 from legit.blob import Blob
+from legit.database import Database
+from legit.db_entry import DatabaseEntry
 from legit.index import Entry
 from legit.tree import Tree
 

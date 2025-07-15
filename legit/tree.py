@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any, Callable, MutableMapping
+
 from legit.db_entry import DatabaseEntry
 from legit.index import Entry
-from typing import Any, Callable, MutableMapping
-from pathlib import Path
 
 
 def git_sort_key(item: tuple[str, "DatabaseEntry | Entry | Tree"]) -> str:

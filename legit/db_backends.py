@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
-from functools import lru_cache
 from legit.db_loose import Loose, Raw
 from legit.db_packed import Packed
 from legit.pack import OfsDelta, Record, RefDelta

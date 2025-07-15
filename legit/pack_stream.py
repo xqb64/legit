@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import os
 import hashlib
-from typing import IO, Callable, Tuple, BinaryIO, Optional, TypeVar
+import os
+from typing import IO, BinaryIO, Callable, Optional, Tuple, TypeVar
 
 from legit.pack import InvalidPack
 

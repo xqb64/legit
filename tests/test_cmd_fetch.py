@@ -1,8 +1,8 @@
 import re
-import tempfile
 import shutil
-from pathlib import Path
+import tempfile
 from io import BytesIO, StringIO, TextIOBase
+from pathlib import Path
 from typing import Any, Callable, TypeAlias
 
 import pytest
@@ -11,15 +11,14 @@ from legit.cmd_base import Base
 from legit.command import Command
 from legit.repository import Repository
 from legit.rev_list import RevList
-
-from tests.conftest import (
-    LegitCmd,
-)
 from tests.cmd_helpers import (
+    CapturedStderr,
     assert_status,
     assert_stderr,
     assert_workspace,
-    CapturedStderr,
+)
+from tests.conftest import (
+    LegitCmd,
 )
 from tests.remote_repo import RemoteRepo
 

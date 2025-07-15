@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import stat
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from legit.index import Entry
-from legit.db_entry import DatabaseEntry
 from legit.blob import Blob
+from legit.db_entry import DatabaseEntry
+from legit.index import Entry
 
 if TYPE_CHECKING:
     from legit.repository import Repository

@@ -1,4 +1,5 @@
 from typing import Union
+
 from legit.revision import Revision
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional, cast
+
 from legit.cmd_base import Base
 from legit.db_entry import DatabaseEntry
 from legit.revision import Revision

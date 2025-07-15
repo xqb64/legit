@@ -1,28 +1,27 @@
 from __future__ import annotations
 
-from typing import reveal_type, cast
-import zlib
 import struct
+import zlib
+from typing import cast, reveal_type
 
+from legit.numbers import VarIntBE, VarIntLE
 from legit.pack import (
+    BLOB,
+    COMMIT,
+    HEADER_FORMAT,
+    HEADER_SIZE,
     OFS_DELTA,
     REF_DELTA,
-    InvalidPack,
-    HEADER_SIZE,
-    HEADER_FORMAT,
     SIGNATURE,
-    VERSION,
-    COMMIT,
-    BLOB,
     TREE,
+    VERSION,
+    InvalidPack,
+    OfsDelta,
     Record,
     RefDelta,
-    OfsDelta,
 )
-from legit.numbers import VarIntBE, VarIntLE
 from legit.pack_expander import Expander
 from legit.pack_stream import Stream
-
 
 TYPE_CODES_REVERSED: dict[int, str] = {COMMIT: "commit", BLOB: "blob", TREE: "tree"}
 

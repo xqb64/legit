@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TextIO, MutableMapping, cast, Union
 from pathlib import Path
+from typing import MutableMapping, TextIO, Union, cast
 
 from legit.cmd_base import Base
 

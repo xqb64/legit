@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import io
-
 from functools import cache
 from pathlib import Path
 from typing import MutableMapping, TextIO, cast
+
 from legit.cmd_color import Color
-from legit.pager import Pager
 from legit.editor import Editor
+from legit.pager import Pager
 from legit.repository import Repository
 
 

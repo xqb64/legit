@@ -1,31 +1,28 @@
-from datetime import datetime, timedelta
 import textwrap
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Callable, TypeAlias
+from typing import Callable, TypeAlias, cast
 
 import pytest
 
-from legit.repository import Repository
 from legit.commit import Commit as CommitObj
+from legit.repository import Repository
 from legit.rev_list import RevList
-
-from tests.conftest import (
-    ResolveRevision,
-    WriteFile,
-    LegitCmd,
-    Commit,
-    LoadCommit,
-    StubEditorFactory,
-)
-
 from tests.cmd_helpers import (
-    assert_stdout,
-    assert_stderr,
-    assert_status,
-    assert_workspace,
     assert_index,
+    assert_status,
+    assert_stderr,
+    assert_stdout,
+    assert_workspace,
 )
-
+from tests.conftest import (
+    Commit,
+    LegitCmd,
+    LoadCommit,
+    ResolveRevision,
+    StubEditorFactory,
+    WriteFile,
+)
 
 CommitTree: TypeAlias = Callable[[str, dict[str, str]], None]
 

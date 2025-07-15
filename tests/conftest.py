@@ -1,32 +1,32 @@
-from io import StringIO
+import shutil
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from typing import (
     Any,
     Callable,
     Generator,
+    Mapping,
     Optional,
+    Protocol,
     TextIO,
     TypeAlias,
-    Protocol,
     cast,
-    Mapping,
 )
-import shutil
 
 import pytest
 from freezegun import freeze_time
 
-from legit.cmd_base import Base
-from tests.cmd_helpers import CapturedStderr
 from legit.blob import Blob
+from legit.cmd_base import Base
+from legit.command import Command
 from legit.commit import Commit as CommitObj
-from legit.tree import Tree
+from legit.editor import Editor
 from legit.pack import Record
 from legit.repository import Repository
-from legit.command import Command
 from legit.revision import Revision
-from legit.editor import Editor
+from legit.tree import Tree
+from tests.cmd_helpers import CapturedStderr
 
 LegitCmdResult: TypeAlias = tuple[Base, StringIO, StringIO, CapturedStderr]
 

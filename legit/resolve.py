@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, cast, Optional
+from typing import Any, Callable, Optional, cast
+
 from legit.blob import Blob
-from legit.repository import Repository
-from legit.inputs import Inputs, CherryPick
 from legit.db_entry import DatabaseEntry
 from legit.diff3 import Diff3
-
+from legit.inputs import CherryPick, Inputs
+from legit.repository import Repository
 
 ProgressCallback = Callable[[Any], None]
 

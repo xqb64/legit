@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import struct
+
 from legit.numbers import PackedInt56LE, VarIntLE
 from legit.pack_entry import Entry
-from legit.pack_xdelta import XDelta
 from legit.pack_stream import Stream
 from legit.pack_window import Window
+from legit.pack_xdelta import XDelta
 
 
 class Delta:

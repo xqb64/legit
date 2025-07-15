@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 
-from legit.command import Command
 from legit.cmd_base import Base
-
+from legit.command import Command
 
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],

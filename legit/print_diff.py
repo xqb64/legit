@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast, reveal_type
-from legit.diff import diff_hunks, combined_hunks
+
+from legit.diff import combined_hunks, diff_hunks
 from legit.hunk import Hunk
 from legit.myers import Edit
-
 
 if TYPE_CHECKING:
     from legit.repository import Repository

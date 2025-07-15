@@ -1,28 +1,27 @@
-from os import linesep
 import textwrap
+from os import linesep
 from pathlib import Path
 from typing import Callable, TypeAlias, cast
+
 import pytest
 
 from legit.repository import Repository
-
-from tests.conftest import (
-    Delete,
-    LegitCmd,
-    Commit,
-    LegitCmdResult,
-    MakeExecutable,
-    WriteFile,
-    ResolveRevision,
-)
 from tests.cmd_helpers import (
     CapturedStderr,
-    assert_stdout,
-    assert_stderr,
     assert_noent,
+    assert_stderr,
+    assert_stdout,
     assert_workspace,
 )
-
+from tests.conftest import (
+    Commit,
+    Delete,
+    LegitCmd,
+    LegitCmdResult,
+    MakeExecutable,
+    ResolveRevision,
+    WriteFile,
+)
 
 CommitAll: TypeAlias = Callable[[], None]
 CommitAndCheckout: TypeAlias = Callable[[str], LegitCmdResult]

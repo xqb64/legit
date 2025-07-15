@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-
 import math
 import time
 from typing import TextIO
-
 
 UNITS = ["B", "KiB", "MiB", "GiB"]
 SCALE = 1024.0
