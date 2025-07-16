@@ -4,7 +4,7 @@ import hashlib
 import random
 import string
 from pathlib import Path
-from typing import MutableMapping, Optional, Type, cast, reveal_type
+from typing import MutableMapping, Optional, Type, cast
 
 from legit.blob import Blob
 from legit.commit import Commit
@@ -156,6 +156,6 @@ class Database:
         return oid[:7]
 
     def generate_temp_name(self) -> str:
-        return f"tmp_obj_" + "".join(
+        return "tmp_obj_" + "".join(
             random.choices(string.ascii_letters + string.digits, k=6)
         )

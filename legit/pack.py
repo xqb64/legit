@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import reveal_type
 
 MAX_COPY_SIZE: int = 0xFFFFFF
 MAX_INSERT_SIZE: int = 0x7F

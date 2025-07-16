@@ -3,7 +3,7 @@ from __future__ import annotations
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, MutableMapping, Optional, Sequence, TextIO, cast
+from typing import TYPE_CHECKING, MutableMapping, Optional, TextIO, cast
 
 from legit.author import Author
 from legit.commit import Commit as CommitObject

@@ -25,7 +25,7 @@ class RecvObjectsMixin:
     ) -> None:
         stream = Stream(self.conn.input, prefix)
         reader = Reader(stream)
-        if not self.conn.input is sys.stdin:
+        if self.conn.input is not sys.stdin:
             progress = Progress(self.stderr)
         else:
             progress = None

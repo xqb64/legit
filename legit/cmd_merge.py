@@ -123,7 +123,7 @@ class Merge(WriteCommitMixin, Base):
         Editor.edit(self.pending_commit.message_path, block=editor_setup)
 
         self.println(
-            f"Automatic merge failed; fix conflicts and then commit the result."
+            "Automatic merge failed; fix conflicts and then commit the result."
         )
         self.exit(1)
 

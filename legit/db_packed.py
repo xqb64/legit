@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import BinaryIO, cast, reveal_type
+from typing import BinaryIO, cast
 
 from legit.db_loose import Raw
 from legit.pack import OfsDelta, Record, RefDelta

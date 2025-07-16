@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 import zlib
-from typing import cast, reveal_type
+from typing import cast
 
 from legit.numbers import VarIntBE, VarIntLE
 from legit.pack import (

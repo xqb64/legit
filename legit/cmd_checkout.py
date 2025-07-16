@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import textwrap
-from pathlib import Path
 from typing import Optional, cast
 
 from legit.cmd_base import Base
 from legit.commit import Commit
-from legit.db_entry import DatabaseEntry
 from legit.migration import Migration
 from legit.refs import Refs
 from legit.revision import Revision

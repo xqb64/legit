@@ -4,7 +4,6 @@ import hashlib
 import struct
 import sys
 import zlib
-from io import BytesIO
 from pathlib import Path
 from typing import IO, Any, Optional, cast
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from typing import TYPE_CHECKING, Optional, Pattern, TextIO, cast, reveal_type
+from typing import TYPE_CHECKING, Optional, Pattern, TextIO, cast
 from urllib.parse import ParseResult
 
 from legit.protocol import Remotes

@@ -72,7 +72,7 @@ class Editor:
             try:
                 result = subprocess.run(editor_argv)
                 if result.returncode != 0:
-                    raise RuntimeError(f"Editor exited with a non-zero status.")
+                    raise RuntimeError("Editor exited with a non-zero status.")
             except (FileNotFoundError, RuntimeError) as e:
                 raise IOError(
                     f"There was a problem with the editor '{self.command}'."

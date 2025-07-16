@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, cast, reveal_type
+from typing import TYPE_CHECKING, Optional, cast
 
 from legit.diff import combined_hunks, diff_hunks
 from legit.hunk import Hunk

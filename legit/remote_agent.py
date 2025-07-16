@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cache
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, cast, reveal_type
+from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, cast
 
 from legit.protocol import Remotes
 from legit.repository import Repository
