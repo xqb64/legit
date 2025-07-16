@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, MutableMapping
+from typing import Callable, MutableMapping
 
 from legit.db_entry import DatabaseEntry
 from legit.index import Entry

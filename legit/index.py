@@ -79,7 +79,7 @@ class Index:
         entry.update_stat(stat)
         self.changed = True
 
-    def entry_for_path(self, path: Path, stage: int = 0) -> " Entry | None":
+    def entry_for_path(self, path: Path, stage: int = 0) -> "Entry | None":
         return self.entries.get((path, stage))
 
     def is_tracked_file(self, path: Path) -> bool:

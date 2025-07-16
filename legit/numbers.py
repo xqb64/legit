@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import reveal_type
 
 from legit.pack_stream import Stream
 

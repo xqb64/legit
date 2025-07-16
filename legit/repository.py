@@ -12,7 +12,7 @@ from legit.config import ConfigFile, ConfigValue
 from legit.config_stack import ConfigStack
 from legit.database import Database
 from legit.db_entry import DatabaseEntry
-from legit.index import Entry, Index
+from legit.index import Index
 from legit.lockfile import Lockfile
 from legit.migration import Migration
 from legit.refs import Refs

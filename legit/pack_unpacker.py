@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, reveal_type
+from typing import TYPE_CHECKING, cast
 
 from legit.pack import OfsDelta, Record, RefDelta
 from legit.pack_expander import Expander

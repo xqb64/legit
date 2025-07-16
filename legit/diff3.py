@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 from legit.diff import diff
 from legit.myers import Line

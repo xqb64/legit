@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, cast, reveal_type
+from typing import Optional, cast
 
 from legit.cmd_base import Base
 from legit.fast_forward import FastForwardMixin

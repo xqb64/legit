@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from typing import IO, BinaryIO, Callable, Optional, Tuple, TypeVar
+from typing import IO, Callable, Optional, Tuple, TypeVar
 
 from legit.pack import InvalidPack
 

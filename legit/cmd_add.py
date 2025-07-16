@@ -41,7 +41,7 @@ class Add(Base):
 
     def handle_no_permission(self, exc: Exception) -> None:
         self.stderr.write(f"error: {exc}\n")
-        self.stderr.write(f"fatal: adding files failed\n")
+        self.stderr.write("fatal: adding files failed\n")
         self.repo.index.release_lock()
         self.exit(128)
 
