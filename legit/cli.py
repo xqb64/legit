@@ -43,6 +43,7 @@ def cli(ctx: click.Context) -> None:
     "path", type=click.Path(file_okay=False, path_type=Path), required=False
 )
 def init(path: Path | None) -> None:
+    """Create an empty legit repository or reinitialize an existing one."""
     run_cmd("init", *(str(path),) if path is not None else ())
 
 
@@ -111,16 +112,23 @@ def commit(
     amend: bool,
 ) -> None:
     """Record changes to the repository."""
-    message_sources = [bool(message), bool(file_path),
-                       bool(reuse_message), bool(reedit_message)]
+    message_sources = [
+        bool(message),
+        bool(file_path),
+        bool(reuse_message),
+        bool(reedit_message),
+    ]
     if sum(message_sources) > 1:
         raise click.UsageError(
             "Options -m/--message, -F/--file, -C/--reuse-message "
             "and -c/--reedit-message are mutually exclusive."
         )
 
-    if edit is not None and ctx.params.get("edit") is not None \
-       and edit != ctx.params["edit"]:
+    if (
+        edit is not None
+        and ctx.params.get("edit") is not None
+        and edit != ctx.params["edit"]
+    ):
         raise click.UsageError("--edit and --no-edit cannot be used together.")
 
     cmd_args: list[str] = ["commit"]
@@ -148,13 +156,71 @@ def commit(
 @cli.command()
 @click.option("--porcelain", is_flag=True, help="Machine‑readable output.")
 def status(porcelain: bool) -> None:
+    """Show the working tree status."""
     run_cmd("status", *("--porcelain",) if porcelain else ())
 
 
-@cli.command(name="diff")
-@click.option("--cached", "--staged", is_flag=True, help="Compare index with HEAD.")
-def diff_cmd(cached: bool) -> None:
-    run_cmd("diff", *("--cached",) if cached else ())
+@cli.command(
+    name="diff",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
+@click.option(
+    "--cached",
+    "--staged",
+    "cached",
+    is_flag=True,
+    help="Compare index with HEAD instead of work‑tree with index.",
+)
+@click.option(
+    "-p",
+    "-u",
+    "--patch",
+    "patch_mode",
+    flag_value="patch",
+    default=None,
+    help="Produce patch (default behaviour).",
+)
+@click.option(
+    "-s",
+    "--no-patch",
+    "patch_mode",
+    flag_value="no_patch",
+    help="Suppress patch output (just list files).",
+)
+@click.option("-1", "--base", "stage", flag_value="1", help="Diff stage 1 (base).")
+@click.option("-2", "--ours", "stage", flag_value="2", help="Diff stage 2 (ours).")
+@click.option("-3", "--theirs", "stage", flag_value="3", help="Diff stage 3 (theirs).")
+@click.argument("rest", nargs=-1, type=click.UNPROCESSED)
+def diff_cmd(
+    cached: bool,
+    patch_mode: Optional[str],
+    stage: Optional[str],
+    rest: tuple[str, ...],
+) -> None:
+    """Show changes between commits, commit and working tree, etc."""
+    cmd_args: list[str] = []
+
+    if cached:
+        cmd_args.append("--cached")
+
+    if patch_mode == "patch":
+        cmd_args.append("-p")
+    elif patch_mode == "no_patch":
+        cmd_args.append("-s")
+
+    if stage == "1":
+        cmd_args.append("-1")
+    elif stage == "2":
+        cmd_args.append("-2")
+    elif stage == "3":
+        cmd_args.append("-3")
+
+    cmd_args.extend(rest)
+
+    run_cmd("diff", *cmd_args)
 
 
 @cli.command()
@@ -165,7 +231,9 @@ def diff_cmd(cached: bool) -> None:
     help="Increase verbosity (-v, -vv, …). Repeat for more detail.",
 )
 @click.option("-d", "--delete", "delete_flag", is_flag=True, help="Delete the branch")
-@click.option("-f", "--force", "force_flag", is_flag=True, help="Force delete / force update")
+@click.option(
+    "-f", "--force", "force_flag", is_flag=True, help="Force delete / force update"
+)
 @click.option(
     "-D",
     "D_flag",
@@ -255,14 +323,13 @@ def branch(
     run_cmd("branch", *flags, *args)
 
 
-@cli.command()
-@click.argument("target")
-def checkout(target: str) -> None:
-    """Switch branches or restore working-tree files."""
-    run_cmd("checkout", target)
-
-
-@cli.command()
+@cli.command(
+    name="log",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
 @click.option(
     "--abbrev-commit/--no-abbrev-commit",
     "abbrev",
@@ -275,7 +342,7 @@ def checkout(target: str) -> None:
     "format_",
     default="medium",
     metavar="<format>",
-    help="Pretty-print format (e.g., medium, oneline).",
+    help="Pretty‑print format (e.g. medium, oneline).",
 )
 @click.option(
     "--oneline",
@@ -291,38 +358,75 @@ def checkout(target: str) -> None:
     help="Decorate refs. 'auto' is default, 'no' disables.",
 )
 @click.option(
-    "--patch",
     "-p",
-    "patch",
-    is_flag=True,
+    "-u",
+    "--patch",
+    "patch_mode",
+    flag_value="patch",
+    default=None,
     help="Show patch for each commit.",
 )
-@click.argument("revisions_and_paths", nargs=-1)
+@click.option(
+    "-s",
+    "--no-patch",
+    "patch_mode",
+    flag_value="no_patch",
+    help="Suppress patch output (like --stat-only).",
+)
+@click.option(
+    "--cc",
+    "combined",
+    is_flag=True,
+    help="Show combined diff format for merge commits (implies --patch).",
+)
+@click.option(
+    "--all", "all_refs", is_flag=True, help="Pretend as if all refs were listed."
+)
+@click.option(
+    "--branches",
+    "branches",
+    is_flag=True,
+    help="Pretend as if all branch refs were listed.",
+)
+@click.option(
+    "--remotes",
+    "remotes",
+    is_flag=True,
+    help="Pretend as if all remote-tracking refs were listed.",
+)
+@click.argument("rest", nargs=-1, type=click.UNPROCESSED)
 def log(
     abbrev: bool | None,
     format_: str,
     oneline: bool,
     decoration: str,
-    patch: bool,
-    revisions_and_paths: tuple[str, ...],
+    patch_mode: str | None,
+    combined: bool,
+    all_refs: bool,
+    branches: bool,
+    remotes: bool,
+    rest: tuple[str, ...],
 ) -> None:
+    """Show commit logs."""
     if oneline:
         format_ = "oneline"
         if abbrev is None:
             abbrev = True
 
-    cmd_args = ["log"]
+    if combined:
+        patch_mode = "patch"
 
-    if abbrev:
+    cmd_args: list[str] = ["log"]
+
+    if abbrev is True:
         cmd_args.append("--abbrev-commit")
-    else:
+    elif abbrev is False:
         cmd_args.append("--no-abbrev-commit")
 
-    if format_ != "medium":
-        if format_ == "oneline":
-            cmd_args.append("--oneline")
-        else:
-            cmd_args.append(f"--pretty={format_}")
+    if format_ == "oneline":
+        cmd_args.append("--oneline")
+    elif format_ != "medium":
+        cmd_args.append(f"--pretty={format_}")
 
     if decoration != "auto":
         if decoration == "no":
@@ -330,20 +434,94 @@ def log(
         else:
             cmd_args.append(f"--decorate={decoration}")
 
-    if patch:
+    if patch_mode == "patch":
         cmd_args.append("--patch")
+    elif patch_mode == "no_patch":
+        cmd_args.append("--no-patch")
 
-    if revisions_and_paths:
-        cmd_args.extend(revisions_and_paths)
+    if combined:
+        cmd_args.append("--cc")
+
+    if all_refs:
+        cmd_args.append("--all")
+    if branches:
+        cmd_args.append("--branches")
+    if remotes:
+        cmd_args.append("--remotes")
+
+    cmd_args.extend(rest)
 
     run_cmd(*cmd_args)
 
 
-@cli.command()
+@cli.command(
+    name="merge",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
+@click.option(
+    "-e",
+    "--edit/--no-edit",
+    "edit",
+    default=None,
+    help="Edit merge commit message (or skip with --no-edit).",
+)
+@click.option(
+    "-m",
+    "--message",
+    "message",
+    type=str,
+    help="Use the given <message> as the commit message.",
+)
+@click.option(
+    "-F",
+    "--file",
+    "file_path",
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+    help="Take the commit message from the given file.",
+)
+@click.option("--continue", "cont", is_flag=True, help="Continue an in‑progress merge.")
+@click.option("--abort", "abort", is_flag=True, help="Abort the in‑progress merge.")
 @click.argument("refs", nargs=-1)
-def merge(refs: tuple[str, ...]) -> None:
-    cmd_args = ["merge"]
+def merge(
+    edit: bool | None,
+    message: str | None,
+    file_path: str | None,
+    cont: bool,
+    abort: bool,
+    refs: tuple[str, ...],
+) -> None:
+    """Join two or more development histories together."""
+    if message and file_path:
+        raise click.UsageError("-m/--message and -F/--file are mutually exclusive.")
+
+    if cont and abort:
+        raise click.UsageError("--continue and --abort cannot be used together.")
+
+    if not (cont or abort) and not refs:
+        raise click.UsageError("You must specify a branch, tag or commit to merge.")
+
+    cmd_args: list[str] = ["merge"]
+
+    if cont:
+        cmd_args.append("--continue")
+    elif abort:
+        cmd_args.append("--abort")
+
+    if edit is True:
+        cmd_args.append("-e")
+    elif edit is False:
+        cmd_args.append("--no-edit")
+
+    if message:
+        cmd_args.extend(["-m", message])
+    elif file_path:
+        cmd_args.extend(["-F", file_path])
+
     cmd_args.extend(refs)
+
     run_cmd(*cmd_args)
 
 
@@ -366,6 +544,7 @@ def merge(refs: tuple[str, ...]) -> None:
 )
 @click.argument("paths", nargs=-1, required=True)
 def rm(recursive: bool, cached: bool, force: bool, paths: tuple[str, ...]) -> None:
+    """Remove files from the working tree and from the index."""
     cmd_args = ["rm"]
 
     if recursive:
@@ -423,6 +602,7 @@ def config(
     remove_section: bool,
     args: list[str],
 ) -> None:
+    """Get and set repository or global options."""
     cmd_args = []
 
     if file_scope:
@@ -450,24 +630,45 @@ def config(
     run_cmd("config", *cmd_args)
 
 
-@cli.command()
-@click.option(
-    "-v", "--verbose", is_flag=True, help="Be more verbose and show remote URLs."
+@cli.command(
+    name="remote",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
 )
-@click.argument("args", nargs=-1)
-def remote(verbose: bool, args: tuple[str, ...]) -> None:
-    cmd_args = []
-
-    subcommand = args[0] if args else None
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Be more verbose and show remote URLs.",
+)
+@click.option(
+    "-t",
+    "tracked",
+    multiple=True,
+    metavar="BRANCH",
+    help="Limit the operation to refs that are tracked by <BRANCH>. "
+    "May be given more than once.",
+)
+@click.argument("args", nargs=-1, type=click.UNPROCESSED)
+def remote(
+    verbose: bool,
+    tracked: tuple[str, ...],
+    args: tuple[str, ...],
+) -> None:
+    """Manage the set of tracked repositories."""
+    cmd_args: list[str] = ["remote"]
 
     if verbose:
         cmd_args.append("--verbose")
 
-    if subcommand:
-        cmd_args.append(subcommand)
-        cmd_args.extend(args[1:])
+    for br in tracked:
+        cmd_args.extend(["-t", br])
 
-    run_cmd("remote", *cmd_args)
+    cmd_args.extend(args)
+
+    run_cmd(*cmd_args)
 
 
 @cli.command()
@@ -485,6 +686,7 @@ def remote(verbose: bool, args: tuple[str, ...]) -> None:
 )
 @click.argument("refs", nargs=-1)
 def fetch(force: bool, upload_pack: str | None, refs: tuple[str, ...]) -> None:
+    """Download objects and refs from another repository."""
     cmd_args: list[str] = []
 
     if force:
@@ -509,6 +711,7 @@ def fetch(force: bool, upload_pack: str | None, refs: tuple[str, ...]) -> None:
 )
 @click.argument("refs", nargs=-1, metavar="REF")
 def push(force: bool, receive_pack: str | None, refs: tuple[str, ...]) -> None:
+    """Update remote refs along with associated objects."""
     cmd_args: list[str] = []
 
     if force:
@@ -521,6 +724,259 @@ def push(force: bool, receive_pack: str | None, refs: tuple[str, ...]) -> None:
     run_cmd("push", *cmd_args)
 
 
+@cli.command(name="checkout")
+@click.argument("target", metavar="REVISION", required=True)
+def checkout(target: str) -> None:
+    """Switch branches or restore working‑tree files."""
+    run_cmd("checkout", target)
+
+
+@cli.command(
+    name="cherry-pick",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
+@click.option(
+    "--continue",
+    "cont",
+    is_flag=True,
+    help="Continue an in‑progress cherry‑pick sequence.",
+)
+@click.option(
+    "--abort", "abort", is_flag=True, help="Abort the current cherry‑pick sequence."
+)
+@click.option(
+    "--quit", "quit_", is_flag=True, help="End the sequence without changing HEAD."
+)
+@click.option(
+    "-m",
+    "--mainline",
+    "mainline",
+    type=int,
+    metavar="PARENT",
+    help="Pick a merge commit by choosing its <PARENT> as mainline.",
+)
+@click.option(
+    "-e",
+    "--edit/--no-edit",
+    "edit",
+    default=None,
+    help="Edit the commit message before creating each picked commit.",
+)
+@click.option(
+    "--message",
+    "message",
+    type=str,
+    metavar="<msg>",
+    help="Replace the default commit message with <msg> for all picks.",
+)
+@click.option(
+    "-F",
+    "--file",
+    "file_path",
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+    metavar="<file>",
+    help="Read the commit message from <file>.",
+)
+@click.argument("commits", nargs=-1)
+def cherry_pick(
+    cont: bool,
+    abort: bool,
+    quit_: bool,
+    mainline: int | None,
+    edit: bool | None,
+    message: str | None,
+    file_path: str | None,
+    commits: tuple[str, ...],
+) -> None:
+    """Apply the changes introduced by some existing commits."""
+    mode_flags = [cont, abort, quit_]
+    if sum(mode_flags) > 1:
+        raise click.UsageError("--continue, --abort and --quit are mutually exclusive.")
+
+    if not any(mode_flags) and not commits:
+        raise click.UsageError("You must supply at least one commit to cherry‑pick.")
+
+    if message and file_path:
+        raise click.UsageError("--message and -F/--file cannot be used together.")
+
+    cmd_args: list[str] = ["cherry-pick"]
+
+    if cont:
+        cmd_args.append("--continue")
+    elif abort:
+        cmd_args.append("--abort")
+    elif quit_:
+        cmd_args.append("--quit")
+
+    if mainline is not None:
+        cmd_args.extend(["-m", str(mainline)])
+
+    if edit is True:
+        cmd_args.append("-e")
+    elif edit is False:
+        cmd_args.append("--no-edit")
+
+    if message:
+        cmd_args.append(f"--message={message}")
+    elif file_path:
+        cmd_args.extend(["-F", file_path])
+
+    cmd_args.extend(commits)
+
+    run_cmd(*cmd_args)
+
+
+@cli.command(
+    name="reset",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
+@click.option(
+    "--soft",
+    "mode_soft",
+    is_flag=True,
+    help="Move HEAD to <commit>, keep index and work‑tree unchanged.",
+)
+@click.option(
+    "--mixed",
+    "mode_mixed",
+    is_flag=True,
+    help="Reset index to <commit> (default).",
+)
+@click.option(
+    "--hard",
+    "mode_hard",
+    is_flag=True,
+    help="Reset index and working tree, discarding changes.",
+)
+@click.argument("targets", nargs=-1, type=click.UNPROCESSED)
+def reset(
+    mode_soft: bool,
+    mode_mixed: bool,
+    mode_hard: bool,
+    targets: tuple[str, ...],
+) -> None:
+    """Reset current HEAD to the specified state."""
+    if sum([mode_soft, mode_mixed, mode_hard]) > 1:
+        raise click.UsageError("--soft, --mixed, and --hard are mutually exclusive.")
+
+    cmd_args: list[str] = ["reset"]
+
+    if mode_soft:
+        cmd_args.append("--soft")
+    elif mode_hard:
+        cmd_args.append("--hard")
+    elif mode_mixed:
+        cmd_args.append("--mixed")
+
+    cmd_args.extend(targets)
+
+    run_cmd(*cmd_args)
+
+
+@cli.command(
+    name="revert",
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
+)
+@click.option(
+    "--continue", "cont", is_flag=True, help="Continue an in‑progress revert sequence."
+)
+@click.option(
+    "--abort",
+    "abort",
+    is_flag=True,
+    help="Abort the current revert sequence and restore the index.",
+)
+@click.option(
+    "--quit",
+    "quit_",
+    is_flag=True,
+    help="End the sequence without committing the remaining reverts.",
+)
+@click.option(
+    "-m",
+    "--mainline",
+    "mainline",
+    type=int,
+    metavar="PARENT",
+    help="When reverting a merge, choose <PARENT> as mainline.",
+)
+@click.option(
+    "-e",
+    "--edit/--no-edit",
+    "edit",
+    default=None,
+    help="Edit each generated commit message in an editor.",
+)
+@click.option(
+    "--message",
+    "message",
+    type=str,
+    metavar="<msg>",
+    help="Use <msg> as commit message instead of the default.",
+)
+@click.option(
+    "-F",
+    "--file",
+    "file_path",
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+    metavar="<file>",
+    help="Read the commit message from <file>.",
+)
+@click.argument("commits", nargs=-1)
+def revert(
+    cont: bool,
+    abort: bool,
+    quit_: bool,
+    mainline: int | None,
+    edit: bool | None,
+    message: str | None,
+    file_path: str | None,
+    commits: tuple[str, ...],
+) -> None:
+    """Revert the changes introduced by existing commits."""
+    if sum([cont, abort, quit_]) > 1:
+        raise click.UsageError("--continue, --abort and --quit are mutually exclusive.")
+    if not any([cont, abort, quit_]) and not commits:
+        raise click.UsageError("You must specify at least one commit to revert.")
+    if message and file_path:
+        raise click.UsageError("--message and -F/--file cannot be used together.")
+
+    cmd_args: list[str] = ["revert"]
+
+    if cont:
+        cmd_args.append("--continue")
+    elif abort:
+        cmd_args.append("--abort")
+    elif quit_:
+        cmd_args.append("--quit")
+
+    if mainline is not None:
+        cmd_args.extend(["-m", str(mainline)])
+
+    if edit is True:
+        cmd_args.append("-e")
+    elif edit is False:
+        cmd_args.append("--no-edit")
+
+    if message:
+        cmd_args.append(f"--message={message}")
+    elif file_path:
+        cmd_args.extend(["-F", file_path])
+
+    cmd_args.extend(commits)
+
+    run_cmd(*cmd_args)
+
+
 def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: list[str]) -> None:
     run_cmd(cmd_name, str(repo), *extra)
 
@@ -531,7 +987,7 @@ def _plumbing(ctx: click.Context, cmd_name: str, repo: Path, extra: list[str]) -
         "ignore_unknown_options": True,
         "allow_interspersed_args": False,
     },
-    help="Internal helper; invoked by Git during fetch/pull.",
+    help="Internal helper; invoked by legit during fetch.",
 )
 @click.argument(
     "repo",
@@ -548,7 +1004,7 @@ def upload_pack(ctx: click.Context, repo: Path) -> None:
         "ignore_unknown_options": True,
         "allow_interspersed_args": False,
     },
-    help="Internal helper; invoked by Git during push.",
+    help="Internal helper; invoked by legit during push.",
 )
 @click.argument(
     "repo",
