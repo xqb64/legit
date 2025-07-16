@@ -102,32 +102,94 @@ def diff_cmd(cached: bool) -> None:
 
 
 @cli.command()
-@click.option("-v", "--verbose", is_flag=True, help="Show verbose branch output")
-@click.option("-d", "--delete", "delete", is_flag=True, help="Delete a branch")
-@click.option("-f", "--force", "force", is_flag=True, help="Force delete a branch")
-@click.option("-D", "D", is_flag=True, help="Shortcut for --delete --force")
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    help="Increase verbosity (-v, -vv, …). Repeat for more detail.",
+)
+@click.option("-d", "--delete", "delete_flag", is_flag=True, help="Delete the branch")
+@click.option("-f", "--force", "force_flag", is_flag=True, help="Force delete / force update")
+@click.option(
+    "-D",
+    "D_flag",
+    is_flag=True,
+    help="Shortcut for --delete --force. Overrides individual -d / -f flags.",
+)
+@click.option(
+    "-a",
+    "--all",
+    "all_branches_flag",
+    is_flag=True,
+    help="List both local *and* remote‑tracking branches",
+)
+@click.option(
+    "-r",
+    "--remotes",
+    "remotes_flag",
+    is_flag=True,
+    help="Limit listing / actions to remote‑tracking branches",
+)
+@click.option(
+    "--set-upstream-to",
+    "-u",
+    "upstream",
+    metavar="UPSTREAM",
+    help="Set branch’s upstream (same as -u)",
+)
+@click.option(
+    "--unset-upstream",
+    is_flag=True,
+    help="Remove the branch’s upstream configuration",
+)
+@click.option(
+    "-t",
+    "--track",
+    "track_flag",
+    is_flag=True,
+    help="When creating <name>, set it to track <start>",
+)
 @click.argument("name", required=False)
 @click.argument("start", required=False)
 def branch(
-    verbose: bool,
-    delete: bool,
-    force: bool,
-    D: bool,
+    verbose: int,
+    delete_flag: bool,
+    force_flag: bool,
+    D_flag: bool,
+    all_branches_flag: bool,
+    remotes_flag: bool,
+    upstream: str | None,
+    unset_upstream: bool,
+    track_flag: bool,
     name: str | None,
     start: str | None,
 ) -> None:
-    flags = []
-    if verbose:
-        flags.append("-v")
-    if delete or D:
-        flags.append("-d")
-    if force or D:
-        flags.append("-f")
-    if D and not (delete and force):
-        flags = [f for f in flags if f not in ("-d", "-f")]
-        flags.extend(["-D"])
+    flags: list[str] = []
 
-    args = []
+    if verbose:
+        flags.extend(["-v"] * verbose)
+
+    if D_flag:
+        flags.append("-D")
+    else:
+        if delete_flag:
+            flags.append("-d")
+        if force_flag:
+            flags.append("-f")
+
+    if all_branches_flag:
+        flags.append("-a")
+    if remotes_flag:
+        flags.append("-r")
+
+    if upstream:
+        flags.extend(["--set-upstream-to", upstream])
+    if unset_upstream:
+        flags.append("--unset-upstream")
+    if track_flag:
+        flags.append("--track")
+
+    args: list[str] = []
     if name:
         args.append(name)
     if start:
