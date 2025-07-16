@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
-
-from typing_extensions import Optional
+from typing import cast, Optional
 
 from legit.cmd_base import Base
 from legit.fast_forward import FastForwardMixin
