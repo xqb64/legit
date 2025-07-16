@@ -1,14 +1,10 @@
-import re
 import shutil
-import tempfile
-from io import BytesIO, StringIO, TextIOBase
 from pathlib import Path
-from typing import Any, Callable, TypeAlias
+from typing import Any, TypeAlias
 
 import pytest
 
 from legit.cmd_base import Base
-from legit.command import Command
 from legit.repository import Repository
 from legit.rev_list import RevList
 from tests.cmd_helpers import (

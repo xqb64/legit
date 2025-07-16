@@ -1,5 +1,4 @@
 import textwrap
-from os import linesep
 from pathlib import Path
 from typing import Callable, TypeAlias, cast
 
