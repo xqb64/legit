@@ -182,7 +182,6 @@ class TestSingleBranchInitialPush:
     ) -> None:
         cmd, *_, stderr = legit_cmd("push", "origin", "@~1:master")
         assert_status(cmd, 0)
-        local_head = commits(repo, ["master^"])[0]
         expected = f"To file://{cast(Path, self.remote.repo_path)}\n * [new branch] @~1 -> master\n"
         assert_stderr(stderr, expected)
         assert commits(repo, ["master^"])[0] == commits(self.remote.repo, ["master"])[0]
@@ -647,8 +646,8 @@ class TestReceiverHasStoredPack:
         self.alice = create_remote_repo("push-remote-alice")
         self.bob = create_remote_repo("push-remote-bob")
 
-        alice_path = self.alice.path(repo_path)
-        bob_path = self.bob.path(repo_path)
+        alice_path = self.alice.path(repo_path)  # noqa: F841
+        bob_path = self.bob.path(repo_path)  # noqa: F841
 
         self.alice.legit_cmd(repo_path, "config", "receive.unpackLimit", "5")
 

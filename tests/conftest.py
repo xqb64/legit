@@ -3,7 +3,6 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import (
-    Any,
     Callable,
     Generator,
     Mapping,

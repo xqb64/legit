@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from re import PatternError
 from typing import cast
 
 import pytest

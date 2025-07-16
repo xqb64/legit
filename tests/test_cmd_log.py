@@ -1,6 +1,5 @@
 import textwrap
 from datetime import datetime, timedelta
-from enum import auto
 from typing import Protocol, cast
 
 import pytest
