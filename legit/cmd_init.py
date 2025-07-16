@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import MutableMapping, TextIO
 
 from legit.cmd_base import Base
 from legit.config import ConfigFile
@@ -11,17 +10,6 @@ DEFAULT_BRANCH = "master"
 
 
 class Init(Base):
-    def __init__(
-        self,
-        _dir: Path,
-        env: MutableMapping[str, str],
-        args: list[str],
-        stdin: TextIO,
-        stdout: TextIO,
-        stderr: TextIO,
-    ) -> None:
-        super().__init__(_dir, env, args, stdin, stdout, stderr)
-
     def run(self) -> None:
         if self.args:
             root_path = Path(self.args[0]).absolute().resolve()
