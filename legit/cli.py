@@ -49,6 +49,7 @@ def init(path: Path | None) -> None:
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("paths", nargs=-1, type=click.Path(path_type=Path))
 def add(paths: tuple[Path, ...]) -> None:
+    """Add file contents to the index."""
     if not paths:
         click.echo("error: pathspec required", err=True)
         raise SystemExit(1)
@@ -71,20 +72,75 @@ def add(paths: tuple[Path, ...]) -> None:
     type=click.Path(exists=True, dir_okay=False, resolve_path=True),
     help="Take the commit message from the given file.",
 )
+@click.option(
+    "-e",
+    "--edit/--no-edit",
+    "edit",
+    default=None,
+    help="Invoke editor to edit the commit message (or skip with --no-edit).",
+)
+@click.option(
+    "-C",
+    "--reuse-message",
+    "reuse_message",
+    metavar="<commit>",
+    type=str,
+    help="Reuse the commit message from <commit> without editing.",
+)
+@click.option(
+    "-c",
+    "--reedit-message",
+    "reedit_message",
+    metavar="<commit>",
+    type=str,
+    help="Reuse the commit message from <commit> and edit it.",
+)
+@click.option(
+    "--amend",
+    is_flag=True,
+    help="Replace the tip of the current branch by creating a new commit.",
+)
 @click.pass_context
 def commit(
-    ctx: click.Context, message: Optional[str], file_path: Optional[str]
+    ctx: click.Context,
+    message: Optional[str],
+    file_path: Optional[str],
+    edit: Optional[bool],
+    reuse_message: Optional[str],
+    reedit_message: Optional[str],
+    amend: bool,
 ) -> None:
-    if message and file_path:
+    """Record changes to the repository."""
+    message_sources = [bool(message), bool(file_path),
+                       bool(reuse_message), bool(reedit_message)]
+    if sum(message_sources) > 1:
         raise click.UsageError(
-            "Options -m/--message and -F/--file are mutually exclusive."
+            "Options -m/--message, -F/--file, -C/--reuse-message "
+            "and -c/--reedit-message are mutually exclusive."
         )
 
-    cmd_args = ["commit"]
+    if edit is not None and ctx.params.get("edit") is not None \
+       and edit != ctx.params["edit"]:
+        raise click.UsageError("--edit and --no-edit cannot be used together.")
+
+    cmd_args: list[str] = ["commit"]
+
     if message:
         cmd_args.extend(["-m", message])
     elif file_path:
         cmd_args.extend(["-F", file_path])
+    elif reuse_message:
+        cmd_args.extend(["-C", reuse_message])
+    elif reedit_message:
+        cmd_args.extend(["-c", reedit_message])
+
+    if edit:
+        cmd_args.append("-e")
+    else:
+        cmd_args.append("--no-edit")
+
+    if amend:
+        cmd_args.append("--amend")
 
     run_cmd(*cmd_args)
 
@@ -164,6 +220,7 @@ def branch(
     name: str | None,
     start: str | None,
 ) -> None:
+    """List, create, or delete branches."""
     flags: list[str] = []
 
     if verbose:
@@ -201,6 +258,7 @@ def branch(
 @cli.command()
 @click.argument("target")
 def checkout(target: str) -> None:
+    """Switch branches or restore working-tree files."""
     run_cmd("checkout", target)
 
 
