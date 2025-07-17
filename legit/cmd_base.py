@@ -36,20 +36,6 @@ class Base:
     def repo(self) -> Repository:
         return Repository(self.dir / ".git")
 
-    def edit_file(self, path: Path) -> str | None:
-        def editor_setup(editor: Editor) -> None:
-            if not self.isatty:
-                editor.close()
-
-        return Editor.edit(path, block=editor_setup)
-
-    def editor_command(self) -> str | None:
-        core_editor = cast(str | None, self.repo.config.get(["core", "editor"]))
-        git_editor = self.env.get("GIT_EDITOR")
-        visual = self.env.get("VISUAL")
-        editor = self.env.get("EDITOR")
-        return git_editor or core_editor or visual or editor
-
     def setup_pager(self) -> None:
         if self.pager is not None:
             return
@@ -93,16 +79,10 @@ class Base:
         raise NotImplementedError(f"{self.__class__.__name__}.run() not implemented")
 
     def println(self, string: str) -> None:
-        if isinstance(self.stdout, io.BufferedIOBase):
-            self.stdout.write((string + "\n").encode("utf-8"))
-        else:
-            self.stdout.write(string + "\n")
+        self.stdout.write(string + "\n")
 
     def eprintln(self, string: str) -> None:
-        if isinstance(self.stderr, io.BufferedIOBase):
-            self.stderr.write((string + "\n").encode("utf-8"))
-        else:
-            self.stderr.write(string + "\n")
+        self.stderr.write(string + "\n")
 
 
 class ExitSignal(Exception):
