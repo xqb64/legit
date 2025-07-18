@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "legit"
 version = "0.1.0"
-description = "A tiny git-like VCS clone."
+description = "A small git(1) implementation."
 readme = "README.md"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "xqb64", email = "x@xqb.ch" }]
 license = { text = "MIT" }
 requires-python = ">=3.11"
 classifiers = [
