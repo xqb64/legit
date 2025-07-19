@@ -40,4 +40,4 @@ class UploadPack(RemoteAgentMixin, SendObjectsMixin, Base):
 
     def send_objects(self) -> None:
         revs = list(self.wanted) + [f"^{oid}" for oid in self.remote_has]
-        self.send_packet_objects(revs)
+        self.send_packed_objects(revs)

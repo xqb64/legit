@@ -175,7 +175,7 @@ class Push(FastForwardMixin, RemoteClientMixin, SendObjectsMixin, Base):
 
         revs += [f"^{oid}" for oid in self.remote_refs.values()]
 
-        self.send_packet_objects(revs)
+        self.send_packed_objects(revs)
 
     def print_summary(self) -> None:
         log.debug(f"About to print summary. self.updates contains: {self.updates}")
