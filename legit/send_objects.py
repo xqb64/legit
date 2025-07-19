@@ -21,7 +21,7 @@ class SendObjectsMixin:
         conn: Remotes.Protocol
         stderr: TextIO
 
-    def send_packet_objects(self, revs: list[str]) -> None:
+    def send_packed_objects(self, revs: list[str]) -> None:
         rev_opts = {"objects": True, "missing": True}
         rev_list = RevList(self.repo, revs, rev_opts)
 
